@@ -376,11 +376,29 @@
           <span>当前选中：{{ selectedAppeal.title }}</span>
         </div>
         <el-steps :active="appealStep(selectedAppeal)" finish-status="success" align-center>
-          <el-step title="已提交" :description="selectedAppeal.createTime || '已提交'" />
-          <el-step title="已受理" :description="stepTime('ASSIGN')" />
-          <el-step title="处理中" :description="stepTime('HANDLE')" />
-          <el-step title="已办结" :description="selectedAppeal.finishTime || '待办结'" />
+          <el-step :title="appealStepTitles[0]" :description="selectedAppeal.createTime || '已提交'" />
+          <el-step :title="appealStepTitles[1]" :description="stepTime('ASSIGN')" />
+          <el-step :title="appealStepTitles[2]" :description="stepTime('HANDLE')" />
+          <el-step :title="appealStepTitles[3]" :description="selectedAppeal.finishTime || appealStepTitles[3]" />
         </el-steps>
+
+        <!-- 回复才是这条反馈的「结果」：驿站/管理员亲口说的话，单独突出显示而不是埋进时间线 -->
+        <div v-if="appealReply" class="appeal-reply">
+          <div class="appeal-reply-head">
+            <el-icon><ChatDotRound /></el-icon>
+            <strong>{{ appealReply.from }}</strong>
+            <time v-if="appealReply.time">{{ appealReply.time }}</time>
+          </div>
+          <p class="appeal-reply-body">{{ appealReply.text }}</p>
+        </div>
+        <div v-else class="appeal-reply appeal-reply--pending">
+          <div class="appeal-reply-head">
+            <el-icon><Clock /></el-icon>
+            <strong>{{ selectedAppeal.receiverName || "受理方" }}尚未回复</strong>
+          </div>
+          <p class="appeal-reply-body">{{ selectedAppeal.statusLabel }}</p>
+        </div>
+
         <el-timeline class="appeal-timeline">
           <el-timeline-item
             v-for="record in selectedAppeal.records || []"
@@ -896,6 +914,36 @@ function appealCategoryTone(category) {
   if (category === "SUGGESTION") return "suggestion";
   return "request";
 }
+
+/**
+ * 流程步骤标题随分类变化，最后一步落在「回复」上——
+ * 这条反馈的结果不是「已办结」这个动作，而是驿站/管理员实际说的话。
+ */
+const appealStepTitles = computed(() => {
+  const category = selectedAppeal.value?.category;
+  if (category === "PRAISE") return ["心意已送达", "已转达驿站", "驿站查看中", "驿站的回应"];
+  if (category === "SUGGESTION") return ["建议已提交", "已转达相关同事", "评估中", "处理意见"];
+  return ["已提交", "已受理", "处理中", "处理结果"];
+});
+
+/**
+ * 驿站/管理员的回复：取处理记录里最后一条带内容的记录。
+ * 这是整条反馈真正有意义的部分，因此单独渲染而不是只放在时间线里。
+ */
+const appealReply = computed(() => {
+  const appeal = selectedAppeal.value;
+  if (!appeal) return null;
+  const records = (appeal.records || []).filter((item) => String(item.content || "").trim());
+  if (!records.length) return null;
+  // 优先取办结/关闭这类终结动作的回复，没有就取最后一条
+  const final = [...records].reverse().find((item) => ["RESOLVED", "CLOSED"].includes(item.action)) || records[records.length - 1];
+  const responder = final.handlerName || appeal.receiverName || "受理方";
+  return {
+    from: `${responder}的回复`,
+    text: final.content,
+    time: final.createTime || appeal.finishTime || ""
+  };
+});
 
 /** 切换分类时同步默认子类型，避免出现「表扬感谢 + 权益保障」这种不搭的组合。 */
 function selectAppealCategory(value) {

@@ -108,7 +108,7 @@
             :rows="4"
             maxlength="300"
             show-word-limit
-            :placeholder="handleStatus === 'RESOLVED' ? '请填写处理说明，办结后不可修改' : '填写处理进展说明'"
+            :placeholder="handleStatus === 'RESOLVED' ? '这段话会直接展示给用户，请用你自己的话写。例如：举手之劳，不必客气，欢迎常来。' : '填写当前进展，用户能看到'"
           />
         </el-form-item>
       </el-form>
@@ -166,8 +166,10 @@ const statusOptions = [
   { value: "CLOSED", label: "已关闭" }
 ];
 
-const HANDLE_TITLES = { PROCESSING: "标记处理中", RESOLVED: "办结诉求", CLOSED: "关闭诉求" };
-const HANDLE_LABELS = { PROCESSING: "处理进展说明", RESOLVED: "处理说明（必填）", CLOSED: "关闭原因" };
+const HANDLE_TITLES = { PROCESSING: "给用户回复进展", RESOLVED: "回复并结束", CLOSED: "回复并关闭" };
+// 这些字段是**要展示给用户看的话**，不是内部处理说明。
+// 驿站想感谢骑手的反馈，就得能自己打出想说的话，而不是从结论选项里挑一个。
+const HANDLE_LABELS = { PROCESSING: "给用户的进展回复", RESOLVED: "给用户的回复（必填）", CLOSED: "给用户的说明" };
 
 const loading = ref(false);
 const submitting = ref(false);
@@ -186,7 +188,7 @@ const timelineLoading = ref(false);
 const timeline = ref([]);
 
 const handleTitle = computed(() => HANDLE_TITLES[handleStatus.value] || "处理诉求");
-const handleContentLabel = computed(() => HANDLE_LABELS[handleStatus.value] || "处理说明");
+const handleContentLabel = computed(() => HANDLE_LABELS[handleStatus.value] || "给用户的回复");
 
 function canHandle(row) {
   return ["PENDING_ACCEPTANCE", "ASSIGNED", "PROCESSING"].includes(row?.status);

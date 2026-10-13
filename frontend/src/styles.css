@@ -956,6 +956,60 @@ button {
   align-items: center;
 }
 
+/* 驿站/管理员的回复：这条反馈的「结果」，要显眼但不喧哗 */
+.appeal-reply {
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  background: var(--primary-soft);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 7px 7px 0;
+}
+
+.appeal-reply--pending {
+  background: #f7fafc;
+  border-left-color: #cbd5e1;
+}
+
+.appeal-reply-head {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.appeal-reply-head .el-icon {
+  color: var(--primary-dark);
+  font-size: 15px;
+}
+
+.appeal-reply--pending .appeal-reply-head .el-icon {
+  color: var(--muted);
+}
+
+.appeal-reply-head strong {
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.appeal-reply--pending .appeal-reply-head strong {
+  color: #5e6877;
+}
+
+.appeal-reply-head time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.appeal-reply-body {
+  margin: 0;
+  color: #24333d;
+  font-size: 14px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
 /* 表单里解释「这个功能是干什么的」的说明文字 */
 .form-hint {
   margin: 0 0 14px;
