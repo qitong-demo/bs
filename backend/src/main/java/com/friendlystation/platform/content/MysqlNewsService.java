@@ -180,6 +180,9 @@ public class MysqlNewsService implements NewsService {
         // 来源与城市信息：来源类型区分官方/平台，城市为空表示不限城市
         out.put("sourceType", news.getSourceType() == null ? "OFFICIAL" : news.getSourceType());
         out.put("sourceTypeLabel", "PLATFORM".equalsIgnoreCase(news.getSourceType()) ? "平台" : "官方");
+        String level = news.getSourceLevel() == null ? "SECONDARY" : news.getSourceLevel();
+        out.put("sourceLevel", level);
+        out.put("sourceLevelLabel", ContentSupport.sourceLevelLabel(level));
         out.put("publisher", news.getPublisher() == null ? "" : news.getPublisher());
         out.put("platform", news.getPlatform() == null ? "" : news.getPlatform());
         out.put("cityCode", news.getCityCode() == null ? "" : news.getCityCode());

@@ -206,6 +206,9 @@ public class MockNewsService implements NewsService {
         String cityCode = ContentSupport.trimText(record.get("cityCode"));
         out.put("sourceType", sourceType);
         out.put("sourceTypeLabel", "PLATFORM".equalsIgnoreCase(sourceType) ? "平台" : "官方");
+        String level = ContentSupport.textOrDefault(record.get("sourceLevel"), "SECONDARY");
+        out.put("sourceLevel", level);
+        out.put("sourceLevelLabel", ContentSupport.sourceLevelLabel(level));
         out.put("publisher", ContentSupport.trimText(record.get("publisher")));
         out.put("platform", ContentSupport.trimText(record.get("platform")));
         out.put("cityCode", cityCode);

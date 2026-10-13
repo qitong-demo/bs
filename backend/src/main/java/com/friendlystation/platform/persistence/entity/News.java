@@ -21,6 +21,8 @@ public class News {
     private String status;
     /** 来源类型：OFFICIAL 官方 / PLATFORM 平台企业。 */
     private String sourceType;
+    /** 来源等级：AUTHORITATIVE 一手文件 / OFFICIAL_MEDIA 官方媒体 / SECONDARY 第三方来源。 */
+    private String sourceLevel;
     /** 发布方名称。 */
     private String publisher;
     /** 平台名称（仅平台来源有值）。 */

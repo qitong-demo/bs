@@ -37,6 +37,38 @@ const ALLOWED_CATEGORIES = new Set([
   "福利补贴", "技能培训", "子女关爱", "劳动报酬"
 ]);
 
+/**
+ * 来源等级：同样的政策内容，出自一手文件还是第三方转载，可信度差别很大。
+ * 界面要给用户看得出来，不能把商业媒体的转述和国务院文件并列展示还不加区分。
+ *
+ *   AUTHORITATIVE   一手规范性文件（政府/人大/群团官网，域名以 gov.cn 结尾）
+ *   OFFICIAL_MEDIA  官方媒体（新华社、人民日报、央广、中工网等）
+ *   SECONDARY       其他媒体与第三方转载（需提示用户以原文为准）
+ */
+const OFFICIAL_MEDIA_HOSTS = [
+  "news.cn", "xinhuanet.com", "people.com.cn", "cnr.cn", "cctv.com",
+  "youth.cn", "jingjiribao.cn", "workercn.cn", "ce.cn", "gmw.cn",
+  "12371.cn", "acftu.org", "chinanews.com.cn", "stdaily.com"
+];
+
+function classifySource(url) {
+  let host = "";
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "SECONDARY";
+  }
+  if (host.endsWith(".gov.cn") || host.endsWith(".npc.gov.cn")) return "AUTHORITATIVE";
+  if (OFFICIAL_MEDIA_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return "OFFICIAL_MEDIA";
+  return "SECONDARY";
+}
+
+const SOURCE_LEVEL_LABELS = {
+  AUTHORITATIVE: "官方文件",
+  OFFICIAL_MEDIA: "官方媒体",
+  SECONDARY: "第三方来源"
+};
+
 if (!fs.existsSync(sourcePath)) {
   console.error(`未找到 ${path.relative(projectRoot, sourcePath)}。请先完成政策调研再运行本脚本。`);
   process.exit(1);
@@ -96,6 +128,7 @@ for (const item of items) {
     title,
     category,
     sourceType,
+    sourceLevel: classifySource(url),
     publisher: String(item.publisher || "").trim(),
     platform: item.platform ? String(item.platform).trim() : "",
     cityCode: rawCity,
@@ -119,7 +152,7 @@ sql.push("USE friendly_station;");
 sql.push("");
 sql.push("DELETE FROM news;");
 sql.push("");
-sql.push("INSERT INTO news (title, category, content, view_count, status, source_type, publisher, platform, city_code, published_at, source_url) VALUES");
+sql.push("INSERT INTO news (title, category, content, view_count, status, source_type, source_level, publisher, platform, city_code, published_at, source_url) VALUES");
 
 const rows = accepted.map((item) => {
   // 正文：摘要 + 来源署名 + 原文链接。界面详情直接展示，用户可点链接回溯原文。
@@ -139,6 +172,7 @@ const rows = accepted.map((item) => {
     "0",
     sqlText("PUBLISHED"),
     sqlText(item.sourceType),
+    sqlText(item.sourceLevel),
     sqlText(item.publisher),
     sqlText(item.platform),
     sqlText(item.cityCode),
@@ -153,6 +187,7 @@ fs.mkdirSync(path.dirname(sqlPath), { recursive: true });
 fs.writeFileSync(sqlPath, sql.join("\n"), "utf8");
 
 // ---------------------------------------------------------------- 生成来源说明
+const byLevel = {};
 const byCity = {};
 const bySource = {};
 const byCategory = {};
@@ -162,6 +197,8 @@ for (const item of accepted) {
   const source = item.sourceType === "PLATFORM" ? `平台：${item.platform || item.publisher}` : "官方";
   bySource[source] = (bySource[source] || 0) + 1;
   byCategory[item.category] = (byCategory[item.category] || 0) + 1;
+  const level = SOURCE_LEVEL_LABELS[item.sourceLevel] || item.sourceLevel;
+  byLevel[level] = (byLevel[level] || 0) + 1;
 }
 
 const doc = [];
@@ -181,6 +218,11 @@ doc.push(`| 总数 | ${accepted.length} 条 |`);
 doc.push(`| 来源类型 | ${Object.entries(bySource).map(([k, v]) => `${k} ${v} 条`).join("；")} |`);
 doc.push(`| 城市归属 | ${Object.entries(byCity).map(([k, v]) => `${k} ${v} 条`).join("；")} |`);
 doc.push(`| 分类 | ${Object.entries(byCategory).map(([k, v]) => `${k} ${v} 条`).join("；")} |`);
+doc.push(`| 来源等级 | ${Object.entries(byLevel).map(([k, v]) => `${k} ${v} 条`).join("；")} |`);
+doc.push("");
+doc.push("> **来源等级说明**：`官方文件` 指政府/人大/群团官网的一手规范性文件；");
+doc.push("> `官方媒体` 指新华社、人民日报、央广、中工网等；`第三方来源` 指商业媒体或第三方转载，");
+doc.push("> 内容可能经过转述，**引用前请以原文为准**。");
 doc.push("");
 doc.push("## 二、逐条来源");
 doc.push("");

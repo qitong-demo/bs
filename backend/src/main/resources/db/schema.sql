@@ -179,6 +179,9 @@ CREATE TABLE IF NOT EXISTS news (
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
     -- 来源类型：OFFICIAL 官方（政府/群团/官方媒体）/ PLATFORM 平台企业自行发布
     source_type VARCHAR(20) NOT NULL DEFAULT 'OFFICIAL',
+    -- 来源等级：AUTHORITATIVE 一手规范性文件 / OFFICIAL_MEDIA 官方媒体 / SECONDARY 第三方来源。
+    -- 同样的政策内容，出自国务院文件还是商业媒体转述，可信度差别很大，界面要区分展示。
+    source_level VARCHAR(20) NOT NULL DEFAULT 'SECONDARY',
     -- 发布方名称，例如「中共中央办公厅、国务院办公厅」「美团」
     publisher VARCHAR(120),
     -- 平台名称（仅 source_type=PLATFORM 时有值），用于按职业/平台筛选

@@ -482,6 +482,8 @@
               {{ item.platform || item.sourceTypeLabel || "官方" }}
             </el-tag>
             <strong>{{ item.title }}</strong>
+            <!-- 第三方来源要提示：商业媒体转述与一手文件的可信度不同 -->
+            <el-tag v-if="item.sourceLevel === 'SECONDARY'" type="danger" effect="plain" size="small">第三方</el-tag>
             <!-- 城市相关的排在前面并标出城市；不限城市的显示「全国」 -->
             <el-tag v-if="item.cityCode" type="success" effect="plain" size="small">{{ cityNameOf(item.cityCode) }}</el-tag>
             <el-tag v-else type="info" effect="plain" size="small">全国</el-tag>

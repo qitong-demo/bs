@@ -42,6 +42,22 @@ final class ContentSupport {
         return status == null ? "" : status;
     }
 
+    /**
+     * 资讯来源等级的中文文案。
+     *
+     * <p>同样的政策内容，出自国务院文件还是商业媒体转述，可信度差别很大；
+     * 界面上必须能区分，不能让用户以为每条都是官方一手文件。</p>
+     */
+    static String sourceLevelLabel(String level) {
+        if ("AUTHORITATIVE".equalsIgnoreCase(level)) {
+            return "官方文件";
+        }
+        if ("OFFICIAL_MEDIA".equalsIgnoreCase(level)) {
+            return "官方媒体";
+        }
+        return "第三方来源";
+    }
+
     /** 日期格式化为 yyyy-MM-dd，空值返回空串。 */
     static String formatDate(LocalDateTime time) {
         return time == null ? "" : time.format(DATE_FORMATTER);
