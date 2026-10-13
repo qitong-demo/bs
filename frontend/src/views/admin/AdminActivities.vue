@@ -86,26 +86,80 @@
         <span class="admin-toolbar-total">共 {{ signups.length }} 条报名</span>
       </div>
       <el-table :data="signups" v-loading="signupLoading" stripe empty-text="暂无报名记录">
-        <el-table-column prop="id" label="编号" width="80" />
-        <el-table-column label="活动名称" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="id" label="编号" width="70" />
+        <el-table-column label="活动名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">{{ textOf(row.activityTitle) }}</template>
         </el-table-column>
-        <el-table-column label="报名人" width="140">
-          <template #default="{ row }">{{ textOf(row.userName) }}</template>
+        <!-- 报名人姓名与电话是承办方联系报名人的依据，直接列出，不必再点开 -->
+        <el-table-column label="报名人" width="110">
+          <template #default="{ row }">{{ textOf(row.contactName || row.userName) }}</template>
         </el-table-column>
-        <el-table-column label="联系电话" width="150">
-          <template #default="{ row }">{{ textOf(row.phone) }}</template>
-        </el-table-column>
-        <el-table-column label="报名状态" width="140">
+        <el-table-column label="联系电话" width="140">
           <template #default="{ row }">
-            <el-tag type="success" effect="plain">{{ textOf(row.statusLabel) }}</el-tag>
+            <a v-if="row.phone" :href="`tel:${row.phone}`" class="signup-phone">{{ row.phone }}</a>
+            <span v-else>—</span>
           </template>
         </el-table-column>
-        <el-table-column label="报名时间" width="180">
-          <template #default="{ row }">{{ textOf(row.createTime) }}</template>
+        <el-table-column label="备注" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">{{ textOf(row.remark) || "—" }}</template>
+        </el-table-column>
+        <el-table-column label="报名状态" width="130">
+          <template #default="{ row }">
+            <el-tag :type="signupStatusTag(row.status)" effect="plain">{{ textOf(row.statusLabel) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核反馈" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span v-if="row.reviewNote">{{ row.reviewNote }}</span>
+            <span v-else class="muted">尚未反馈</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" @click="openReview(row)">联系与审核</el-button>
+          </template>
         </el-table-column>
       </el-table>
     </template>
+
+    <!-- 承办方处理报名：联系、审核通过或未通过，并给出给报名人的反馈 -->
+    <el-dialog v-model="reviewVisible" title="联系与审核报名" width="520px">
+      <el-descriptions v-if="reviewTarget" :column="1" border size="small" class="admin-dialog-meta">
+        <el-descriptions-item label="活动">{{ textOf(reviewTarget.activityTitle) }}</el-descriptions-item>
+        <el-descriptions-item label="报名人">{{ textOf(reviewTarget.contactName || reviewTarget.userName) }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">
+          <a v-if="reviewTarget.phone" :href="`tel:${reviewTarget.phone}`" class="signup-phone">{{ reviewTarget.phone }}</a>
+          <span v-else>—</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="备注">{{ textOf(reviewTarget.remark) || "—" }}</el-descriptions-item>
+        <el-descriptions-item label="当前状态">{{ textOf(reviewTarget.statusLabel) }}</el-descriptions-item>
+      </el-descriptions>
+      <el-form label-position="top">
+        <el-form-item label="处理结果" required>
+          <el-radio-group v-model="reviewForm.status">
+            <el-radio-button value="CONTACTED">已联系</el-radio-button>
+            <el-radio-button value="APPROVED">审核通过</el-radio-button>
+            <el-radio-button value="REJECTED">审核未通过</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="给报名人的反馈" :required="reviewForm.status === 'REJECTED'">
+          <el-input
+            v-model="reviewForm.reviewNote"
+            type="textarea"
+            :rows="3"
+            maxlength="300"
+            show-word-limit
+            :placeholder="reviewForm.status === 'REJECTED'
+              ? '未通过必须说明原因，报名人会看到这段说明'
+              : '例如：已电话确认，周六上午 9 点在驿站集合，记得带身份证'"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reviewVisible = false">取消</el-button>
+        <el-button type="primary" :loading="reviewSubmitting" @click="submitReview">提交</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="dialogVisible" :title="editingId ? '编辑活动' : '新增活动'" width="620px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="94px">
@@ -182,10 +236,10 @@ import {
   getAdminActivityPage,
   updateActivity
 } from "../../api/content";
-import { getAdminSignups } from "../../api/workflow";
+import { getAdminSignups, reviewSignup } from "../../api/workflow";
 import { getStationPage } from "../../api/station";
 import { errorMessage } from "../../api/http";
-import { contentStatusLabel, contentStatusTag, numberText, textOf } from "./admin-shared";
+import { contentStatusLabel, contentStatusTag, numberText, signupStatusTag, textOf } from "./admin-shared";
 
 const props = defineProps({
   /** 初始展示的区块：activities（活动列表）或 signups（报名记录）。 */
@@ -202,6 +256,44 @@ const total = ref(0);
 const query = reactive({ current: 1, size: 10, status: "", keyword: "" });
 
 const signupLoading = ref(false);
+
+/** 处理报名的弹窗：联系、审核通过或未通过，并给出反馈。 */
+const reviewVisible = ref(false);
+const reviewSubmitting = ref(false);
+const reviewTarget = ref(null);
+const reviewForm = reactive({ status: "CONTACTED", reviewNote: "" });
+
+function openReview(row) {
+  reviewTarget.value = row;
+  // 已审核过的再次打开时沿用原状态，避免手滑把结论改掉
+  reviewForm.status = ["CONTACTED", "APPROVED", "REJECTED"].includes(row.status) ? row.status : "CONTACTED";
+  reviewForm.reviewNote = row.reviewNote || "";
+  reviewVisible.value = true;
+}
+
+async function submitReview() {
+  const target = reviewTarget.value;
+  if (!target) return;
+  if (reviewForm.status === "REJECTED" && !reviewForm.reviewNote.trim()) {
+    ElMessage.warning("审核未通过时请填写原因，报名人会看到这段说明");
+    return;
+  }
+  reviewSubmitting.value = true;
+  try {
+    await reviewSignup({
+      id: target.id,
+      status: reviewForm.status,
+      reviewNote: reviewForm.reviewNote.trim()
+    });
+    reviewVisible.value = false;
+    ElMessage.success("已提交处理结果，报名人可以看到反馈");
+    await loadSignups();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "处理失败"));
+  } finally {
+    reviewSubmitting.value = false;
+  }
+}
 const signups = ref([]);
 
 const stations = ref([]);

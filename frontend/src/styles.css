@@ -949,6 +949,32 @@ button {
 }
 
 /* 政策资讯的筛选组（来源 + 平台 + 分类） */
+/* 管理端报名表里的电话：可点击直接拨号 */
+.signup-phone {
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.signup-phone:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* 弹窗里的说明文字：解释「为什么要填这个」 */
+.dialog-hint {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  background: var(--primary-soft);
+  border-radius: 7px;
+  color: #2b4a52;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .news-filters {
   display: flex;
   flex-wrap: wrap;
@@ -2272,7 +2298,33 @@ button {
     grid-row: 1;
   }
 
-  .news-filters {
+  /* 管理端报名表里的电话：可点击直接拨号 */
+.signup-phone {
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.signup-phone:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* 弹窗里的说明文字：解释「为什么要填这个」 */
+.dialog-hint {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  background: var(--primary-soft);
+  border-radius: 7px;
+  color: #2b4a52;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.news-filters {
     width: 100%;
   }
 

@@ -63,6 +63,14 @@ export function getMySignups() {
   return request({ url: "/activity/my" });
 }
 
+/**
+ * 承办方处理报名：联系 / 审核通过 / 审核未通过，并给出给报名人的反馈。
+ * 审核未通过时后端要求填写原因。
+ */
+export function reviewSignup(data) {
+  return request({ url: "/activity/signup/review", method: "put", data });
+}
+
 export function getAdminSignups() {
   return request({ url: "/activity/admin/signups" });
 }

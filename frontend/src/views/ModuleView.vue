@@ -421,26 +421,69 @@
           <div class="activity-body">
             <div class="activity-top">
               <el-tag effect="light">{{ activity.stationName || "平台活动" }}</el-tag>
+              <!-- 承办方：驿站 / 平台管理员 / 第三方机构。第三方活动只在站内展示并跳转。 -->
+              <el-tag :type="activity.organizerType === 'EXTERNAL' ? 'warning' : 'info'" effect="plain">
+                {{ activity.organizerLabel || "驿站" }}
+              </el-tag>
               <el-tag :type="activity.remaining > 0 ? 'success' : 'info'" effect="plain">
-                {{ activity.remaining > 0 ? "报名中" : "已满" }}
+                {{ activity.organizerType === 'EXTERNAL' ? "外部活动" : (activity.remaining > 0 ? "报名中" : "已满") }}
               </el-tag>
             </div>
             <h2>{{ activity.title }}</h2>
             <p><el-icon><Location /></el-icon>{{ activity.address || activity.stationName || "地点待确认" }}</p>
             <p><el-icon><Calendar /></el-icon>{{ activity.activityTime }}</p>
             <div class="activity-footer">
-              <span>已报名 {{ activity.signedCount }} / {{ activity.maxCount }}</span>
+              <span v-if="activity.organizerType === 'EXTERNAL'">由第三方机构举办，报名请前往来源页面</span>
+              <span v-else>已报名 {{ activity.signedCount }} / {{ activity.maxCount }}</span>
+              <!-- 第三方活动不提供站内报名：报名与审核都在对方平台，
+                   在站内收报名没人能处理。这里改为跳转链接。 -->
               <el-button
+                v-if="activity.organizerType === 'EXTERNAL'"
+                type="primary"
+                plain
+                @click="openExternalActivity(activity)"
+              >前往报名<el-icon class="el-icon--right"><TopRight /></el-icon></el-button>
+              <el-button
+                v-else
                 :disabled="activity.remaining <= 0 || signedActivityIds.includes(activity.id)"
                 type="primary"
                 plain
-                @click="signup(activity)"
+                @click="openSignup(activity)"
               >{{ signedActivityIds.includes(activity.id) ? "已报名" : "立即报名" }}</el-button>
             </div>
           </div>
         </article>
         <el-empty v-if="!loading.activities && activityItems.length === 0" description="暂无可报名活动" />
       </div>
+
+      <!-- 报名表单：姓名与电话必填，承办方要靠这些联系报名人 -->
+      <el-dialog v-model="signupVisible" title="填写报名信息" width="460px">
+        <p class="dialog-hint">
+          驿站会根据这些信息联系你，确认时间与安排。请留常用的电话。
+        </p>
+        <el-form label-position="top">
+          <el-form-item label="姓名" required>
+            <el-input v-model="signupForm.contactName" maxlength="50" placeholder="请填写真实姓名，方便驿站称呼与核对" />
+          </el-form-item>
+          <el-form-item label="联系电话" required>
+            <el-input v-model="signupForm.phone" maxlength="30" placeholder="例如：13800002088" />
+          </el-form-item>
+          <el-form-item label="备注（选填）">
+            <el-input
+              v-model="signupForm.remark"
+              type="textarea"
+              :rows="3"
+              maxlength="255"
+              show-word-limit
+              placeholder="方便的时间、同行人数等，驿站会参考"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="signupVisible = false">取消</el-button>
+          <el-button type="primary" :loading="signupSubmitting" @click="submitSignup">提交报名</el-button>
+        </template>
+      </el-dialog>
     </template>
 
     <!-- ------------------------------------------------------ 政策资讯 -->
@@ -984,6 +1027,11 @@ const appealEvaluationForm = reactive({ appealId: null, score: 5, content: "" })
 
 const activityItems = ref([]);
 const signedActivityIds = ref([]);
+/** 报名表单：姓名与电话必填，承办方要靠这些联系报名人。 */
+const signupVisible = ref(false);
+const signupSubmitting = ref(false);
+const signupTarget = ref(null);
+const signupForm = reactive({ contactName: "", phone: "", remark: "" });
 const accentTones = ["green", "blue", "orange", "purple"];
 
 const newsFilter = ref("全部");
@@ -1505,14 +1553,58 @@ async function loadActivities() {
   }
 }
 
-async function signup(activity) {
+/**
+ * 打开报名表单。
+ *
+ * 报名信息要交给承办方去联系报名人，所以姓名与电话必填、备注选填，
+ * 不再是一键报名——那样驿站拿到一条没有联系方式的记录，等于没法联系。
+ */
+function openSignup(activity) {
+  signupTarget.value = activity;
+  signupForm.contactName = userStore.profile?.realName || userStore.profile?.nickname || "";
+  signupForm.phone = userStore.profile?.phone || "";
+  signupForm.remark = "";
+  signupVisible.value = true;
+}
+
+/** 第三方活动的跳转：只做展示与跳转，报名在对方平台完成。 */
+function openExternalActivity(activity) {
+  const url = String(activity.externalUrl || "").trim();
+  if (!url) {
+    ElMessage.warning("该活动未提供报名链接，请联系平台管理员");
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function submitSignup() {
+  const activity = signupTarget.value;
+  if (!activity) return;
+  if (!signupForm.contactName.trim()) {
+    ElMessage.warning("请填写报名人姓名");
+    return;
+  }
+  if (!signupForm.phone.trim()) {
+    ElMessage.warning("请填写联系电话，承办方需要据此联系你");
+    return;
+  }
+  signupSubmitting.value = true;
   try {
-    await signupActivity({ activityId: activity.id, title: activity.title });
+    await signupActivity({
+      activityId: activity.id,
+      title: activity.title,
+      contactName: signupForm.contactName.trim(),
+      phone: signupForm.phone.trim(),
+      remark: signupForm.remark.trim()
+    });
     signedActivityIds.value = [...signedActivityIds.value, activity.id];
-    ElMessage.success(`已提交「${activity.title}」的报名申请`);
+    signupVisible.value = false;
+    ElMessage.success(`已提交「${activity.title}」的报名，承办方会联系你`);
     await loadActivities();
   } catch (error) {
     ElMessage.error(errorMessage(error, "报名失败"));
+  } finally {
+    signupSubmitting.value = false;
   }
 }
 

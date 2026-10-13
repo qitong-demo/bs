@@ -110,6 +110,14 @@ export function appealStatusTag(status) {
   return "danger";
 }
 
+/** 报名状态标签色：通过为成功、未通过为危险、已联系为进行中。 */
+export function signupStatusTag(status) {
+  if (status === "APPROVED") return "success";
+  if (status === "REJECTED") return "danger";
+  if (status === "CONTACTED") return "warning";
+  return "info";
+}
+
 /** 驿站状态标签色。 */
 export function stationStatusTag(status) {
   if (status === "OPEN") return "success";
