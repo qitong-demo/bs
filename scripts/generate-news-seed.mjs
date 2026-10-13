@@ -82,15 +82,24 @@ for (const item of items) {
 
   const category = ALLOWED_CATEGORIES.has(item.category) ? item.category : "权益保障";
   const sourceType = item.sourceType === "PLATFORM" ? "PLATFORM" : "OFFICIAL";
-  const cityCode = item.cityCode ? String(item.cityCode).trim() : "";
+  const rawCity = item.cityCode ? String(item.cityCode).trim() : "";
+
+  // 城市归属必须是平台已覆盖的 7 个城市之一。
+  // 否则这条资讯在任何城市都匹配不上（既非本地、又非不限城市），等于永远不显示——
+  // 与其悄悄丢失，不如明确排除并在文档里说明原因。
+  if (rawCity && !CITY_NAMES[rawCity]) {
+    rejected.push({ ...item, reason: `城市 ${item.cityName || rawCity} 不在平台覆盖范围内，导入后不会在任何城市显示` });
+    continue;
+  }
+
   accepted.push({
     title,
     category,
     sourceType,
     publisher: String(item.publisher || "").trim(),
     platform: item.platform ? String(item.platform).trim() : "",
-    cityCode,
-    cityName: cityCode ? (CITY_NAMES[cityCode] || item.cityName || "") : "",
+    cityCode: rawCity,
+    cityName: rawCity ? CITY_NAMES[rawCity] : "",
     publishedAt: normalizeDate(item.publishedAt),
     url,
     summary: String(item.summary || "").trim()
@@ -214,7 +223,28 @@ doc.push("");
 fs.mkdirSync(path.dirname(docPath), { recursive: true });
 fs.writeFileSync(docPath, doc.join("\n"), "utf8");
 
+// ---------------------------------------------------------------- 生成前端平台清单
+// 平台下拉的选项直接由来源数据派生，避免前端硬编码一份容易过期的列表。
+const platforms = [...new Set(accepted.map((item) => item.platform).filter(Boolean))].sort((a, b) =>
+  a.localeCompare(b, "zh-Hans-CN")
+);
+const constantPath = path.join(projectRoot, "frontend", "src", "constants", "news-platforms.js");
+const constantLines = [
+  "/**",
+  " * 政策资讯可筛选的平台清单。",
+  " *",
+  " * 由 scripts/generate-news-seed.mjs 从 data/policy-sources.json 生成，请勿手工编辑。",
+  " * 这里列的是**资讯涉及的平台**（含官方媒体报道该平台的情形），",
+  " * 不区分这条是平台自己发布的、还是官方媒体发布的。",
+  " */",
+  `export const NEWS_PLATFORMS = ${JSON.stringify(platforms, null, 2)};`,
+  ""
+];
+fs.mkdirSync(path.dirname(constantPath), { recursive: true });
+fs.writeFileSync(constantPath, constantLines.join("\n"), "utf8");
+
 console.log(`已收录 ${accepted.length} 条（未纳入 ${rejected.length + unverified.length} 条）`);
 console.log(`来源类型：${Object.entries(bySource).map(([k, v]) => `${k}=${v}`).join("  ")}`);
 console.log(`城市分布：${Object.entries(byCity).map(([k, v]) => `${k}=${v}`).join("  ")}`);
-console.log(`已生成：\n  - ${path.relative(projectRoot, sqlPath)}\n  - ${path.relative(projectRoot, docPath)}`);
+console.log(`涉及平台 ${platforms.length} 个：${platforms.join("、")}`);
+console.log(`已生成：\n  - ${path.relative(projectRoot, sqlPath)}\n  - ${path.relative(projectRoot, docPath)}\n  - ${path.relative(projectRoot, constantPath)}`);

@@ -948,12 +948,16 @@ button {
   background: var(--primary-soft);
 }
 
-/* 政策资讯的两个筛选组（来源 + 分类） */
+/* 政策资讯的筛选组（来源 + 平台 + 分类） */
 .news-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+.news-platform-select {
+  width: 132px;
 }
 
 /* 驿站/管理员的回复：这条反馈的「结果」，要显眼但不喧哗 */

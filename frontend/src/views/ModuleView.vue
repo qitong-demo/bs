@@ -455,6 +455,17 @@
               <el-radio-button label="官方" />
               <el-radio-button label="平台" />
             </el-radio-group>
+            <!-- 按平台筛选：骑手可以只看自己关心的平台动态（美团/京东/滴滴…） -->
+            <el-select
+              v-model="newsPlatformFilter"
+              size="small"
+              clearable
+              placeholder="全部平台"
+              class="news-platform-select"
+              @change="resetNewsAndLoad"
+            >
+              <el-option v-for="name in NEWS_PLATFORMS" :key="name" :label="name" :value="name" />
+            </el-select>
             <el-radio-group v-model="newsFilter" size="small" @change="resetNewsAndLoad">
               <el-radio-button label="全部" />
               <el-radio-button label="政策" />
@@ -741,6 +752,7 @@ import { getMonthlyTrend, getServiceRanking, getStatOverview } from "../api/stat
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
+import { NEWS_PLATFORMS } from "../constants/news-platforms";
 
 const props = defineProps({
   view: { type: String, required: true },
@@ -967,6 +979,8 @@ const newsFilter = ref("全部");
 const newsItems = ref([]);
 /** 来源筛选：全部 / 官方 / 平台。 */
 const newsSourceFilter = ref("全部");
+/** 平台筛选：空表示不限，可选值由 scripts/generate-news-seed.mjs 生成。 */
+const newsPlatformFilter = ref("");
 const newsTotal = ref(0);
 const newsQuery = reactive({ current: 1, size: 8 });
 const newsVisible = ref(false);
@@ -1509,7 +1523,7 @@ async function loadNews() {
     // 传当前城市：后端只返回「该城市 + 不限城市」，并把该城市的排在前面
     const cityCode = userStore.cityCode || undefined;
     const [newsPage, noticePage] = await Promise.all([
-      getNewsPage({ current: newsQuery.current, size: newsQuery.size, category, cityCode, sourceType }),
+      getNewsPage({ current: newsQuery.current, size: newsQuery.size, category, cityCode, sourceType, platform: newsPlatformFilter.value || undefined }),
       // 通知公告不属于政策来源体系，按分类单独拉取
       sourceType === "PLATFORM"
         ? Promise.resolve({ records: [], total: 0 })

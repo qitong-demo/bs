@@ -39,9 +39,10 @@ public class NewsController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String cityCode,
-            @RequestParam(required = false) String sourceType
+            @RequestParam(required = false) String sourceType,
+            @RequestParam(required = false) String platform
     ) {
-        return ApiResponse.ok(newsService.publicPage(current, size, category, keyword, cityCode, sourceType));
+        return ApiResponse.ok(newsService.publicPage(current, size, category, keyword, cityCode, sourceType, platform));
     }
 
     /** 后台资讯分页，返回全部状态。 */

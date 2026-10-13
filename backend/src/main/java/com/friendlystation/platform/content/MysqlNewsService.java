@@ -27,18 +27,18 @@ public class MysqlNewsService implements NewsService {
 
     @Override
     public PageResult<Map<String, Object>> publicPage(long current, long size, String category, String keyword) {
-        return publicPage(current, size, category, keyword, null, null);
+        return publicPage(current, size, category, keyword, null, null, null);
     }
 
     @Override
     public PageResult<Map<String, Object>> publicPage(long current, long size, String category, String keyword,
-                                                      String cityCode, String sourceType) {
-        return doPage(current, size, category, keyword, "PUBLISHED", cityCode, sourceType);
+                                                      String cityCode, String sourceType, String platform) {
+        return doPage(current, size, category, keyword, "PUBLISHED", cityCode, sourceType, platform);
     }
 
     @Override
     public PageResult<Map<String, Object>> adminPage(long current, long size, String category, String keyword, String status) {
-        return doPage(current, size, category, keyword, status, null, null);
+        return doPage(current, size, category, keyword, status, null, null, null);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class MysqlNewsService implements NewsService {
      * 排序用「是否属于当前城市」优先，其次按发布日期倒序。
      */
     private PageResult<Map<String, Object>> doPage(long current, long size, String category, String keyword,
-                                                   String status, String cityCode, String sourceType) {
+                                                   String status, String cityCode, String sourceType, String platform) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 100);
         LambdaQueryWrapper<News> query = new LambdaQueryWrapper<>();
@@ -112,6 +112,11 @@ public class MysqlNewsService implements NewsService {
         }
         if (!ContentSupport.isBlank(sourceType)) {
             query.eq(News::getSourceType, sourceType.trim().toUpperCase());
+        }
+        // 按平台筛选：骑手可以只看美团、京东这类自己关心的平台动态，
+        // 不区分这条是平台自己发的、还是官方媒体报道该平台。
+        if (!ContentSupport.isBlank(platform)) {
+            query.eq(News::getPlatform, platform.trim());
         }
         // 城市过滤：本城市 + 不限城市。没传城市时不加限制（管理端与旧客户端行为不变）。
         if (!ContentSupport.isBlank(cityCode)) {

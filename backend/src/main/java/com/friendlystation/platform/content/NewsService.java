@@ -20,7 +20,7 @@ public interface NewsService {
      * @param sourceType OFFICIAL / PLATFORM；空表示不限
      */
     PageResult<Map<String, Object>> publicPage(long current, long size, String category, String keyword,
-                                               String cityCode, String sourceType);
+                                               String cityCode, String sourceType, String platform);
 
     /** 后台分页，返回全部状态，status 非空时按状态过滤。 */
     PageResult<Map<String, Object>> adminPage(long current, long size, String category, String keyword, String status);

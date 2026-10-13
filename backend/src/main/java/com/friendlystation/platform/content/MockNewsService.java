@@ -41,18 +41,20 @@ public class MockNewsService implements NewsService {
      */
     @Override
     public PageResult<Map<String, Object>> publicPage(long current, long size, String category, String keyword,
-                                                      String cityCode, String sourceType) {
+                                                      String cityCode, String sourceType, String platform) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 100);
         String normalizedCategory = ContentSupport.trimText(category);
         String normalizedKeyword = ContentSupport.trimText(keyword);
         String city = ContentSupport.trimText(cityCode);
         String source = ContentSupport.trimText(sourceType).toUpperCase();
+        String platformFilter = ContentSupport.trimText(platform);
 
         List<Map<String, Object>> filtered = store.stream()
                 .filter(item -> "PUBLISHED".equals(item.get("status")))
                 .filter(item -> normalizedCategory.isEmpty() || normalizedCategory.equals(item.get("category")))
                 .filter(item -> source.isEmpty() || source.equals(String.valueOf(item.get("sourceType"))))
+                .filter(item -> platformFilter.isEmpty() || platformFilter.equals(String.valueOf(item.getOrDefault("platform", ""))))
                 // 城市过滤：本城市 + 不限城市
                 .filter(item -> city.isEmpty()
                         || ContentSupport.trimText(item.get("cityCode")).isEmpty()
