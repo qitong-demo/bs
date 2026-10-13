@@ -960,6 +960,10 @@ button {
   width: 132px;
 }
 
+.news-category-select {
+  width: 132px;
+}
+
 /* 驿站/管理员的回复：这条反馈的「结果」，要显眼但不喧哗 */
 .appeal-reply {
   margin: 4px 0 18px;

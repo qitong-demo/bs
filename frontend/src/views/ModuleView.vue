@@ -466,12 +466,18 @@
             >
               <el-option v-for="name in NEWS_PLATFORMS" :key="name" :label="name" :value="name" />
             </el-select>
-            <el-radio-group v-model="newsFilter" size="small" @change="resetNewsAndLoad">
-              <el-radio-button label="全部" />
-              <el-radio-button label="政策" />
-              <el-radio-button label="通知" />
-              <el-radio-button label="动态" />
-            </el-radio-group>
+            <!-- 分类筛选用资讯的真实分类（权益保障/职业伤害/…），
+                 不再写死「政策/通知/动态」——那套词与资讯分类对不上，筛了基本命中不到。 -->
+            <el-select
+              v-model="newsFilter"
+              size="small"
+              clearable
+              placeholder="全部分类"
+              class="news-category-select"
+              @change="resetNewsAndLoad"
+            >
+              <el-option v-for="name in NEWS_CATEGORIES" :key="name" :label="name" :value="name" />
+            </el-select>
           </div>
         </div>
         <div class="news-directory" v-loading="loading.news">
@@ -757,7 +763,7 @@ import { getMonthlyTrend, getServiceRanking, getStatOverview } from "../api/stat
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
-import { NEWS_PLATFORMS } from "../constants/news-platforms";
+import { NEWS_CATEGORIES, NEWS_PLATFORMS } from "../constants/news-platforms";
 
 const props = defineProps({
   view: { type: String, required: true },
@@ -1521,7 +1527,7 @@ function resetNewsAndLoad() {
 async function loadNews() {
   loading.news = true;
   try {
-    const category = newsFilter.value === "全部" ? undefined : newsFilter.value;
+    const category = newsFilter.value || undefined;
     const sourceType = newsSourceFilter.value === "全部"
       ? undefined
       : (newsSourceFilter.value === "平台" ? "PLATFORM" : "OFFICIAL");
@@ -1758,7 +1764,7 @@ async function loadView() {
       }
       break;
     case "诉求与反馈":
-      dataNote.value = "诉求提交后会生成处理记录，受理与办结过程可在“我的诉求”中查看。";
+      dataNote.value = "反馈提交后会生成处理记录。反馈给驿站由驿站管理员受理，反馈给平台由平台管理员受理，回复可在“我的诉求”中查看。";
       // 区域候选按当前城市返回，未选择时默认落到第一个可用区域，避免提交空区域
       if (!appealForm.area) {
         appealForm.area = areaOptions.value[0] || "";

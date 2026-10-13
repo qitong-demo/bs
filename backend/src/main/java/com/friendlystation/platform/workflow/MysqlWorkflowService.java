@@ -325,8 +325,18 @@ public class MysqlWorkflowService implements WorkflowService {
             throw new BusinessException("诉求处理状态只能是 PROCESSING、RESOLVED 或 CLOSED");
         }
         long id = FormatUtils.number(request.get("id"));
-        String content = FormatUtils.text(request.get("content"), WorkflowStatus.label(status));
+        String content = FormatUtils.text(request.get("content"), "");
         boolean resolved = WorkflowStatus.APPEAL_RESOLVED.equals(status);
+        // 回复是这条反馈的「结果」——用户端会把它当作结论展示。
+        // 因此办结/关闭时必须由受理方写出内容，不能在服务端回退成状态标签
+        // （此前回退为「已办结」，等于允许不写回复就结束，直接调接口即可绕过前端校验）。
+        if (content.isBlank() && (resolved || WorkflowStatus.APPEAL_CLOSED.equals(status))) {
+            throw new BusinessException("请填写给用户的回复，这段话会直接展示给用户");
+        }
+        // 仅「处理中」允许不填内容，此时记一条状态流转说明。
+        if (content.isBlank()) {
+            content = WorkflowStatus.label(status);
+        }
 
         // 条件更新：只有未办结 / 未关闭的诉求可以被处理，保证并发下只成功一次、只留一条处理记录。
         int updated = appealMapper.update(null, new LambdaUpdateWrapper<Appeal>()

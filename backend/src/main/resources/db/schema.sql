@@ -220,6 +220,12 @@ CREATE TABLE IF NOT EXISTS activity (
     max_count INT NOT NULL DEFAULT 50,
     content LONGTEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
+    -- 承办方：STATION 驿站 / PLATFORM 平台管理员 / EXTERNAL 第三方（外部机构）。
+    -- 第三方活动只在站内展示并提供跳转链接，**不接受站内报名**——
+    -- 报名与审核由对方平台负责，我们既不掌握名单也无法联系报名人。
+    organizer_type VARCHAR(20) NOT NULL DEFAULT 'STATION',
+    -- 仅 organizer_type=EXTERNAL 时有值：跳转到对方平台的详情/报名页
+    external_url VARCHAR(500),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_activity_station FOREIGN KEY (station_id) REFERENCES station (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -228,10 +234,19 @@ CREATE TABLE IF NOT EXISTS activity_signup (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     activity_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
+    -- 报名时填写的信息。承办方要靠这些去联系报名人，因此姓名必填、电话建议填写。
+    contact_name VARCHAR(50),
     phone VARCHAR(20),
+    remark VARCHAR(255),
+    -- 报名状态：SIGNED_UP 已报名 → CONTACTED 已联系 → APPROVED 通过 / REJECTED 未通过 / CANCELLED 已取消
     status VARCHAR(20) NOT NULL DEFAULT 'SIGNED_UP',
+    -- 承办方的审核反馈，会展示给报名人
+    review_note VARCHAR(500),
+    reviewer_id BIGINT,
+    review_time DATETIME,
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_activity_user (activity_id, user_id),
+    KEY idx_signup_status (status),
     CONSTRAINT fk_activity_signup_activity FOREIGN KEY (activity_id) REFERENCES activity (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

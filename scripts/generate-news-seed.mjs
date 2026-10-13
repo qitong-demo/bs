@@ -265,21 +265,32 @@ doc.push("");
 fs.mkdirSync(path.dirname(docPath), { recursive: true });
 fs.writeFileSync(docPath, doc.join("\n"), "utf8");
 
-// ---------------------------------------------------------------- 生成前端平台清单
-// 平台下拉的选项直接由来源数据派生，避免前端硬编码一份容易过期的列表。
+// ---------------------------------------------------------------- 生成前端平台与分类清单
+// 下拉与筛选按钮的选项直接由来源数据派生，避免前端硬编码一份容易过期的列表。
 const platforms = [...new Set(accepted.map((item) => item.platform).filter(Boolean))].sort((a, b) =>
   a.localeCompare(b, "zh-Hans-CN")
 );
+const categories = [...new Set(accepted.map((item) => item.category).filter(Boolean))];
 const constantPath = path.join(projectRoot, "frontend", "src", "constants", "news-platforms.js");
 const constantLines = [
   "/**",
-  " * 政策资讯可筛选的平台清单。",
+  " * 政策资讯的筛选清单。",
   " *",
   " * 由 scripts/generate-news-seed.mjs 从 data/policy-sources.json 生成，请勿手工编辑。",
-  " * 这里列的是**资讯涉及的平台**（含官方媒体报道该平台的情形），",
+  " */",
+  "",
+  "/**",
+  " * 可筛选的平台。这里列的是**资讯涉及的平台**（含官方媒体报道该平台的情形），",
   " * 不区分这条是平台自己发布的、还是官方媒体发布的。",
   " */",
   `export const NEWS_PLATFORMS = ${JSON.stringify(platforms, null, 2)};`,
+  "",
+  "/**",
+  " * 资讯的实际分类。界面的分类筛选必须用这份清单——",
+  " * 此前写死「政策/通知/动态」，而资讯的真实分类是「权益保障/职业伤害/…」，",
+  " * 导致筛「政策」几乎命中不到任何资讯。",
+  " */",
+  `export const NEWS_CATEGORIES = ${JSON.stringify(categories, null, 2)};`,
   ""
 ];
 fs.mkdirSync(path.dirname(constantPath), { recursive: true });

@@ -255,7 +255,7 @@ async function submitHandle() {
   if (!current.value) return;
   const content = handleContent.value.trim();
   if (handleStatus.value === "RESOLVED" && !content) {
-    ElMessage.warning("办结诉求必须填写处理说明");
+    ElMessage.warning("请填写给用户的回复，这段话会直接展示给用户");
     return;
   }
   submitting.value = true;

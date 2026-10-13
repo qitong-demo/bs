@@ -269,6 +269,12 @@ public class DemoWorkflowStore implements WorkflowService {
         if (!WorkflowStatus.isHandleTarget(status)) {
             throw new BusinessException("诉求处理状态只能是 PROCESSING、RESOLVED 或 CLOSED");
         }
+        // 与 mysql 实现同口径：办结/关闭必须写明给用户的回复，不能在服务端回退成状态标签。
+        String handleContent = FormatUtils.text(request.get("content"), "");
+        if (handleContent.isBlank()
+                && (WorkflowStatus.APPEAL_RESOLVED.equals(status) || WorkflowStatus.APPEAL_CLOSED.equals(status))) {
+            throw new BusinessException("请填写给用户的回复，这段话会直接展示给用户");
+        }
         Map<String, Object> item = byId(appeals, FormatUtils.number(request.get("id")));
         if (item == null) {
             throw new BusinessException("诉求不存在");
@@ -449,6 +455,8 @@ public class DemoWorkflowStore implements WorkflowService {
         // 这个方法被预约/诉求/报名/评价共用，只有带 category 的记录（诉求与反馈）
         // 才按分类调整状态文案，避免影响其他实体。
         Object category = item.get("category");
+        // 与 mysql 实现同口径：管理端用标准闭环术语，用户端用分类感知的温暖文案
+        out.put("statusLabelStandard", WorkflowStatus.label(String.valueOf(item.get("status"))));
         out.put("statusLabel", category == null
                 ? WorkflowStatus.label(String.valueOf(item.get("status")))
                 : AppealCategory.statusLabel(String.valueOf(category), String.valueOf(item.get("status"))));

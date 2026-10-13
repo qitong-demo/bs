@@ -53,7 +53,11 @@ class DemoWorkflowStoreTest {
         DemoWorkflowStore store = new DemoWorkflowStore();
         Map<String, Object> created = store.addAppeal(Map.of("title", "充电设施故障", "type", "驿站服务"), 1L);
         store.assignAppeal(Map.of("id", created.get("id")), 2L);
-        Map<String, Object> resolved = store.handleAppeal(Map.of("id", created.get("id"), "status", "RESOLVED"), 2L);
+        // 办结必须写明给用户的回复——这段话是用户端看到的「结果」，服务端不再回退成状态标签。
+        Map<String, Object> resolved = store.handleAppeal(Map.of(
+                "id", created.get("id"),
+                "status", "RESOLVED",
+                "content", "已联系维修人员更换充电桩，明日起恢复使用。"), 2L);
         assertEquals("RESOLVED", resolved.get("status"));
         assertEquals("STATION_ADMIN", resolved.get("receiverType"));
     }
