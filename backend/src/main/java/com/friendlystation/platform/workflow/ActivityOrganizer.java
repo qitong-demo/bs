@@ -77,6 +77,16 @@ public final class ActivityOrganizer {
         return "SUBMITTED".equals(key) || key.isEmpty() ? SIGNUP_SIGNED_UP : key;
     }
 
+    /**
+     * 是否是报名状态。
+     *
+     * <p>DemoWorkflowStore 的 view() 被预约/诉求/报名/评价共用，
+     * 需要据此判断该用哪套状态文案。</p>
+     */
+    public static boolean isSignupStatus(Object raw) {
+        return SIGNUP_LABELS.containsKey(normalizeSignupStatus(raw));
+    }
+
     /** 承办方可设置的报名状态。 */
     public static boolean isReviewTarget(String status) {
         String key = status == null ? "" : status.trim().toUpperCase();

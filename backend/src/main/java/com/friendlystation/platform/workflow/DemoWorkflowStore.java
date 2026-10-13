@@ -488,14 +488,21 @@ public class DemoWorkflowStore implements WorkflowService {
     /** 生成对外返回的副本；匿名诉求在管理端列表中隐藏提交人。 */
     private static Map<String, Object> view(Map<String, Object> item, boolean maskAnonymous) {
         Map<String, Object> out = new LinkedHashMap<>(item);
-        // 这个方法被预约/诉求/报名/评价共用，只有带 category 的记录（诉求与反馈）
-        // 才按分类调整状态文案，避免影响其他实体。
+        // 这个方法被预约/诉求/报名/评价共用，状态文案要按实体各用各的口径，
+        // 否则报名状态会被诉求的映射覆盖（SIGNED_UP 找不到对应文案就原样返回）。
         Object category = item.get("category");
-        // 与 mysql 实现同口径：管理端用标准闭环术语，用户端用分类感知的温暖文案
-        out.put("statusLabelStandard", WorkflowStatus.label(String.valueOf(item.get("status"))));
-        out.put("statusLabel", category == null
-                ? WorkflowStatus.label(String.valueOf(item.get("status")))
-                : AppealCategory.statusLabel(String.valueOf(category), String.valueOf(item.get("status"))));
+        String rawStatus = String.valueOf(item.get("status"));
+        if (ActivityOrganizer.isSignupStatus(rawStatus)) {
+            // 报名状态：已报名，等待联系 / 承办方已联系 / 审核通过 / 审核未通过
+            out.put("statusLabel", ActivityOrganizer.signupLabel(rawStatus));
+        } else if (category == null) {
+            // 与 mysql 实现同口径：管理端用标准闭环术语，用户端用分类感知的温暖文案
+            out.put("statusLabelStandard", WorkflowStatus.label(rawStatus));
+            out.put("statusLabel", WorkflowStatus.label(rawStatus));
+        } else {
+            out.put("statusLabelStandard", WorkflowStatus.label(rawStatus));
+            out.put("statusLabel", AppealCategory.statusLabel(String.valueOf(category), rawStatus));
+        }
         if (item.get("records") instanceof List<?> records) {
             out.put("recordCount", records.size());
         }
