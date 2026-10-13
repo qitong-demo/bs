@@ -154,6 +154,49 @@ Assert-True '活动报名成功' ($signup.Status -eq 200) $signup.Raw
 $duplicateSignup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId; contactName = '王骑手'; phone = '13800002088' }
 Assert-True '重复报名被拒绝' ($duplicateSignup.Status -eq 400 -and $duplicateSignup.Json.message -like '*已报名*') $duplicateSignup.Raw
 
+# ---------------------------------------------------------------- 承办方与报名审核
+# 第三方活动只在站内展示并提供跳转链接，不接受站内报名。
+$externalNoUrl = Send-Api -Method Post -Path '/api/activity/admin' -Token $adminToken `
+    -Body @{ title = '接口回归第三方活动（无链接）'; organizerType = 'EXTERNAL'; activityTime = '2026-12-31 09:00:00' }
+Assert-True '第三方活动缺少链接被拒绝（400）' ($externalNoUrl.Status -eq 400) $externalNoUrl.Raw
+
+$externalActivity = Send-Api -Method Post -Path '/api/activity/admin' -Token $adminToken `
+    -Body @{ title = '接口回归第三方活动'; organizerType = 'EXTERNAL'; externalUrl = 'https://example.org/race'; activityTime = '2026-12-31 09:00:00' }
+Assert-True '第三方活动创建成功' ($externalActivity.Status -eq 200) $externalActivity.Raw
+Assert-True '第三方活动标注承办方为第三方机构' ($externalActivity.Json.data.organizerLabel -eq '第三方机构') $externalActivity.Raw
+Assert-True '第三方活动不接受站内报名' ($externalActivity.Json.data.acceptsSignup -eq $false) $externalActivity.Raw
+
+$externalSignup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken `
+    -Body @{ activityId = $externalActivity.Json.data.id; contactName = '王骑手'; phone = '13800002088' }
+Assert-True '向第三方活动报名被拒绝（400）' ($externalSignup.Status -eq 400 -and $externalSignup.Json.message -like '*第三方*') $externalSignup.Raw
+
+# 非第三方活动不接受外部链接，避免两套报名入口
+$stationWithUrl = Send-Api -Method Post -Path '/api/activity/admin' -Token $adminToken `
+    -Body @{ title = '接口回归驿站活动带链接'; organizerType = 'STATION'; stationId = $stationId; externalUrl = 'https://example.org/x'; activityTime = '2026-12-30 10:00:00' }
+Assert-True '驿站活动忽略外部链接' ($stationWithUrl.Status -eq 200 -and [string]::IsNullOrEmpty($stationWithUrl.Json.data.externalUrl)) $stationWithUrl.Raw
+
+# 报名审核：未通过必须说明原因，报名人有权知道为什么
+$rejectNoNote = Send-Api -Method Put -Path '/api/activity/signup/review' -Token $adminToken `
+    -Body @{ id = $signup.Json.data.id; status = 'REJECTED' }
+Assert-True '审核未通过缺少原因被拒绝（400）' ($rejectNoNote.Status -eq 400) $rejectNoNote.Raw
+
+$reviewed = Send-Api -Method Put -Path '/api/activity/signup/review' -Token $adminToken `
+    -Body @{ id = $signup.Json.data.id; status = 'APPROVED'; reviewNote = '已电话确认，周六上午 9 点在驿站集合' }
+Assert-True '审核通过成功' ($reviewed.Status -eq 200) $reviewed.Raw
+Assert-True '报名状态文案为审核通过' ($reviewed.Json.data.statusLabel -eq '审核通过') $reviewed.Raw
+Assert-True '审核反馈随报名返回' ($reviewed.Json.data.reviewNote -like '*周六上午*') $reviewed.Raw
+
+# 反馈必须回到报名人自己能看到的地方
+$mySignups = Send-Api -Method Get -Path '/api/activity/my' -Token $userToken
+$myReviewed = @($mySignups.Json.data | Where-Object { $_.id -eq $signup.Json.data.id })[0]
+Assert-True '我的报名能看到审核反馈' ($myReviewed -and $myReviewed.reviewNote -like '*周六上午*') $mySignups.Raw
+Assert-True '我的报名带有报名人姓名' ($myReviewed.contactName -eq '王骑手') $mySignups.Raw
+
+# 用户不能处理自己的报名
+$userReview = Send-Api -Method Put -Path '/api/activity/signup/review' -Token $userToken `
+    -Body @{ id = $signup.Json.data.id; status = 'APPROVED' }
+Assert-True '普通用户不能审核报名（403）' ($userReview.Status -eq 403) $userReview.Raw
+
 $evaluation = Send-Api -Method Post -Path '/api/evaluation/station' -Token $userToken `
     -Body @{ stationId = $stationId; score = 5; content = '接口回归测试评价' }
 Assert-True '提交驿站评价成功' ($evaluation.Status -eq 200 -and $evaluation.Json.data.status -eq 'SAVED') $evaluation.Raw
