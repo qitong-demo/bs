@@ -69,10 +69,16 @@ export function appointmentStatusLabel(row) {
   return row.statusLabel || APPOINTMENT_STATUS_LABELS[row.status] || row.status || "未知";
 }
 
-/** 诉求状态文案：优先使用后端 statusLabel。 */
+/**
+ * 诉求状态文案（管理端）。
+ *
+ * 优先用后端的**标准术语** `statusLabelStandard`（待受理/已分派/处理中/已办结）。
+ * 用户端的 `statusLabel` 是按分类改写的温暖措辞（如「心意已收到」），
+ * 管理端需要保留开题与中期报告要求的闭环术语，因此这里不采用它。
+ */
 export function appealStatusLabel(row) {
   if (!row) return "未知";
-  return row.statusLabel || APPEAL_STATUS_LABELS[row.status] || row.status || "未知";
+  return row.statusLabelStandard || APPEAL_STATUS_LABELS[row.status] || row.status || "未知";
 }
 
 /** 驿站状态文案。 */

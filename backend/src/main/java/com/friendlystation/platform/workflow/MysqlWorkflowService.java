@@ -569,8 +569,13 @@ public class MysqlWorkflowService implements WorkflowService {
         out.put("content", item.getContent() == null ? "" : item.getContent());
         out.put("anonymous", anonymous);
         out.put("status", item.getStatus());
-        // 状态文案随分类变化：诉求「已办结」、表扬「已致谢」、建议「已回复」
+        // 两套文案，对应两类读者：
+        // - statusLabel：给用户看，措辞随分类变化（表扬读作「心意已收到」而不是「待受理」）；
+        // - statusLabelStandard：给管理端看，保留「待受理/已分派/处理中/已办结」标准术语，
+        //   因为开题与中期报告都明确要求「提交→受理→分派→处理→办结→评价」的闭环必须可见。
+        //   状态机本身完全一致，只是同一状态对两类读者的表达不同。
         out.put("statusLabel", AppealCategory.statusLabel(category, item.getStatus()));
+        out.put("statusLabelStandard", WorkflowStatus.label(item.getStatus()));
         out.put("handlerId", item.getHandlerId() == null ? 0L : item.getHandlerId());
         out.put("handlerName", stationSafe(handlerName));
         out.put("finishTime", FormatUtils.dateTime(item.getFinishTime()));
