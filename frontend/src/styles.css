@@ -949,6 +949,39 @@ button {
 }
 
 /* 政策资讯的筛选组（来源 + 平台 + 分类） */
+/* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
+.admin-todo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 10px;
+  gap: 4px;
+  min-height: 120px;
+}
+
+.admin-todo-number {
+  color: var(--primary-dark);
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.admin-todo span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 补一句这个数字代表什么、需要做什么，避免一大块留白里只有一个数字 */
+.admin-todo-hint {
+  margin: 10px 0 0;
+  color: #5e6877;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
 /* 管理端报名表里的电话：可点击直接拨号 */
 .signup-phone {
   color: var(--primary-dark);
@@ -2298,7 +2331,40 @@ button {
     grid-row: 1;
   }
 
-  /* 管理端报名表里的电话：可点击直接拨号 */
+  /* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
+.admin-todo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 10px;
+  gap: 4px;
+  min-height: 120px;
+}
+
+.admin-todo-number {
+  color: var(--primary-dark);
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.admin-todo span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 补一句这个数字代表什么、需要做什么，避免一大块留白里只有一个数字 */
+.admin-todo-hint {
+  margin: 10px 0 0;
+  color: #5e6877;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* 管理端报名表里的电话：可点击直接拨号 */
 .signup-phone {
   color: var(--primary-dark);
   font-variant-numeric: tabular-nums;

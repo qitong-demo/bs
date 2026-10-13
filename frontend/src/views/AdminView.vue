@@ -66,7 +66,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { getAdminOverview } from "../api/admin";
 import { getStatOverview } from "../api/stat";
@@ -101,6 +101,7 @@ const tabs = [
 
 const userStore = useUserStore();
 const router = useRouter();
+const route = useRoute();
 const activeTab = ref("overview");
 const loading = ref(false);
 const stat = ref({});
@@ -165,7 +166,14 @@ async function loadSummary() {
   }
 }
 
-onMounted(loadSummary);
+onMounted(() => {
+  loadSummary();
+  // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
+  const tab = String(route.query.tab || "");
+  if (tab && canSee(tab)) {
+    activeTab.value = tab;
+  }
+});
 </script>
 
 <style scoped>

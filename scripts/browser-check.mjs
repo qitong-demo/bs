@@ -107,6 +107,19 @@ async function main() {
     await shoot(page, "02-首页工作台.png");
   });
 
+  await step("管理员侧栏不含用户专属功能", async () => {
+    // 驿站/平台管理员不是用户：报名自己的活动、给自己驿站写评价都没有意义。
+    const labels = await page.locator(".nav-item span").allTextContents();
+    const forbidden = ["服务预约", "我的诉求", "活动报名", "服务评价", "我的收藏"];
+    const leaked = forbidden.filter((name) => labels.includes(name));
+    if (leaked.length) {
+      throw new Error(`管理员侧栏不应出现用户专属功能：${leaked.join("、")}（实际：${labels.join("/")}）`);
+    }
+    if (!labels.includes("管理工作台")) {
+      throw new Error(`管理员侧栏缺少「管理工作台」入口（实际：${labels.join("/")}）`);
+    }
+    console.log(`      管理员侧栏：${labels.join(" / ")}`);
+  });
   await step("首页趋势图渲染", async () => {
     // 趋势图默认收起，先展开再断言（它是回顾性数据，不再常驻首屏）。
     await page.locator(".chart-panel .panel-head-actions button", { hasText: "展开" }).first().click();
@@ -129,6 +142,26 @@ async function main() {
 
   // ---------------------------------------------------------------- 用户端
   console.log("\n[2] 用户端模块");
+  // 这些是用户专属功能，管理员侧栏里已经没有入口。
+  // 必须换成普通用户登录，否则下面的点击都会超时（这正是权限分离生效的表现）。
+  await step("切换为普通用户登录", async () => {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await page.goto(`${base}/login`, { waitUntil: "domcontentloaded" });
+    await page.fill('input[autocomplete="username"]', "rider_xiaowang");
+    await page.fill('input[autocomplete="current-password"]', "password");
+    await page.locator("button.login-submit").click();
+    await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 15000 });
+    await page.waitForTimeout(1200);
+    const labels = await page.locator(".nav-item span").allTextContents();
+    if (!labels.includes("服务预约")) {
+      throw new Error(`普通用户侧栏应包含用户功能（实际：${labels.join("/")}）`);
+    }
+    console.log(`      普通用户侧栏：${labels.join(" / ")}`);
+  });
+
   const modules = [
     ["驿站查询", "附近友好驿站", "03-驿站查询.png"],
     ["服务预约", "提前联系驿站", "04-服务预约.png"],
@@ -189,6 +222,21 @@ async function main() {
 
   // ---------------------------------------------------------------- 管理端
   console.log("\n[3] 管理端工作台");
+  // 上一段为了走用户模块换成了普通用户，这里切回管理员。
+  // 普通用户访问 /admin 会被路由守卫挡回首页，所以必须先换账号。
+  await step("切换为平台管理员登录", async () => {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await page.goto(`${base}/login`, { waitUntil: "domcontentloaded" });
+    await page.fill('input[autocomplete="username"]', "platform_admin");
+    await page.fill('input[autocomplete="current-password"]', "password");
+    await page.locator("button.login-submit").click();
+    await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 15000 });
+    await page.waitForTimeout(1200);
+  });
+
   await step("进入管理工作台", async () => {
     await page.locator(".topbar-actions button", { hasText: "管理工作台" }).first().click();
     await page.waitForURL(/\/admin/, { timeout: 15000 });
@@ -300,6 +348,21 @@ async function main() {
 
   // ---------------------------------------------------------------- 手机端适配
   console.log("\n[5] 手机端响应式");
+  // 手机端这段要看的是用户界面（首页、服务预约、侧栏），换成普通用户再看，
+  // 管理员侧栏里没有「服务预约」，用管理员跑必然点不到。
+  await step("切回普通用户以检查手机端用户界面", async () => {
+    await page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+    await page.goto(`${base}/login`, { waitUntil: "domcontentloaded" });
+    await page.fill('input[autocomplete="username"]', "rider_xiaowang");
+    await page.fill('input[autocomplete="current-password"]', "password");
+    await page.locator("button.login-submit").click();
+    await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 15000 });
+    await page.waitForTimeout(1200);
+  });
+
   await step("切换到手机视口（390×844，iPhone 尺寸）", async () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(800);

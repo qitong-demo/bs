@@ -181,9 +181,34 @@
           </section>
         </div>
 
-        <!-- 次要区：我的预约 / 我的诉求 / 政策资讯，压缩在一行，不抢主区空间 -->
+        <!-- 次要区：用户看「我的」，管理员看「待办」——管理员不是用户，没有自己的预约与诉求 -->
         <div class="secondary-grid">
-          <section class="panel">
+          <!-- 管理员：待办入口。点进去到管理工作台对应标签页，不在这里堆明细。 -->
+          <section class="panel" v-if="isAdmin">
+            <PanelHeader title="待审核预约" action="去处理" @click="goAdmin('appointments')" />
+            <div class="admin-todo">
+              <strong class="admin-todo-number">{{ pendingAppointments }}</strong>
+              <span>条预约等待处理</span>
+              <p class="admin-todo-hint">用户在服务预约里填了想提前沟通的事项，需要你确认是否可行并回复。</p>
+            </div>
+            <footer class="panel-footer right-only">
+              <button @click="goAdmin('appointments')">前往预约审核 <el-icon><ArrowRight /></el-icon></button>
+            </footer>
+          </section>
+
+          <section class="panel" v-if="isAdmin">
+            <PanelHeader title="待处理诉求" action="去处理" @click="goAdmin('appeals')" />
+            <div class="admin-todo">
+              <strong class="admin-todo-number">{{ pendingAppeals }}</strong>
+              <span>条诉求等待受理或回复</span>
+              <p class="admin-todo-hint">用户提交的诉求与反馈，需要你联系核实后写下给用户的回复。</p>
+            </div>
+            <footer class="panel-footer right-only">
+              <button @click="goAdmin('appeals')">前往诉求处理 <el-icon><ArrowRight /></el-icon></button>
+            </footer>
+          </section>
+
+          <section class="panel" v-if="!isAdmin">
             <PanelHeader title="我的预约" action="更多" @click="activeNav = '服务预约'" />
             <div class="record-list compact" v-loading="loading">
               <div v-for="item in myAppointments.slice(0, 5)" :key="item.id" class="record-row">
@@ -203,7 +228,7 @@
             </footer>
           </section>
 
-          <section class="panel">
+          <section class="panel" v-if="!isAdmin">
             <PanelHeader title="我的诉求进度" action="更多" @click="activeNav = '我的诉求'" />
             <div class="appeal-list compact">
               <div v-for="appeal in filteredAppeals.slice(0, 5)" :key="appeal.id" class="appeal-row">
@@ -280,6 +305,7 @@ import { getMyAppeals, getMyAppointments } from "../api/workflow";
 import { getNewsPage, getNoticePage } from "../api/content";
 import { getMonthlyTrend, getStatOverview } from "../api/stat";
 import { getMySignups } from "../api/workflow";
+import { getAdminOverview } from "../api/admin";
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { openStateMeta } from "../utils/business-hours";
@@ -322,9 +348,44 @@ function onViewportChange(event) {
 
 /** 手机端点击导航后自动收起侧栏，让内容立刻可见。 */
 function onNavClick(label) {
+  // 「管理工作台」不在本页切换视图，而是跳到独立的管理端路由。
+  if (label === "管理工作台") {
+    router.push("/admin");
+    return;
+  }
+  // 管理员不应进入用户专属视图：后端按其数据范围过滤后只会返回空列表，
+  // 进去也做不了什么，还会让人以为自己有用户身份。
+  if (isAdmin.value && USER_ONLY_VIEWS.includes(label)) {
+    ElMessage.info("该功能面向接受服务的一方，管理员请到管理工作台处理对应事项");
+    router.push("/admin");
+    return;
+  }
   activeNav.value = label;
   if (isMobile.value) {
     collapsed.value = true;
+  }
+}
+
+/** 管理员首页的两个待办数字，来自管理端概览（按角色数据范围过滤）。 */
+const pendingAppointments = ref(0);
+const pendingAppeals = ref(0);
+
+/** 跳到管理工作台的指定标签页，避免让管理员自己再找一遍。 */
+function goAdmin(tab) {
+  router.push({ path: "/admin", query: tab ? { tab } : {} });
+}
+
+/** 管理员登录后进入首页时，顺带取一次待办数字。 */
+async function loadAdminTodo() {
+  if (!isAdmin.value) return;
+  try {
+    const summary = await getAdminOverview();
+    pendingAppointments.value = summary?.pendingAppointments ?? 0;
+    pendingAppeals.value = summary?.pendingAppeals ?? 0;
+  } catch {
+    // 待办数字取不到不影响首页其他内容，静默降级为 0
+    pendingAppointments.value = 0;
+    pendingAppeals.value = 0;
   }
 }
 const loading = ref(false);
@@ -359,7 +420,17 @@ let nowTimer = null;
 const chartRef = ref(null);
 const chartRange = ref("6");
 
-const navItems = [
+/**
+ * 侧栏导航。
+ *
+ * 驿站管理员与平台管理员**不是用户**，不应该看到用户专属功能：
+ * 服务预约、我的诉求、活动报名、服务评价、我的收藏都是「接受服务的一方」才用的，
+ * 管理员是提供服务与处理诉求的一方，让他们也能报名自己的活动、给自己驿站写评价，
+ * 既没有意义，也会让权限边界变得含糊。
+ *
+ * 管理员用「管理工作台」进入审核与处理，而不是混在用户功能里。
+ */
+const USER_NAV = [
   { label: "首页", icon: "HomeFilled" },
   { label: "驿站查询", icon: "Location" },
   { label: "服务预约", icon: "Calendar" },
@@ -373,6 +444,21 @@ const navItems = [
   { label: "我的收藏", icon: "Collection" },
   { label: "个人中心", icon: "User" }
 ];
+
+/** 管理员侧栏：去掉用户专属功能，换成管理入口。 */
+const ADMIN_NAV = [
+  { label: "首页", icon: "HomeFilled" },
+  { label: "管理工作台", icon: "Operation" },
+  { label: "驿站查询", icon: "Location" },
+  { label: "政策资讯", icon: "Reading" },
+  { label: "消息中心", icon: "ChatDotRound" },
+  { label: "个人中心", icon: "User" }
+];
+
+/** 用户专属视图：管理员不应进入（后端也会按其数据范围过滤，进错页面只会看到空列表）。 */
+const USER_ONLY_VIEWS = ["服务预约", "我的诉求", "活动报名", "服务评价", "我的收藏"];
+
+const navItems = computed(() => (isAdmin.value ? ADMIN_NAV : USER_NAV));
 
 /** 当前城市对象（含地图中心点），供 StationMap 与统计口径文案使用。 */
 const currentCity = computed(() => {
@@ -747,6 +833,7 @@ watch(chartOpen, async (open) => {
 });
 
 onMounted(async () => {
+  loadAdminTodo();
   // 每分钟走一次，让主区列表的「营业中 / 已打烊」随时间自行变化
   nowTimer = setInterval(() => {
     now.value = new Date();
