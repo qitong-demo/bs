@@ -176,6 +176,30 @@ async function main() {
     ["个人中心", "个人资料", "13-个人中心.png"]
   ];
 
+  await step("「我的报名」能看到承办方的审核反馈", async () => {
+    // 报名之后必须能看到进展与承办方说了什么，否则报名等于石沉大海。
+    await page.locator(".nav-item", { hasText: "活动报名" }).first().click();
+    await page.waitForTimeout(1200);
+    await page.locator("button", { hasText: "查看我的报名" }).first().click();
+    await page.waitForTimeout(1800);
+    const state = await page.evaluate(() => ({
+      items: document.querySelectorAll(".my-signup-item").length,
+      statuses: [...document.querySelectorAll(".my-signup-head .el-tag")].map((el) => el.textContent.trim()),
+      reviews: [...document.querySelectorAll(".my-signup-review")].map((el) => el.textContent.trim())
+    }));
+    if (state.items === 0) {
+      throw new Error("「我的报名」弹窗没有列出任何报名记录");
+    }
+    // 状态文案必须是报名口径，不能漏出内部枚举值
+    const raw = state.statuses.filter((s) => /^[A-Z_]+$/.test(s));
+    if (raw.length) {
+      throw new Error(`报名状态未本地化，出现枚举值：${raw.join("、")}`);
+    }
+    console.log(`      我的报名：${state.items} 条，其中 ${state.reviews.length} 条有承办方反馈`);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(600);
+  });
+
   for (const [label, marker, file] of modules) {
     await step(`模块「${label}」可打开并渲染`, async () => {
       await gotoModule(page, label);

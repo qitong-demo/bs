@@ -484,6 +484,27 @@
           <el-button type="primary" :loading="signupSubmitting" @click="submitSignup">提交报名</el-button>
         </template>
       </el-dialog>
+
+      <!-- 我的报名：报名之后能看到承办方是否联系过、有没有通过、说了什么 -->
+      <el-dialog v-model="mySignupsVisible" title="我的报名" width="600px">
+        <div v-loading="mySignupsLoading">
+          <div v-if="mySignupsList.length" class="my-signup-list">
+            <div v-for="item in mySignupsList" :key="item.id" class="my-signup-item">
+              <div class="my-signup-head">
+                <strong>{{ item.activityTitle || "（活动已下架）" }}</strong>
+                <el-tag :type="signupTagType(item.status)" effect="plain" size="small">{{ item.statusLabel }}</el-tag>
+              </div>
+              <p class="my-signup-meta">报名时间：{{ item.createTime }}</p>
+              <!-- 承办方的反馈是这条报名真正要等的东西，单独显示 -->
+              <p v-if="item.reviewNote" class="my-signup-review">
+                <span>{{ item.reviewerName || "承办方" }}的回复：</span>{{ item.reviewNote }}
+              </p>
+              <p v-else class="my-signup-muted">承办方还没有回复，可留意电话或消息</p>
+            </div>
+          </div>
+          <el-empty v-else-if="!mySignupsLoading" :image-size="64" description="还没有报名记录" />
+        </div>
+      </el-dialog>
     </template>
 
     <!-- ------------------------------------------------------ 政策资讯 -->
@@ -1538,8 +1559,7 @@ async function submitAppealEvaluation() {
 
 // ------------------------------------------------------------------ 活动
 
-async function loadActivities() {
-  loading.activities = true;
+async function loadActivities() {  loading.activities = true;
   try {
     const page = await getActivityPage({ current: 1, size: 12 });
     activityItems.value = page.records || [];
@@ -1568,6 +1588,14 @@ function openSignup(activity) {
 }
 
 /** 第三方活动的跳转：只做展示与跳转，报名在对方平台完成。 */
+/** 报名状态配色，与用户端语义一致。 */
+function signupTagType(status) {
+  if (status === "APPROVED") return "success";
+  if (status === "REJECTED") return "danger";
+  if (status === "CONTACTED") return "warning";
+  return "info";
+}
+
 function openExternalActivity(activity) {
   const url = String(activity.externalUrl || "").trim();
   if (!url) {
@@ -1575,6 +1603,21 @@ function openExternalActivity(activity) {
     return;
   }
   window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/** 我的报名：状态与承办方反馈。报名之后要能看到进展，否则等于石沉大海。 */
+const mySignupsVisible = ref(false);
+const mySignupsLoading = ref(false);
+const mySignupsList = ref([]);
+
+async function openMySignups() {
+  mySignupsVisible.value = true;
+  mySignupsLoading.value = true;
+  try {
+    mySignupsList.value = await getMySignups().catch(() => []);
+  } finally {
+    mySignupsLoading.value = false;
+  }
 }
 
 async function submitSignup() {
@@ -1801,8 +1844,8 @@ async function handlePrimary() {
       ElMessage.success("诉求进度已刷新");
       break;
     case "活动报名": {
-      const mySignups = await getMySignups().catch(() => []);
-      ElMessage.success(mySignups.length ? `你已报名 ${mySignups.length} 场活动` : "还没有报名记录");
+      // 用户需要看到自己的报名进展与承办方反馈，而不只是一句「已报名 N 场」。
+      await openMySignups();
       break;
     }
     case "政策资讯":

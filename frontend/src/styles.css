@@ -949,6 +949,61 @@ button {
 }
 
 /* 政策资讯的筛选组（来源 + 平台 + 分类） */
+/* 我的报名列表：一次报名一条，重点是承办方的回复 */
+.my-signup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-signup-item {
+  padding: 14px 16px;
+  border: 1px solid #e6ecf1;
+  border-radius: 8px;
+  background: #fcfdfe;
+}
+
+.my-signup-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.my-signup-head strong {
+  color: #2b3542;
+  font-size: 15px;
+}
+
+.my-signup-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.my-signup-review {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  background: var(--primary-soft);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 6px 6px 0;
+  color: #24333d;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.my-signup-review span {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.my-signup-muted {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
 .admin-todo {
   display: flex;
@@ -2331,7 +2386,62 @@ button {
     grid-row: 1;
   }
 
-  /* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
+  /* 我的报名列表：一次报名一条，重点是承办方的回复 */
+.my-signup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-signup-item {
+  padding: 14px 16px;
+  border: 1px solid #e6ecf1;
+  border-radius: 8px;
+  background: #fcfdfe;
+}
+
+.my-signup-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.my-signup-head strong {
+  color: #2b3542;
+  font-size: 15px;
+}
+
+.my-signup-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.my-signup-review {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  background: var(--primary-soft);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 6px 6px 0;
+  color: #24333d;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.my-signup-review span {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.my-signup-muted {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
 .admin-todo {
   display: flex;
   flex: 1;
