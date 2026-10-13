@@ -413,6 +413,14 @@ public class MysqlWorkflowService implements WorkflowService {
         if (activity == null) {
             throw new BusinessException("活动不存在");
         }
+        // 第三方活动只做展示与跳转，不接受站内报名：
+        // 报名与审核都在对方平台进行，我们既不掌握名单、也无法替对方联系报名人。
+        if (ActivityOrganizer.TYPE_EXTERNAL.equals(ActivityOrganizer.normalize(activity.getOrganizerType()))) {
+            throw new BusinessException("该活动由第三方机构举办，请前往活动来源页面报名");
+        }
+        // 报名信息要交给承办方去联系报名人，因此姓名必填、电话必填。
+        String contactName = ActivityOrganizer.requireContactName(request.get("contactName"));
+        String phone = ActivityOrganizer.requirePhone(request.get("phone"));
         Long duplicated = signupMapper.selectCount(new LambdaQueryWrapper<ActivitySignup>()
                 .eq(ActivitySignup::getActivityId, activityId)
                 .eq(ActivitySignup::getUserId, userId));
@@ -429,8 +437,10 @@ public class MysqlWorkflowService implements WorkflowService {
         ActivitySignup item = new ActivitySignup();
         item.setActivityId(activityId);
         item.setUserId(userId);
-        item.setPhone(FormatUtils.text(request.get("phone"), ""));
-        item.setStatus("SUBMITTED");
+        item.setContactName(contactName);
+        item.setPhone(phone);
+        item.setRemark(FormatUtils.text(request.get("remark"), ""));
+        item.setStatus(ActivityOrganizer.SIGNUP_SIGNED_UP);
         item.setCreateTime(LocalDateTime.now());
         try {
             signupMapper.insert(item);
@@ -649,12 +659,52 @@ public class MysqlWorkflowService implements WorkflowService {
         out.put("activityTitle", activityTitle == null ? "" : activityTitle);
         out.put("userId", item.getUserId());
         out.put("userName", userName(item.getUserId()));
+        // 报名信息：承办方要靠这些联系报名人，因此列表里直接给出，不必再点开
+        out.put("contactName", item.getContactName() == null ? "" : item.getContactName());
         out.put("phone", item.getPhone() == null ? "" : item.getPhone());
-        out.put("status", item.getStatus());
-        out.put("statusLabel", "SUBMITTED".equals(item.getStatus()) ? "已提交报名" : item.getStatus());
+        out.put("remark", item.getRemark() == null ? "" : item.getRemark());
+        out.put("status", ActivityOrganizer.normalizeSignupStatus(item.getStatus()));
+        out.put("statusLabel", ActivityOrganizer.signupLabel(item.getStatus()));
+        // 承办方的审核反馈，报名人会看到
+        out.put("reviewNote", item.getReviewNote() == null ? "" : item.getReviewNote());
+        out.put("reviewerName", item.getReviewerId() == null ? "" : userName(item.getReviewerId()));
+        out.put("reviewTime", FormatUtils.dateTime(item.getReviewTime()));
         out.put("dataStatus", "系统计算结果");
         out.put("createTime", FormatUtils.dateTime(item.getCreateTime()));
         return out;
+    }
+
+    /**
+     * 承办方处理报名：联系、审核通过或未通过，并给出反馈。
+     *
+     * <p>报名人提交的信息（姓名、电话）是为了让承办方能联系到他；
+     * 处理结果与反馈会回传给报名人，形成一次完整的双向沟通。</p>
+     */
+    @Transactional
+    public Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId) {
+        long id = FormatUtils.number(request.get("id"));
+        String status = FormatUtils.text(request.get("status"), ActivityOrganizer.SIGNUP_APPROVED).toUpperCase();
+        if (!ActivityOrganizer.isReviewTarget(status)) {
+            throw new BusinessException("报名处理状态只能是 CONTACTED、APPROVED 或 REJECTED");
+        }
+        ActivitySignup signup = signupMapper.selectById(id);
+        if (signup == null) {
+            throw new BusinessException("报名记录不存在");
+        }
+        if (ActivityOrganizer.SIGNUP_CANCELLED.equals(signup.getStatus())) {
+            throw new BusinessException("该报名已取消，不能处理");
+        }
+        String note = FormatUtils.text(request.get("reviewNote"), "");
+        // 审核未通过必须说明原因——报名人有权知道为什么
+        if (ActivityOrganizer.SIGNUP_REJECTED.equals(status) && note.isBlank()) {
+            throw new BusinessException("审核未通过时请填写原因，报名人会看到这段说明");
+        }
+        signup.setStatus(status);
+        signup.setReviewNote(note);
+        signup.setReviewerId(operatorId);
+        signup.setReviewTime(LocalDateTime.now());
+        signupMapper.updateById(signup);
+        return signupView(signup, activityTitles(List.of(signup.getActivityId())).get(signup.getActivityId()));
     }
 
     private Map<Long, String> activityTitles(Collection<Long> ids) {

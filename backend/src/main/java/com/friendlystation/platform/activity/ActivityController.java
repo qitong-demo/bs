@@ -10,6 +10,7 @@ import com.friendlystation.platform.content.ActivityService;
 import com.friendlystation.platform.workflow.WorkflowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,6 +59,18 @@ public class ActivityController {
             throw new BusinessException("活动名额已满");
         }
         return ApiResponse.ok(workflowService.addSignup(payload, CurrentUserContext.require().id()));
+    }
+
+    /**
+     * 承办方处理报名：联系、审核通过或审核未通过，并给出反馈。
+     *
+     * <p>报名人填写的姓名与电话随报名记录一起展示给承办方供其联系核实；
+     * 处理结果与反馈会回传给报名人。</p>
+     */
+    @PutMapping("/signup/review")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    public ApiResponse<Map<String, Object>> reviewSignup(@RequestBody Map<String, Object> payload) {
+        return ApiResponse.ok(workflowService.reviewSignup(payload, CurrentUserContext.require().id()));
     }
 
     @GetMapping("/admin/signups")

@@ -42,7 +42,8 @@ class DemoWorkflowStoreTest {
     @Test
     void duplicateActivitySignupIsRejected() {
         DemoWorkflowStore store = new DemoWorkflowStore();
-        Map<String, Object> request = Map.of("activityId", 9);
+        Map<String, Object> request = new java.util.HashMap<>(Map.of(
+                "activityId", 9L, "contactName", "王骑手", "phone", "13800002088"));
         store.addSignup(request, 1L);
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> store.addSignup(request, 1L));
         assertEquals("该活动已报名", error.getMessage());

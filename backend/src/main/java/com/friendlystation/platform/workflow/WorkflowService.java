@@ -45,6 +45,13 @@ public interface WorkflowService {
 
     Map<String, Object> addSignup(Map<String, Object> request, long userId);
 
+    /**
+     * 承办方处理报名：联系 / 审核通过 / 审核未通过，并填写给报名人的反馈。
+     *
+     * @param request 含 id 与 status（CONTACTED / APPROVED / REJECTED）与 reviewNote
+     */
+    Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId);
+
     List<Map<String, Object>> mySignups(long userId);
 
     List<Map<String, Object>> allSignups();

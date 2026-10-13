@@ -146,9 +146,12 @@ $signupActivity = Send-Api -Method Post -Path '/api/activity/admin' -Token $admi
     -Body @{ title = '接口回归测试报名活动'; stationId = $stationId; activityTime = '2026-12-30 09:00:00'; maxCount = 50 }
 $signupActivityId = $signupActivity.Json.data.id
 
-$signup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId; phone = '13800002088' }
+    # 报名必须填姓名与电话——承办方要靠这些联系报名人
+    $signupMissing = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId }
+    Assert-True '报名缺少姓名被拒绝（400）' ($signupMissing.Status -eq 400) $signupMissing.Raw
+    $signup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId; contactName = '王骑手'; phone = '13800002088' }
 Assert-True '活动报名成功' ($signup.Status -eq 200) $signup.Raw
-$duplicateSignup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId; phone = '13800002088' }
+$duplicateSignup = Send-Api -Method Post -Path '/api/activity/signup' -Token $userToken -Body @{ activityId = $signupActivityId; contactName = '王骑手'; phone = '13800002088' }
 Assert-True '重复报名被拒绝' ($duplicateSignup.Status -eq 400 -and $duplicateSignup.Json.message -like '*已报名*') $duplicateSignup.Raw
 
 $evaluation = Send-Api -Method Post -Path '/api/evaluation/station' -Token $userToken `

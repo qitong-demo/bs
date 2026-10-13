@@ -331,6 +331,9 @@ public class DemoWorkflowStore implements WorkflowService {
     @Override
     public synchronized Map<String, Object> addSignup(Map<String, Object> request, long userId) {
         long activityId = FormatUtils.number(request.get("activityId"));
+        // 与 mysql 实现同口径：姓名与电话必填，承办方要靠这些联系报名人。
+        String contactName = ActivityOrganizer.requireContactName(request.get("contactName"));
+        String phone = ActivityOrganizer.requirePhone(request.get("phone"));
         boolean duplicated = signups.stream()
                 .anyMatch(item -> FormatUtils.number(item.get("activityId")) == activityId
                         && FormatUtils.number(item.get("userId")) == userId);
@@ -343,12 +346,45 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("activityTitle", FormatUtils.text(request.get("activityTitle"), FormatUtils.text(request.get("title"), "")));
         item.put("userId", userId);
         item.put("userName", userName(userId));
-        item.put("phone", FormatUtils.text(request.get("phone"), ""));
-        item.put("status", "SUBMITTED");
-        item.put("statusLabel", "已提交报名");
+        item.put("contactName", contactName);
+        item.put("phone", phone);
+        item.put("remark", FormatUtils.text(request.get("remark"), ""));
+        item.put("status", ActivityOrganizer.SIGNUP_SIGNED_UP);
+        item.put("statusLabel", ActivityOrganizer.signupLabel(ActivityOrganizer.SIGNUP_SIGNED_UP));
+        item.put("reviewNote", "");
+        item.put("reviewerName", "");
+        item.put("reviewTime", "");
         item.put("dataStatus", "系统计算结果");
         item.put("createTime", FormatUtils.dateTime(LocalDateTime.now()));
         signups.add(item);
+        return view(item);
+    }
+
+    /** 承办方处理报名：联系 / 审核通过 / 审核未通过，并给出反馈。 */
+    @Override
+    public synchronized Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId) {
+        long id = FormatUtils.number(request.get("id"));
+        String status = FormatUtils.text(request.get("status"), ActivityOrganizer.SIGNUP_APPROVED).toUpperCase();
+        if (!ActivityOrganizer.isReviewTarget(status)) {
+            throw new IllegalArgumentException("报名处理状态只能是 CONTACTED、APPROVED 或 REJECTED");
+        }
+        Map<String, Object> item = signups.stream()
+                .filter(row -> FormatUtils.number(row.get("id")) == id)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("报名记录不存在"));
+        if (ActivityOrganizer.SIGNUP_CANCELLED.equals(String.valueOf(item.get("status")))) {
+            throw new IllegalArgumentException("该报名已取消，不能处理");
+        }
+        String note = FormatUtils.text(request.get("reviewNote"), "");
+        // 未通过必须说明原因，报名人有权知道为什么
+        if (ActivityOrganizer.SIGNUP_REJECTED.equals(status) && note.isBlank()) {
+            throw new IllegalArgumentException("审核未通过时请填写原因，报名人会看到这段说明");
+        }
+        item.put("status", status);
+        item.put("statusLabel", ActivityOrganizer.signupLabel(status));
+        item.put("reviewNote", note);
+        item.put("reviewerName", userName(operatorId));
+        item.put("reviewTime", FormatUtils.dateTime(LocalDateTime.now()));
         return view(item);
     }
 

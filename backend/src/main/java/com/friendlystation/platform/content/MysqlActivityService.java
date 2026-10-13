@@ -3,6 +3,7 @@ package com.friendlystation.platform.content;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.friendlystation.platform.common.BusinessException;
+import com.friendlystation.platform.workflow.ActivityOrganizer;
 import com.friendlystation.platform.common.PageResult;
 import com.friendlystation.platform.persistence.entity.Activity;
 import com.friendlystation.platform.persistence.entity.ActivitySignup;
@@ -65,8 +66,33 @@ public class MysqlActivityService implements ActivityService {
         activity.setMaxCount(maxCount);
         activity.setContent(ContentSupport.trimText(data.get("content")));
         activity.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
+        applyOrganizer(activity, data);
         activityMapper.insert(activity);
         return toMap(require(activity.getId()));
+    }
+
+    /**
+     * 设置承办方。
+     *
+     * <p>第三方活动（EXTERNAL）必须给出跳转链接——它在站内只做展示，
+     * 报名要去对方平台，没有链接用户就无处可去。</p>
+     */
+    private void applyOrganizer(Activity activity, Map<String, Object> data) {
+        String type = ActivityOrganizer.normalize(data.get("organizerType"));
+        String externalUrl = ContentSupport.trimText(data.get("externalUrl"));
+        if (ActivityOrganizer.TYPE_EXTERNAL.equals(type)) {
+            if (externalUrl.isEmpty()) {
+                throw new BusinessException("第三方活动必须填写报名或详情链接");
+            }
+            if (!externalUrl.startsWith("http://") && !externalUrl.startsWith("https://")) {
+                throw new BusinessException("活动链接需以 http:// 或 https:// 开头");
+            }
+        } else {
+            // 非第三方活动不接受外部链接，避免出现两套报名入口
+            externalUrl = "";
+        }
+        activity.setOrganizerType(type);
+        activity.setExternalUrl(externalUrl);
     }
 
     @Override
@@ -97,7 +123,11 @@ public class MysqlActivityService implements ActivityService {
         if (data.containsKey("content")) {
             activity.setContent(ContentSupport.trimText(data.get("content")));
         }
-        if (data.containsKey("status")) {
+        if (data.containsKey("organizerType") || data.containsKey("externalUrl")) {
+            Map<String, Object> merged = new java.util.HashMap<>(data);
+            merged.putIfAbsent("organizerType", activity.getOrganizerType());
+            applyOrganizer(activity, merged);
+        }        if (data.containsKey("status")) {
             activity.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
         }
         activityMapper.updateById(activity);
@@ -212,6 +242,12 @@ public class MysqlActivityService implements ActivityService {
         out.put("content", activity.getContent() == null ? "" : activity.getContent());
         out.put("status", activity.getStatus());
         out.put("statusLabel", ContentSupport.statusLabel(activity.getStatus()));
+        // 承办方与报名入口：第三方活动给出跳转链接，用户无从报名会以为功能坏了
+        String organizer = ActivityOrganizer.normalize(activity.getOrganizerType());
+        out.put("organizerType", organizer);
+        out.put("organizerLabel", ActivityOrganizer.typeLabel(organizer));
+        out.put("externalUrl", activity.getExternalUrl() == null ? "" : activity.getExternalUrl());
+        out.put("acceptsSignup", ActivityOrganizer.acceptsSignup(organizer));
         out.put("createTime", ContentSupport.formatDateTime(activity.getCreateTime()));
         return out;
     }

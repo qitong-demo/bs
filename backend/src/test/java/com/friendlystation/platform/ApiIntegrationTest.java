@@ -353,10 +353,10 @@ class ApiIntegrationTest {
         String userToken = login("rider_xiaowang");
         int activityId = firstActivityId();
 
-        JsonNode first = call("post", "/api/activity/signup", userToken, Map.of("activityId", activityId));
+        JsonNode first = call("post", "/api/activity/signup", userToken, Map.of("activityId", activityId, "contactName", "王骑手", "phone", "13800002088"));
         assertEquals(200, httpStatus(first), messageOf(first));
 
-        JsonNode duplicate = call("post", "/api/activity/signup", userToken, Map.of("activityId", activityId));
+        JsonNode duplicate = call("post", "/api/activity/signup", userToken, Map.of("activityId", activityId, "contactName", "王骑手", "phone", "13800002088"));
         assertEquals(400, httpStatus(duplicate));
         assertTrue(messageOf(duplicate).contains("已报名"));
 
