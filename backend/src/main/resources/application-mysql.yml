@@ -1,0 +1,13 @@
+spring:
+  autoconfigure:
+    exclude: []
+  datasource:
+    url: jdbc:mysql://localhost:3306/friendly_station?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:123123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true

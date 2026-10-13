@@ -1,0 +1,553 @@
+{
+ "name": "图4-2 用户认证与个人中心模块流程图",
+ "style": {
+  "page_w": 8.27,
+  "page_h": 8.97,
+  "fs_msg": 12.25,
+  "fs_life": 12.25,
+  "fs_sub": 8.0,
+  "fs_tab": 11.5,
+  "fs_cond": 11.5,
+  "line_weight_pt": 0.75,
+  "box_w": 1.24,
+  "box_h": 0.64,
+  "box_top_margin": 0.3,
+  "box_bottom_gap": null,
+  "dy_msg": 0.335,
+  "dy_self": 0.5,
+  "frame_in": 0.5,
+  "frame_out": 0.08,
+  "tab_w": 0.46,
+  "tab_h": 0.24,
+  "tab_text_pad": 0.08,
+  "bar_w": 0.08,
+  "bar_pad": 0.12,
+  "loop_w": 0.28,
+  "loop_h": 0.22,
+  "txt_off": 0.34,
+  "life_bottom_pad": 0.1,
+  "min_bottom": 0.14,
+  "msg_text_lift": 0.02,
+  "text_pad": 0.1,
+  "insert_width_cm": 15.5,
+  "max_aspect": 1.52,
+  "ascii_em": 0.52,
+  "tol_text": 0.02,
+  "tol_bar": 0.03,
+  "tol_border": 0.01,
+  "fs_label": 11.5,
+  "box_bottom_margin": 0.3
+ },
+ "shapes": 30,
+ "messages": 0,
+ "lifelines": 0,
+ "frames": [],
+ "content_bbox": [
+  1.55,
+  0.30000000000000004,
+  7.85,
+  8.67
+ ],
+ "page_xml_bytes": 42692,
+ "png_size": [
+  1075,
+  1166
+ ],
+ "prims": [
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "roundrect",
+   "geom_kind": "rect",
+   "rounding": 0.16,
+   "box": [
+    2.1,
+    8.15,
+    3.9,
+    8.67
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "开始",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.3402777777777778
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "parallelogram",
+   "geom_kind": "parallelogram",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    7.25,
+    4.3,
+    7.869999999999999
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "输入用户名和密码",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    6.380000000000001,
+    4.3,
+    7.0
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "提交登录请求并查询账号",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.8715277777777777
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "diamond",
+   "geom_kind": "diamond",
+   "rounding": 0.0,
+   "box": [
+    1.55,
+    5.055,
+    4.45,
+    6.105
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "账号密码是否正确",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    4.07,
+    4.3,
+    4.6899999999999995
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "签发令牌并跳转对应页面",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.8715277777777777
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    3.17,
+    4.3,
+    3.79
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "打开个人中心",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.0208333333333333
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "diamond",
+   "geom_kind": "diamond",
+   "rounding": 0.0,
+   "box": [
+    1.55,
+    1.935,
+    4.45,
+    2.985
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "令牌是否有效",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.0208333333333333
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    1.05,
+    4.3,
+    1.6700000000000002
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "查询并展示个人资料",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.53125
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "roundrect",
+   "geom_kind": "rect",
+   "rounding": 0.16,
+   "box": [
+    2.1,
+    0.30000000000000004,
+    3.9,
+    0.8200000000000001
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "结束",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.3402777777777778
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    5.3,
+    5.2700000000000005,
+    7.3999999999999995,
+    5.89
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "提示用户名或密码错误",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.7013888888888888
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    5.3,
+    2.15,
+    7.3999999999999995,
+    2.77
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "提示登录状态失效",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    8.15,
+    3.0,
+    7.869999999999999
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    7.25,
+    3.0,
+    7.0
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    6.380000000000001,
+    3.0,
+    6.105
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    5.055,
+    3.0,
+    4.6899999999999995
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    4.45,
+    5.58,
+    5.3,
+    5.58
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    4.07,
+    3.0,
+    3.79
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    3.17,
+    3.0,
+    2.985
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    1.935,
+    3.0,
+    1.6700000000000002
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    4.45,
+    2.46,
+    5.3,
+    2.46
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    1.05,
+    3.0,
+    0.8200000000000001
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.4,
+    5.58,
+    7.85,
+    5.58
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.85,
+    5.58,
+    7.85,
+    2.46
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.85,
+    2.46,
+    7.85,
+    0.56
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.85,
+    0.56,
+    3.9,
+    0.56
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.4,
+    2.46,
+    7.85,
+    2.46
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    3.050138888888889,
+    4.77267361111111,
+    3.269861111111111,
+    4.972326388888889
+   ],
+   "text": "是",
+   "size": 11.5,
+   "align": "left",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    3.080138888888889,
+    4.77267361111111,
+    3.2398611111111113,
+    4.972326388888889
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    4.765138888888889,
+    5.640173611111111,
+    4.984861111111111,
+    5.8398263888888895
+   ],
+   "text": "否",
+   "size": 11.5,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    4.795138888888889,
+    5.640173611111111,
+    4.954861111111111,
+    5.8398263888888895
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    3.050138888888889,
+    1.7026736111111114,
+    3.269861111111111,
+    1.902326388888889
+   ],
+   "text": "是",
+   "size": 11.5,
+   "align": "left",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    3.080138888888889,
+    1.7026736111111114,
+    3.2398611111111113,
+    1.902326388888889
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    4.765138888888889,
+    2.5201736111111113,
+    4.984861111111111,
+    2.719826388888889
+   ],
+   "text": "否",
+   "size": 11.5,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    4.795138888888889,
+    2.5201736111111113,
+    4.954861111111111,
+    2.719826388888889
+   ]
+  }
+ ]
+}

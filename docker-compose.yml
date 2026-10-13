@@ -1,0 +1,71 @@
+# 生产形态编排：MySQL + 后端（mysql,prod profile）+ 前端静态站点。
+#
+# 使用前请先构建产物：
+#   cd backend  && mvn -q -DskipTests package
+#   cd frontend && npm ci && npm run build
+#
+# 启动：
+#   $env:JWT_SECRET = "请替换为不少于 32 字节的随机密钥"
+#   $env:MYSQL_ROOT_PASSWORD = "请替换为强密码"
+#   docker compose up -d --build
+#
+# 说明：JWT_SECRET 与数据库密码必须通过环境变量提供，未提供时后端会拒绝启动；
+# 该文件不包含任何演示默认密码，避免把示例配置直接带到生产环境。
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?必须设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-friendly_station}
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/src/main/resources/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${DB_PORT:-3306}:3306"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql,prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-friendly_station}
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:?必须设置 MYSQL_ROOT_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?必须设置 JWT_SECRET}
+      OPENAPI_ENABLED: ${OPENAPI_ENABLED:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+  frontend:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      API_BASE: http://backend:8080
+    volumes:
+      - ./frontend/dist:/app/dist:ro
+      - ./scripts/serve-dist.mjs:/app/serve-dist.mjs:ro
+    command: node /app/serve-dist.mjs --port 5174 --api http://backend:8080
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:

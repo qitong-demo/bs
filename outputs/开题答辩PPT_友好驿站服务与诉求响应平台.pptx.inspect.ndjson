@@ -1,0 +1,255 @@
+{"kind":"deck","id":"pr/8obbp1","name":"Deck"}
+{"kind":"layout","layoutId":"bb02a45b-9f93-43f8-9535-c33b44084a46","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"bd376dcb-17a1-4d51-8d91-3c3471d6b347","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/um1rt1","slide":1,"title":"哈尔滨信息工程学院 软件学院","textShapes":9}
+{"kind":"textbox","id":"sh/s72x4nap","slide":1,"name":"text","text":"哈尔滨信息工程学院 软件学院","textPreview":"哈尔滨信息工程学院 软件学院","textChars":14,"textLines":1,"bbox":[42,36,520,28]}
+{"kind":"shape","id":"sh/3m94fu18","slide":1,"name":"right-field","bbox":[796,0,484,720]}
+{"kind":"textbox","id":"sh/a5gbq1or","slide":1,"name":"text","text":"基于 SpringBoot + Vue 的","textPreview":"基于 SpringBoot + Vue 的","textChars":21,"textLines":1,"bbox":[42,150,720,54]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":1,"name":"text","text":"新就业群体友好驿站服务与诉求响应平台","textPreview":"新就业群体友好驿站服务与诉求响应平台","textChars":18,"textLines":1,"bbox":[42,214,820,138]}
+{"kind":"textbox","id":"sh/sji5snel","slide":1,"name":"text","text":"设计与实现","textPreview":"设计与实现","textChars":5,"textLines":1,"bbox":[42,360,520,64]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":1,"name":"text","text":"开题答辩","textPreview":"开题答辩","textChars":4,"textLines":1,"bbox":[42,476,240,36]}
+{"kind":"textbox","id":"sh/adsji5sn","slide":1,"name":"text","text":"学生：齐烔  |  学号：2023010719\n专业班级：软件工程 软件23J05\n指导教师：唐博海","textPreview":"学生：齐烔  |  学号：2023010719 | 专业班级：软件工程 软件23J05 | 指导教师：唐博海","textChars":50,"textLines":3,"bbox":[42,526,520,96]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":1,"name":"text","text":"服务可查\n诉求可提\n过程可跟踪\n结果可评价","textPreview":"服务可查 | 诉求可提 | 过程可跟踪 | 结果可评价","textChars":21,"textLines":4,"bbox":[862,122,300,300]}
+{"kind":"textbox","id":"sh/svu9knih","slide":1,"name":"text","text":"Spring Boot 3 / Vue 3 / MySQL / ECharts","textPreview":"Spring Boot 3 / Vue 3 / MySQL / ECharts","textChars":39,"textLines":1,"bbox":[862,514,310,80]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":1,"name":"text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"notes","id":"nt/um1rt1","slide":1,"text":""}
+{"kind":"slide","id":"sl/aty07h","slide":2,"title":"汇报结构","textShapes":15}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":2,"name":"text","text":"汇报结构","textPreview":"汇报结构","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":2,"name":"text","text":"本次开题围绕“为什么做、做什么、怎么做、何时完成”展开","textPreview":"本次开题围绕“为什么做、做什么、怎么做、何时完成”展开","textChars":27,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/x0nuxc3y","slide":2,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":2,"name":"text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":2,"name":"text","text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[42,198,90,54]}
+{"kind":"textbox","id":"sh/83itgfml","slide":2,"name":"text","text":"研究背景与意义","textPreview":"研究背景与意义","textChars":7,"textLines":1,"bbox":[160,196,300,44]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":2,"name":"text","text":"说明选题的政策背景、用户痛点与应用价值","textPreview":"说明选题的政策背景、用户痛点与应用价值","textChars":19,"textLines":1,"bbox":[500,202,680,40]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":2,"name":"row-rule","bbox":[42,266,1196,1]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":2,"name":"text","text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[42,296,90,54]}
+{"kind":"textbox","id":"sh/7adsji5s","slide":2,"name":"text","text":"研究目标与内容","textPreview":"研究目标与内容","textChars":7,"textLines":1,"bbox":[160,294,300,44]}
+{"kind":"textbox","id":"sh/epkzupwb","slide":2,"name":"text","text":"明确平台服务对象、系统边界和核心任务","textPreview":"明确平台服务对象、系统边界和核心任务","textChars":18,"textLines":1,"bbox":[500,300,680,40]}
+{"kind":"shape","id":"sh/pg3ex0nu","slide":2,"name":"row-rule","bbox":[42,364,1196,1]}
+{"kind":"textbox","id":"sh/wval87ed","slide":2,"name":"text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[42,394,90,54]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":2,"name":"text","text":"系统设计方案","textPreview":"系统设计方案","textChars":6,"textLines":1,"bbox":[160,392,300,44]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":2,"name":"text","text":"展示功能架构、业务流程、技术路线与数据设计","textPreview":"展示功能架构、业务流程、技术路线与数据设计","textChars":21,"textLines":1,"bbox":[500,398,680,40]}
+{"kind":"shape","id":"sh/psfil0rq","slide":2,"name":"row-rule","bbox":[42,462,1196,1]}
+{"kind":"textbox","id":"sh/w7mp0bi9","slide":2,"name":"text","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[42,492,90,54]}
+{"kind":"textbox","id":"sh/7u54zido","slide":2,"name":"text","text":"实施计划与成果","textPreview":"实施计划与成果","textChars":7,"textLines":1,"bbox":[160,490,300,44]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":2,"name":"text","text":"说明进度安排、预期成果、创新点与风险控制","textPreview":"说明进度安排、预期成果、创新点与风险控制","textChars":20,"textLines":1,"bbox":[500,496,680,40]}
+{"kind":"shape","id":"sh/mhk3q5o7","slide":2,"name":"row-rule","bbox":[42,560,1196,1]}
+{"kind":"notes","id":"nt/aty07h","slide":2,"text":""}
+{"kind":"slide","id":"sl/q7zxp9","slide":3,"title":"背景与意义","textShapes":17}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":3,"name":"text","text":"背景与意义","textPreview":"背景与意义","textChars":5,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":3,"name":"text","text":"选题来自新就业群体服务保障和基层治理数字化的现实需求","textPreview":"选题来自新就业群体服务保障和基层治理数字化的现实需求","textChars":26,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/fu18jqh0","slide":3,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/83itgfml","slide":3,"name":"text","text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/xobm58z2","slide":3,"name":"metric-panel","bbox":[42,205,270,230]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":3,"name":"text","text":"约 8400 万","textPreview":"约 8400 万","textChars":8,"textLines":1,"bbox":[66,230,222,68]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":3,"name":"text","text":"新就业形态劳动者","textPreview":"新就业形态劳动者","textChars":8,"textLines":1,"bbox":[66,309,222,34]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":3,"name":"text","text":"开题材料引用第九次全国职工队伍状况调查数据。","textPreview":"开题材料引用第九次全国职工队伍状况调查数据。","textChars":22,"textLines":1,"bbox":[66,348,222,56]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":3,"name":"metric-panel","bbox":[350,205,250,230]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":3,"name":"text","text":"4.02 亿","textPreview":"4.02 亿","textChars":6,"textLines":1,"bbox":[374,230,202,68]}
+{"kind":"textbox","id":"sh/c3ylc7u5","slide":3,"name":"text","text":"全国职工总数","textPreview":"全国职工总数","textChars":6,"textLines":1,"bbox":[374,309,202,34]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":3,"name":"text","text":"群体规模决定公共服务覆盖和治理协同需求。","textPreview":"群体规模决定公共服务覆盖和治理协同需求。","textChars":20,"textLines":1,"bbox":[374,348,202,56]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":3,"name":"metric-panel","bbox":[638,205,270,230]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":3,"name":"text","text":"闭环响应","textPreview":"闭环响应","textChars":4,"textLines":1,"bbox":[662,230,222,68]}
+{"kind":"textbox","id":"sh/crmhk3q5","slide":3,"name":"text","text":"服务治理重点","textPreview":"服务治理重点","textChars":6,"textLines":1,"bbox":[662,309,222,34]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":3,"name":"text","text":"诉求提交、分派、处理、反馈和评价需要可追踪。","textPreview":"诉求提交、分派、处理、反馈和评价需要可追踪。","textChars":22,"textLines":1,"bbox":[662,348,222,56]}
+{"kind":"shape","id":"sh/ulwval87","slide":3,"name":"metric-panel","bbox":[946,205,292,230]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":3,"name":"text","text":"数字平台","textPreview":"数字平台","textChars":4,"textLines":1,"bbox":[970,230,244,68]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":3,"name":"text","text":"工程实现载体","textPreview":"工程实现载体","textChars":6,"textLines":1,"bbox":[970,309,244,34]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":3,"name":"text","text":"用信息化方式整合驿站资源、服务预约和数据统计。","textPreview":"用信息化方式整合驿站资源、服务预约和数据统计。","textChars":23,"textLines":1,"bbox":[970,348,244,56]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":3,"name":"text","text":"因此，本课题不是单纯做一个管理后台，而是把“驿站服务供给”和“劳动者诉求响应”放到同一个可管理、可统计、可评价的平台中。","textPreview":"因此，本课题不是单纯做一个管理后台，而是把“驿站服务供给”和“劳动者诉求响应”放到同一个可管理、可统计、可评价的平台中。","textChars":60,"textLines":1,"bbox":[42,504,1040,72]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":3,"name":"text","text":"材料来源：开题报告模板、任务书、课题申报表。","textPreview":"材料来源：开题报告模板、任务书、课题申报表。","textChars":22,"textLines":1,"bbox":[42,612,880,28]}
+{"kind":"notes","id":"nt/q7zxp9","slide":3,"text":""}
+{"kind":"slide","id":"sl/eaye84","slide":4,"title":"研究目标","textShapes":14}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":4,"name":"text","text":"研究目标","textPreview":"研究目标","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/h0fepkzu","slide":4,"name":"text","text":"平台目标是让服务获取更便捷，让诉求处理更可控","textPreview":"平台目标是让服务获取更便捷，让诉求处理更可控","textChars":22,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/sfil0rqd","slide":4,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/z61032ls","slide":4,"name":"text","text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/al87ed8b","slide":4,"name":"left-panel","bbox":[42,188,522,402]}
+{"kind":"textbox","id":"sh/hcrmhk3q","slide":4,"name":"text","text":"用户侧","textPreview":"用户侧","textChars":3,"textLines":1,"bbox":[76,222,180,40]}
+{"kind":"shape","id":"sh/orytsvu9","slide":4,"name":"dot","bbox":[84,302,10,10]}
+{"kind":"textbox","id":"sh/zed8v6ps","slide":4,"name":"text","text":"查询附近友好驿站和服务项目","textPreview":"查询附近友好驿站和服务项目","textChars":13,"textLines":1,"bbox":[112,294,392,46]}
+{"kind":"shape","id":"sh/6xkf6dcb","slide":4,"name":"dot","bbox":[84,354,10,10]}
+{"kind":"textbox","id":"sh/8z25kb6x","slide":4,"name":"text","text":"提交服务预约并查看审核结果","textPreview":"提交服务预约并查看审核结果","textChars":13,"textLines":1,"bbox":[112,346,392,46]}
+{"kind":"shape","id":"sh/1gvy90je","slide":4,"name":"dot","bbox":[84,406,10,10]}
+{"kind":"textbox","id":"sh/qtcj6tov","slide":4,"name":"text","text":"提交诉求并跟踪处理进度","textPreview":"提交诉求并跟踪处理进度","textChars":11,"textLines":1,"bbox":[112,398,392,46]}
+{"kind":"shape","id":"sh/je9cvixc","slide":4,"name":"dot","bbox":[84,458,10,10]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":4,"name":"text","text":"查看政策资讯、公告和活动信息","textPreview":"查看政策资讯、公告和活动信息","textChars":14,"textLines":1,"bbox":[112,450,392,46]}
+{"kind":"shape","id":"sh/xs72x4na","slide":4,"name":"dot","bbox":[84,510,10,10]}
+{"kind":"textbox","id":"sh/q1orytsv","slide":4,"name":"text","text":"对驿站服务和诉求结果进行评价","textPreview":"对驿站服务和诉求结果进行评价","textChars":14,"textLines":1,"bbox":[112,502,392,46]}
+{"kind":"shape","id":"sh/fmlkjm1c","slide":4,"name":"right-panel","bbox":[614,188,624,402]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":4,"name":"text","text":"管理侧","textPreview":"管理侧","textChars":3,"textLines":1,"bbox":[648,222,180,40]}
+{"kind":"shape","id":"sh/x4nap4r6","slide":4,"name":"dot","bbox":[656,302,10,10]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":4,"name":"text","text":"统一维护驿站、服务、公告、活动等基础数据","textPreview":"统一维护驿站、服务、公告、活动等基础数据","textChars":20,"textLines":1,"bbox":[684,294,472,58]}
+{"kind":"shape","id":"sh/svu9knih","slide":4,"name":"dot","bbox":[656,366,10,10]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":4,"name":"text","text":"对预约进行通过、拒绝、完成或取消处理","textPreview":"对预约进行通过、拒绝、完成或取消处理","textChars":18,"textLines":1,"bbox":[684,358,472,58]}
+{"kind":"shape","id":"sh/ap4r65wj","slide":4,"name":"dot","bbox":[656,430,10,10]}
+{"kind":"textbox","id":"sh/hoza1gvy","slide":4,"name":"text","text":"对诉求进行分派、受理、回复和办结","textPreview":"对诉求进行分派、受理、回复和办结","textChars":16,"textLines":1,"bbox":[684,422,472,58]}
+{"kind":"shape","id":"sh/s36hcrmh","slide":4,"name":"dot","bbox":[656,494,10,10]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":4,"name":"text","text":"通过统计看板分析服务使用、高频诉求和办结率","textPreview":"通过统计看板分析服务使用、高频诉求和办结率","textChars":21,"textLines":1,"bbox":[684,486,472,58]}
+{"kind":"notes","id":"nt/eaye84","slide":4,"text":""}
+{"kind":"slide","id":"sl/5q05ox","slide":5,"title":"功能架构","textShapes":3}
+{"kind":"textbox","id":"sh/0je9cvix","slide":5,"name":"text","text":"功能架构","textPreview":"功能架构","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":5,"name":"text","text":"系统功能按 7 个模块、21 个功能点组织，规模适合毕业设计实现","textPreview":"系统功能按 7 个模块、21 个功能点组织，规模适合毕业设计实现","textChars":32,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/idonyd0z","slide":5,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/tcj6tova","slide":5,"name":"text","text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"image","id":"im/xc3ylc7u","slide":5,"name":"","alt":"系统功能结构图","bbox":[56,174,1168,476]}
+{"kind":"notes","id":"nt/5q05ox","slide":5,"text":""}
+{"kind":"slide","id":"sl/d64d4d","slide":6,"title":"核心业务流程","textShapes":18}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":6,"name":"text","text":"核心业务流程","textPreview":"核心业务流程","textChars":6,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/val87ed8","slide":6,"name":"text","text":"两个核心流程支撑“服务供给”和“诉求闭环”","textPreview":"两个核心流程支撑“服务供给”和“诉求闭环”","textChars":21,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/6psfil0r","slide":6,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":6,"name":"text","text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/k3q5o7qp","slide":6,"name":"tag-dot","bbox":[72,196,12,12]}
+{"kind":"textbox","id":"sh/vixczed8","slide":6,"name":"text","text":"服务预约流程","textPreview":"服务预约流程","textChars":6,"textLines":1,"bbox":[94,190,260,28]}
+{"kind":"shape","id":"sh/2x4nap4r","slide":6,"name":"tag-dot","bbox":[680,196,12,12]}
+{"kind":"textbox","id":"sh/d0z61032","slide":6,"name":"text","text":"诉求响应流程","textPreview":"诉求响应流程","textChars":6,"textLines":1,"bbox":[702,190,260,28]}
+{"kind":"shape","id":"sh/kf6dcbul","slide":6,"name":"step","bbox":[72,254,390,38]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":6,"name":"text","text":"1. 登录系统","textPreview":"1. 登录系统","textChars":7,"textLines":1,"bbox":[94,260,340,26]}
+{"kind":"shape","id":"sh/r65wjudg","slide":6,"name":"step","bbox":[72,309,390,38]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":6,"name":"text","text":"2. 查询附近驿站","textPreview":"2. 查询附近驿站","textChars":9,"textLines":1,"bbox":[94,315,340,26]}
+{"kind":"shape","id":"sh/9cvixcze","slide":6,"name":"step","bbox":[72,364,390,38]}
+{"kind":"textbox","id":"sh/yxobm58z","slide":6,"name":"text","text":"3. 选择服务与时间段","textPreview":"3. 选择服务与时间段","textChars":11,"textLines":1,"bbox":[94,370,340,26]}
+{"kind":"shape","id":"sh/nih4byhg","slide":6,"name":"step","bbox":[72,419,390,38]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":6,"name":"text","text":"4. 驿站管理员审核","textPreview":"4. 驿站管理员审核","textChars":10,"textLines":1,"bbox":[94,425,340,26]}
+{"kind":"shape","id":"sh/5o7qpg3e","slide":6,"name":"step","bbox":[72,474,390,38]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":6,"name":"text","text":"5. 用户查看结果","textPreview":"5. 用户查看结果","textChars":9,"textLines":1,"bbox":[94,480,340,26]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":6,"name":"step","bbox":[72,529,390,38]}
+{"kind":"textbox","id":"sh/3ylc7u54","slide":6,"name":"text","text":"6. 完成后归档","textPreview":"6. 完成后归档","textChars":8,"textLines":1,"bbox":[94,535,340,26]}
+{"kind":"shape","id":"sh/adsji5sn","slide":6,"name":"step","bbox":[680,254,390,38]}
+{"kind":"textbox","id":"sh/h4byhgn2","slide":6,"name":"text","text":"1. 提交诉求","textPreview":"1. 提交诉求","textChars":7,"textLines":1,"bbox":[702,260,340,26]}
+{"kind":"shape","id":"sh/sji5snel","slide":6,"name":"step","bbox":[680,309,390,38]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":6,"name":"text","text":"2. 平台管理员查看","textPreview":"2. 平台管理员查看","textChars":10,"textLines":1,"bbox":[702,315,340,26]}
+{"kind":"shape","id":"sh/a5gbq1or","slide":6,"name":"step","bbox":[680,364,390,38]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":6,"name":"text","text":"3. 分派处理人员","textPreview":"3. 分派处理人员","textChars":9,"textLines":1,"bbox":[702,370,340,26]}
+{"kind":"shape","id":"sh/s72x4nap","slide":6,"name":"step","bbox":[680,419,390,38]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":6,"name":"text","text":"4. 记录处理过程","textPreview":"4. 记录处理过程","textChars":9,"textLines":1,"bbox":[702,425,340,26]}
+{"kind":"shape","id":"sh/a1gvy90j","slide":6,"name":"step","bbox":[680,474,390,38]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":6,"name":"text","text":"5. 填写办结结果","textPreview":"5. 填写办结结果","textChars":9,"textLines":1,"bbox":[702,480,340,26]}
+{"kind":"shape","id":"sh/dcbulwva","slide":6,"name":"step","bbox":[680,529,390,38]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":6,"name":"text","text":"6. 用户评价反馈","textPreview":"6. 用户评价反馈","textChars":9,"textLines":1,"bbox":[702,535,340,26]}
+{"kind":"textbox","id":"sh/val87ed8","slide":6,"name":"text","text":"预约流程强调服务资源的可用性和审核记录；诉求流程强调分派、处理、回复、评价的闭环留痕。","textPreview":"预约流程强调服务资源的可用性和审核记录；诉求流程强调分派、处理、回复、评价的闭环留痕。","textChars":43,"textLines":1,"bbox":[72,612,1030,42]}
+{"kind":"notes","id":"nt/d64d4d","slide":6,"text":""}
+{"kind":"slide","id":"sl/hl72qy","slide":7,"title":"技术路线","textShapes":19}
+{"kind":"textbox","id":"sh/3ex0nuxc","slide":7,"name":"text","text":"技术路线","textPreview":"技术路线","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/szqtcj6t","slide":7,"name":"text","text":"技术路线采用成熟的前后端分离架构，便于实现和演示","textPreview":"技术路线采用成熟的前后端分离架构，便于实现和演示","textChars":24,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/lkjm1cfa","slide":7,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/ahoza1gv","slide":7,"name":"text","text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/32lszqtc","slide":7,"name":"cell","bbox":[42,180,260,52]}
+{"kind":"shape","id":"sh/sneloj2t","slide":7,"name":"cell","bbox":[318,180,360,52]}
+{"kind":"shape","id":"sh/l87ed8ba","slide":7,"name":"cell","bbox":[696,180,542,52]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":7,"name":"text","text":"前端表现层","textPreview":"前端表现层","textChars":5,"textLines":1,"bbox":[66,191,220,28]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":7,"name":"text","text":"Vue 3 / Vite / Element Plus","textPreview":"Vue 3 / Vite / Element Plus","textChars":27,"textLines":1,"bbox":[342,191,316,28]}
+{"kind":"textbox","id":"sh/neloj2t8","slide":7,"name":"text","text":"构建用户端、驿站管理端和后台管理页面","textPreview":"构建用户端、驿站管理端和后台管理页面","textChars":18,"textLines":1,"bbox":[720,191,490,28]}
+{"kind":"shape","id":"sh/ytsvu9kn","slide":7,"name":"cell","bbox":[42,258,260,52]}
+{"kind":"shape","id":"sh/5kb6xkf6","slide":7,"name":"cell","bbox":[318,258,360,52]}
+{"kind":"shape","id":"sh/czed8v6p","slide":7,"name":"cell","bbox":[696,258,542,52]}
+{"kind":"textbox","id":"sh/nqxs72x4","slide":7,"name":"text","text":"交互与数据","textPreview":"交互与数据","textChars":5,"textLines":1,"bbox":[66,269,220,28]}
+{"kind":"textbox","id":"sh/u54zidon","slide":7,"name":"text","text":"Axios / RESTful API","textPreview":"Axios / RESTful API","textChars":19,"textLines":1,"bbox":[342,269,316,28]}
+{"kind":"textbox","id":"sh/5sneloj2","slide":7,"name":"text","text":"完成页面请求、接口联调和统一响应处理","textPreview":"完成页面请求、接口联调和统一响应处理","textChars":18,"textLines":1,"bbox":[720,269,490,28]}
+{"kind":"shape","id":"sh/cbulwval","slide":7,"name":"cell","bbox":[42,336,260,52]}
+{"kind":"shape","id":"sh/nuxc3ylc","slide":7,"name":"cell","bbox":[318,336,360,52]}
+{"kind":"shape","id":"sh/y90je9cv","slide":7,"name":"cell","bbox":[696,336,542,52]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":7,"name":"text","text":"后端业务层","textPreview":"后端业务层","textChars":5,"textLines":1,"bbox":[66,347,220,28]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":7,"name":"text","text":"Spring Boot 3 / Java 17","textPreview":"Spring Boot 3 / Java 17","textChars":23,"textLines":1,"bbox":[342,347,316,28]}
+{"kind":"textbox","id":"sh/knih4byh","slide":7,"name":"text","text":"提供认证、驿站、预约、诉求、公告、活动等业务接口","textPreview":"提供认证、驿站、预约、诉求、公告、活动等业务接口","textChars":24,"textLines":1,"bbox":[720,347,490,28]}
+{"kind":"shape","id":"sh/d8bat47y","slide":7,"name":"cell","bbox":[42,414,260,52]}
+{"kind":"shape","id":"sh/29gr2p8n","slide":7,"name":"cell","bbox":[318,414,360,52]}
+{"kind":"shape","id":"sh/vu9knih4","slide":7,"name":"cell","bbox":[696,414,542,52]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":7,"name":"text","text":"持久化层","textPreview":"持久化层","textChars":4,"textLines":1,"bbox":[66,425,220,28]}
+{"kind":"textbox","id":"sh/d0z61032","slide":7,"name":"text","text":"MyBatis-Plus / MySQL","textPreview":"MyBatis-Plus / MySQL","textChars":20,"textLines":1,"bbox":[342,425,316,28]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":7,"name":"text","text":"完成核心表设计、查询维护和业务数据存储","textPreview":"完成核心表设计、查询维护和业务数据存储","textChars":19,"textLines":1,"bbox":[720,425,490,28]}
+{"kind":"shape","id":"sh/vixczed8","slide":7,"name":"cell","bbox":[42,492,260,52]}
+{"kind":"shape","id":"sh/hoza1gvy","slide":7,"name":"cell","bbox":[318,492,360,52]}
+{"kind":"shape","id":"sh/s36hcrmh","slide":7,"name":"cell","bbox":[696,492,542,52]}
+{"kind":"textbox","id":"sh/zidonyd0","slide":7,"name":"text","text":"统计展示","textPreview":"统计展示","textChars":4,"textLines":1,"bbox":[66,503,220,28]}
+{"kind":"textbox","id":"sh/a1gvy90j","slide":7,"name":"text","text":"ECharts","textPreview":"ECharts","textChars":7,"textLines":1,"bbox":[342,503,316,28]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":7,"name":"text","text":"呈现服务人次、诉求数量、办结率等可视化指标","textPreview":"呈现服务人次、诉求数量、办结率等可视化指标","textChars":21,"textLines":1,"bbox":[720,503,490,28]}
+{"kind":"textbox","id":"sh/svu9knih","slide":7,"name":"text","text":"当前项目代码已包含 Vue 前端、Spring Boot 后端和统计看板雏形，开题后可继续完善数据库持久化、权限控制和测试文档。","textPreview":"当前项目代码已包含 Vue 前端、Spring Boot 后端和统计看板雏形，开题后可继续完善数据库持久化、权限控制和测试文档。","textChars":64,"textLines":1,"bbox":[42,604,1070,52]}
+{"kind":"notes","id":"nt/hl72qy","slide":7,"text":""}
+{"kind":"slide","id":"sl/k7f9ga","slide":8,"title":"数据库与接口","textShapes":12}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":8,"name":"text","text":"数据库与接口","textPreview":"数据库与接口","textChars":6,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":8,"name":"text","text":"数据设计围绕用户、驿站、预约、诉求和内容运营展开","textPreview":"数据设计围绕用户、驿站、预约、诉求和内容运营展开","textChars":24,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/xczed8v6","slide":8,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":8,"name":"text","text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"textbox","id":"sh/fyxobm58","slide":8,"name":"text","text":"约 14 张核心表","textPreview":"约 14 张核心表","textChars":9,"textLines":1,"bbox":[42,188,430,60]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":8,"name":"text","text":"sys_user、sys_role、station、station_service、service_appointment、appeal、appeal_record、appeal_evaluation、news、notice、activity、activity_signup、station_evaluation 等。","textPreview":"sys_user、sys_role、station、station_service、service_appointment、appeal、appeal_record、appeal_evaluation、news、notice、activity、activity_signup...","textChars":159,"textLines":1,"bbox":[42,260,520,180]}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":8,"name":"text","text":"接口覆盖 8 类业务","textPreview":"接口覆盖 8 类业务","textChars":10,"textLines":1,"bbox":[690,188,430,60]}
+{"kind":"shape","id":"sh/q1orytsv","slide":8,"name":"dot","bbox":[698,276,10,10]}
+{"kind":"textbox","id":"sh/fmlkjm1c","slide":8,"name":"text","text":"认证：/api/auth/login、/api/auth/register","textPreview":"认证：/api/auth/login、/api/auth/register","textChars":37,"textLines":1,"bbox":[726,268,472,48]}
+{"kind":"shape","id":"sh/jqh0fepk","slide":8,"name":"dot","bbox":[698,330,10,10]}
+{"kind":"textbox","id":"sh/q5o7qpg3","slide":8,"name":"text","text":"驿站：/api/station/page、/nearby、/{id}","textPreview":"驿站：/api/station/page、/nearby、/{id}","textChars":34,"textLines":1,"bbox":[726,322,472,48]}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":8,"name":"dot","bbox":[698,384,10,10]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":8,"name":"text","text":"预约：/api/appointment、/my","textPreview":"预约：/api/appointment、/my","textChars":23,"textLines":1,"bbox":[726,376,472,48]}
+{"kind":"shape","id":"sh/j2t83itg","slide":8,"name":"dot","bbox":[698,438,10,10]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":8,"name":"text","text":"诉求：/api/appeal、/my、/evaluate","textPreview":"诉求：/api/appeal、/my、/evaluate","textChars":28,"textLines":1,"bbox":[726,430,472,48]}
+{"kind":"shape","id":"sh/18jqh0fe","slide":8,"name":"dot","bbox":[698,492,10,10]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":8,"name":"text","text":"资讯/公告/活动/统计：列表、发布和看板接口","textPreview":"资讯/公告/活动/统计：列表、发布和看板接口","textChars":22,"textLines":1,"bbox":[726,484,472,48]}
+{"kind":"shape","id":"sh/j6tovaho","slide":8,"name":"logic","bbox":[42,502,1196,88]}
+{"kind":"textbox","id":"sh/ulwval87","slide":8,"name":"text","text":"设计原则：核心业务表先支撑完整闭环，再通过状态字段、处理记录表和评价表保存过程证据；接口按业务模块拆分，便于前端页面联调和论文中分章节说明。","textPreview":"设计原则：核心业务表先支撑完整闭环，再通过状态字段、处理记录表和评价表保存过程证据；接口按业务模块拆分，便于前端页面联调和论文中分章节说明。","textChars":70,"textLines":1,"bbox":[70,525,1120,46]}
+{"kind":"notes","id":"nt/k7f9ga","slide":8,"text":""}
+{"kind":"slide","id":"sl/ms04qn","slide":9,"title":"原型展示","textShapes":9}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":9,"name":"text","text":"原型展示","textPreview":"原型展示","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":9,"name":"text","text":"原型页面已能体现主要业务入口和统计展示方式","textPreview":"原型页面已能体现主要业务入口和统计展示方式","textChars":21,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":9,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":9,"name":"text","text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/ovahoza1","slide":9,"name":"evidence","bbox":[862,188,320,330]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":9,"name":"text","text":"已验证的展示面","textPreview":"已验证的展示面","textChars":7,"textLines":1,"bbox":[896,222,240,38]}
+{"kind":"shape","id":"sh/61032lsz","slide":9,"name":"dot","bbox":[896,304,10,10]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":9,"name":"text","text":"附近驿站列表与地图区域","textPreview":"附近驿站列表与地图区域","textChars":11,"textLines":1,"bbox":[924,296,212,44]}
+{"kind":"shape","id":"sh/b2hwfyxo","slide":9,"name":"dot","bbox":[896,354,10,10]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":9,"name":"text","text":"服务预约、诉求反馈、政策资讯入口","textPreview":"服务预约、诉求反馈、政策资讯入口","textChars":16,"textLines":1,"bbox":[924,346,212,44]}
+{"kind":"shape","id":"sh/t83itgfm","slide":9,"name":"dot","bbox":[896,404,10,10]}
+{"kind":"textbox","id":"sh/4nap4r65","slide":9,"name":"text","text":"预约记录与待处理诉求列表","textPreview":"预约记录与待处理诉求列表","textChars":12,"textLines":1,"bbox":[924,396,212,44]}
+{"kind":"shape","id":"sh/bq1oryts","slide":9,"name":"dot","bbox":[896,454,10,10]}
+{"kind":"textbox","id":"sh/m58z25kb","slide":9,"name":"text","text":"服务人次、诉求数量和办结率图表","textPreview":"服务人次、诉求数量和办结率图表","textChars":15,"textLines":1,"bbox":[924,446,212,44]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":9,"name":"text","text":"后续重点是把演示数据逐步替换为 MySQL 持久化数据，并补充管理员侧处理页面。","textPreview":"后续重点是把演示数据逐步替换为 MySQL 持久化数据，并补充管理员侧处理页面。","textChars":40,"textLines":1,"bbox":[862,560,330,66]}
+{"kind":"image","id":"im/m1cfa9w3","slide":9,"name":"","alt":"系统仪表盘页面截图","bbox":[60,168,760,486]}
+{"kind":"notes","id":"nt/ms04qn","slide":9,"text":""}
+{"kind":"slide","id":"sl/kd4sci","slide":10,"title":"进度安排","textShapes":18}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":10,"name":"text","text":"进度安排","textPreview":"进度安排","textChars":4,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/judg7ads","slide":10,"name":"text","text":"进度安排按“分析、设计、开发、测试、论文”推进","textPreview":"进度安排按“分析、设计、开发、测试、论文”推进","textChars":23,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/u9knih4b","slide":10,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":10,"name":"text","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":10,"name":"text","text":"第 1 阶段","textPreview":"第 1 阶段","textChars":6,"textLines":1,"bbox":[66,176,130,34]}
+{"kind":"textbox","id":"sh/jm1cfa9w","slide":10,"name":"text","text":"需求分析与资料整理","textPreview":"需求分析与资料整理","textChars":9,"textLines":1,"bbox":[226,172,330,40]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":10,"name":"text","text":"明确用户角色、业务流程、功能边界和参考文献","textPreview":"明确用户角色、业务流程、功能边界和参考文献","textChars":21,"textLines":1,"bbox":[600,176,590,34]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":10,"name":"rule","bbox":[66,230,1120,1]}
+{"kind":"textbox","id":"sh/cvixczed","slide":10,"name":"text","text":"第 2 阶段","textPreview":"第 2 阶段","textChars":6,"textLines":1,"bbox":[66,260,130,34]}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":10,"name":"text","text":"概要设计与数据库设计","textPreview":"概要设计与数据库设计","textChars":10,"textLines":1,"bbox":[226,256,330,40]}
+{"kind":"textbox","id":"sh/bm58z25k","slide":10,"name":"text","text":"完成功能结构、技术架构、核心表和接口草案","textPreview":"完成功能结构、技术架构、核心表和接口草案","textChars":20,"textLines":1,"bbox":[600,260,590,34]}
+{"kind":"shape","id":"sh/47y1kre1","slide":10,"name":"rule","bbox":[66,314,1120,1]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":10,"name":"text","text":"第 3 阶段","textPreview":"第 3 阶段","textChars":6,"textLines":1,"bbox":[66,344,130,34]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":10,"name":"text","text":"系统开发与联调","textPreview":"系统开发与联调","textChars":7,"textLines":1,"bbox":[226,340,330,40]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":10,"name":"text","text":"实现认证、驿站、预约、诉求、资讯、活动和统计模块","textPreview":"实现认证、驿站、预约、诉求、资讯、活动和统计模块","textChars":24,"textLines":1,"bbox":[600,344,590,34]}
+{"kind":"shape","id":"sh/4vmtwra5","slide":10,"name":"rule","bbox":[66,398,1120,1]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":10,"name":"text","text":"第 4 阶段","textPreview":"第 4 阶段","textChars":6,"textLines":1,"bbox":[66,428,130,34]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":10,"name":"text","text":"系统测试与优化","textPreview":"系统测试与优化","textChars":7,"textLines":1,"bbox":[226,424,330,40]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":10,"name":"text","text":"进行功能测试、接口测试、异常处理和页面可用性优化","textPreview":"进行功能测试、接口测试、异常处理和页面可用性优化","textChars":24,"textLines":1,"bbox":[600,428,590,34]}
+{"kind":"shape","id":"sh/7u54zido","slide":10,"name":"rule","bbox":[66,482,1120,1]}
+{"kind":"textbox","id":"sh/ed8bat47","slide":10,"name":"text","text":"第 5 阶段","textPreview":"第 5 阶段","textChars":6,"textLines":1,"bbox":[66,512,130,34]}
+{"kind":"textbox","id":"sh/l0rqd4vm","slide":10,"name":"text","text":"论文撰写与答辩准备","textPreview":"论文撰写与答辩准备","textChars":9,"textLines":1,"bbox":[226,508,330,40]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":10,"name":"text","text":"整理设计说明、测试结果、创新点和演示材料","textPreview":"整理设计说明、测试结果、创新点和演示材料","textChars":20,"textLines":1,"bbox":[600,512,590,34]}
+{"kind":"shape","id":"sh/36hcrmhk","slide":10,"name":"rule","bbox":[66,566,1120,1]}
+{"kind":"notes","id":"nt/kd4sci","slide":10,"text":""}
+{"kind":"slide","id":"sl/xdll2t","slide":11,"title":"创新点与预期成果","textShapes":13}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":11,"name":"text","text":"创新点与预期成果","textPreview":"创新点与预期成果","textChars":8,"textLines":1,"bbox":[42,34,240,22]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":11,"name":"text","text":"预期成果聚焦可运行系统、规范论文和可展示答辩材料","textPreview":"预期成果聚焦可运行系统、规范论文和可展示答辩材料","textChars":24,"textLines":1,"bbox":[42,72,850,60]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":11,"name":"rule","bbox":[42,146,1196,1]}
+{"kind":"textbox","id":"sh/t47y1kre","slide":11,"name":"text","text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1180,658,58,24]}
+{"kind":"shape","id":"sh/0je9cvix","slide":11,"name":"block","bbox":[42,192,356,250]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":11,"name":"text","text":"业务闭环","textPreview":"业务闭环","textChars":4,"textLines":1,"bbox":[68,224,250,38]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":11,"name":"text","text":"把驿站查询、预约、诉求处理、评价反馈和统计分析贯通，避免只做静态信息展示。","textPreview":"把驿站查询、预约、诉求处理、评价反馈和统计分析贯通，避免只做静态信息展示。","textChars":37,"textLines":1,"bbox":[68,292,296,112]}
+{"kind":"shape","id":"sh/p0bi9s36","slide":11,"name":"block","bbox":[440,192,356,250]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":11,"name":"text","text":"多角色协同","textPreview":"多角色协同","textChars":5,"textLines":1,"bbox":[466,224,250,38]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":11,"name":"text","text":"普通用户、驿站管理员、平台管理员职责清晰，权限和流程更贴近实际管理场景。","textPreview":"普通用户、驿站管理员、平台管理员职责清晰，权限和流程更贴近实际管理场景。","textChars":36,"textLines":1,"bbox":[466,292,296,112]}
+{"kind":"shape","id":"sh/7ed8bat4","slide":11,"name":"block","bbox":[838,192,356,250]}
+{"kind":"textbox","id":"sh/0z61032l","slide":11,"name":"text","text":"数据支撑治理","textPreview":"数据支撑治理","textChars":6,"textLines":1,"bbox":[864,224,250,38]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":11,"name":"text","text":"通过诉求类型、区域、办结率、满意度等指标，为驿站服务优化提供依据。","textPreview":"通过诉求类型、区域、办结率、满意度等指标，为驿站服务优化提供依据。","textChars":33,"textLines":1,"bbox":[864,292,296,112]}
+{"kind":"textbox","id":"sh/ih4byhgn","slide":11,"name":"text","text":"预期提交物","textPreview":"预期提交物","textChars":5,"textLines":1,"bbox":[42,508,260,38]}
+{"kind":"shape","id":"sh/72x4nap4","slide":11,"name":"dot","bbox":[322,518,10,10]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":11,"name":"text","text":"可运行的 Spring Boot + Vue 前后端分离系统","textPreview":"可运行的 Spring Boot + Vue 前后端分离系统","textChars":30,"textLines":1,"bbox":[350,510,832,38]}
+{"kind":"shape","id":"sh/p8nqxs72","slide":11,"name":"dot","bbox":[322,562,10,10]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":11,"name":"text","text":"数据库设计、接口设计、功能测试和系统演示材料","textPreview":"数据库设计、接口设计、功能测试和系统演示材料","textChars":22,"textLines":1,"bbox":[350,554,832,38]}
+{"kind":"shape","id":"sh/7y1kre1w","slide":11,"name":"dot","bbox":[322,606,10,10]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":11,"name":"text","text":"毕业论文：需求分析、系统设计、实现、测试与总结展望","textPreview":"毕业论文：需求分析、系统设计、实现、测试与总结展望","textChars":25,"textLines":1,"bbox":[350,598,832,38]}
+{"kind":"notes","id":"nt/xdll2t","slide":11,"text":""}

@@ -1,0 +1,85 @@
+# 生产环境配置（在 mysql profile 之上叠加使用）
+#
+# 启动方式：
+#   java -jar target/platform-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql,prod
+# 或通过环境变量：
+#   SPRING_PROFILES_ACTIVE=mysql,prod
+#
+# 与 application-mysql.yml 的差异：
+#   1. 数据库连接、JWT 密钥全部改为环境变量注入，不再提供演示默认值；
+#   2. 关闭接口文档页面（按需通过 OPENAPI_ENABLED=true 打开）；
+#   3. 收敛错误信息、开启响应压缩与请求日志。
+
+spring:
+  autoconfigure:
+    exclude: []
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME:friendly_station}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: friendly-station-pool
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 3600
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  compression:
+    enabled: true
+    mime-types: application/json,text/csv,text/html,text/css,text/javascript
+    min-response-size: 1024
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:200}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:20}
+    accept-count: 200
+  error:
+    # 不向客户端暴露异常信息与堆栈
+    include-message: never
+    include-stacktrace: never
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+app:
+  security:
+    token-prefix: Bearer
+    # 生产环境必须显式提供，未设置时应用启动失败，避免沿用演示密钥。
+    jwt-secret: ${JWT_SECRET}
+    token-expire-minutes: ${TOKEN_EXPIRE_MINUTES:120}
+
+# 生产环境默认关闭接口文档；需要时用 OPENAPI_ENABLED=true 临时打开。
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:false}
+  swagger-ui:
+    enabled: ${OPENAPI_ENABLED:false}
+
+logging:
+  level:
+    root: INFO
+    com.friendlystation.platform: ${LOG_LEVEL:INFO}
+    org.springframework.web: WARN
+  file:
+    name: ${LOG_FILE:logs/friendly-station.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 20MB
+      max-history: 30
+      total-size-cap: 500MB

@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: friendly-station-platform
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  security:
+    token-prefix: Bearer
+    jwt-secret: friendly-station-demo-secret-key-at-least-32-bytes
+    token-expire-minutes: 120
+
+# 高德地图 Web 服务（服务端调用，Key 绝不进前端）。
+# 通过环境变量 AMAP_WEB_KEY 注入；未配置时「按坐标定位用户城市」接口返回 null，
+# 前端会自动回退到平台默认城市，不影响其他功能。
+amap:
+  web-key: ${AMAP_WEB_KEY:}
+  base-url: https://restapi.amap.com
+  timeout-seconds: 5
+
+# 接口文档：/v3/api-docs 为 OpenAPI 描述，/swagger-ui.html 为可视化调试页面。
+# 导出脚本 scripts/export-openapi.ps1 会拉取该描述并生成 docs/接口文档.md。
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  default-produces-media-type: application/json

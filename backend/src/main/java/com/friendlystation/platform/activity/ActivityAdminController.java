@@ -1,0 +1,63 @@
+package com.friendlystation.platform.activity;
+
+import com.friendlystation.platform.auth.RequireRole;
+import com.friendlystation.platform.common.ApiResponse;
+import com.friendlystation.platform.common.PageResult;
+import com.friendlystation.platform.content.ActivityService;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
+
+/**
+ * 活动后台管理接口。
+ * 只负责管理端的分页、新增、修改与删除；前台的 /api/activity/page、/api/activity/signup、
+ * /api/activity/admin/signups、/api/activity/my 由 ActivityController 提供。
+ */
+@RestController
+@RequestMapping("/api/activity/admin")
+@RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+public class ActivityAdminController {
+    private final ActivityService activityService;
+
+    public ActivityAdminController(ActivityService activityService) {
+        this.activityService = activityService;
+    }
+
+    /** 后台活动分页，返回全部状态。 */
+    @GetMapping("/page")
+    public ApiResponse<PageResult<Map<String, Object>>> page(
+            @RequestParam(defaultValue = "1") long current,
+            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ApiResponse.ok(activityService.adminPage(current, size, status, keyword));
+    }
+
+    /** 新增活动。 */
+    @PostMapping
+    public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
+        return ApiResponse.ok(activityService.create(payload));
+    }
+
+    /** 修改活动。 */
+    @PutMapping("/{id}")
+    public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        return ApiResponse.ok(activityService.update(id, payload));
+    }
+
+    /** 删除活动。 */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
+        activityService.delete(id);
+        return ApiResponse.ok(Map.of("id", id, "deleted", true));
+    }
+}

@@ -1,0 +1,4825 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "新就业群体友好驿站服务与诉求响应平台 API",
+    "description": "基于 Spring Boot + Vue 的友好驿站服务与诉求响应平台后端接口。\n\n统一返回结构：`{ \"code\": 200, \"message\": \"success\", \"data\": ... }`；\n分页结构：`{ \"current\": 1, \"size\": 10, \"total\": 0, \"records\": [] }`。\n\n鉴权：登录后取得的 token 通过 `Authorization: Bearer <token>` 传递。\n角色为 USER、STATION_ADMIN、PLATFORM_ADMIN、SUPER_ADMIN，\n受保护接口会校验角色，越权返回 403，未登录或凭证失效返回 401。\n",
+    "contact": {
+      "name": "毕业设计项目"
+    },
+    "license": {
+      "name": "仅用于教学与毕业设计演示"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/user/{id}/status": {
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/info": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "info",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "updateInfo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/{id}": {
+      "get": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "detail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/{id}/status": {
+      "put": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "updateStatus_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/service/{id}": {
+      "put": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationServiceItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationServiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/service/{id}/status": {
+      "put": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "updateStatus_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationServiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notice/{id}": {
+      "get": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "detail_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news/{id}": {
+      "get": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "detail_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "delete_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointment/{id}/cancel": {
+      "put": {
+        "tags": [
+          "appointment-controller"
+        ],
+        "operationId": "cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointment/audit": {
+      "put": {
+        "tags": [
+          "appointment-controller"
+        ],
+        "operationId": "audit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/handle": {
+      "put": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "handle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/assign": {
+      "put": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "assign",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "userDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/status": {
+      "put": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "updateUserStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/roles": {
+      "put": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "updateUserRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/admin/{id}": {
+      "put": {
+        "tags": [
+          "activity-admin-controller"
+        ],
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "activity-admin-controller"
+        ],
+        "operationId": "delete_4",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station": {
+      "post": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/service": {
+      "post": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "create_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationServiceItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseStationServiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notice": {
+      "post": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "create_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news": {
+      "post": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "create_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/evaluation/station": {
+      "post": {
+        "tags": [
+          "evaluation-controller"
+        ],
+        "operationId": "createStationEvaluation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointment": {
+      "post": {
+        "tags": [
+          "appointment-controller"
+        ],
+        "operationId": "create_4",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal": {
+      "post": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "create_5",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/evaluate": {
+      "post": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/signup": {
+      "post": {
+        "tags": [
+          "activity-controller"
+        ],
+        "operationId": "signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/admin": {
+      "post": {
+        "tags": [
+          "activity-admin-controller"
+        ],
+        "operationId": "create_6",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/page": {
+      "get": {
+        "tags": [
+          "user-controller"
+        ],
+        "operationId": "page",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/service/page": {
+      "get": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "page_1",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "stationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultStationServiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/service/list": {
+      "get": {
+        "tags": [
+          "station-service-controller"
+        ],
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "stationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListStationServiceItemDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/page": {
+      "get": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "page_2",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "cityCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/nearby": {
+      "get": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "nearby",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "cityCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/areas": {
+      "get": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "areas",
+        "parameters": [
+          {
+            "name": "cityCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/station/admin/page": {
+      "get": {
+        "tags": [
+          "station-controller"
+        ],
+        "operationId": "adminPage",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "cityCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "area",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultStationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stat/service/ranking": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "serviceRanking",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stat/overview": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "overview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stat/export/{type}": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "export",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stat/appeal/month": {
+      "get": {
+        "tags": [
+          "dashboard-controller"
+        ],
+        "operationId": "monthlyTrend",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notice/page": {
+      "get": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "page_3",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "noticeType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notice/admin/page": {
+      "get": {
+        "tags": [
+          "notice-controller"
+        ],
+        "operationId": "adminPage_1",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "noticeType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news/page": {
+      "get": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "page_4",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/news/admin/page": {
+      "get": {
+        "tags": [
+          "news-controller"
+        ],
+        "operationId": "adminPage_2",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/evaluation/station/summary": {
+      "get": {
+        "tags": [
+          "evaluation-controller"
+        ],
+        "operationId": "stationEvaluationSummary",
+        "parameters": [
+          {
+            "name": "stationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/evaluation/station/page": {
+      "get": {
+        "tags": [
+          "evaluation-controller"
+        ],
+        "operationId": "pageStationEvaluations",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "stationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/evaluation/my": {
+      "get": {
+        "tags": [
+          "evaluation-controller"
+        ],
+        "operationId": "myEvaluations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/city/nearest": {
+      "get": {
+        "tags": [
+          "city-controller"
+        ],
+        "operationId": "nearest",
+        "parameters": [
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCityDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/city/locate": {
+      "get": {
+        "tags": [
+          "city-controller"
+        ],
+        "operationId": "locate",
+        "parameters": [
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseCityLocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/city/list": {
+      "get": {
+        "tags": [
+          "city-controller"
+        ],
+        "operationId": "list_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListCityDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointment/my": {
+      "get": {
+        "tags": [
+          "appointment-controller"
+        ],
+        "operationId": "myAppointments",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointment/admin/page": {
+      "get": {
+        "tags": [
+          "appointment-controller"
+        ],
+        "operationId": "adminPage_3",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/{id}": {
+      "get": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "detail_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/{id}/records": {
+      "get": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "records",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/my": {
+      "get": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "myAppeals",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appeal/admin/page": {
+      "get": {
+        "tags": [
+          "appeal-controller"
+        ],
+        "operationId": "adminPage_4",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "users",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/roles": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "roles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/overview": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "overview_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/page": {
+      "get": {
+        "tags": [
+          "activity-controller"
+        ],
+        "operationId": "page_5",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "stationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/my": {
+      "get": {
+        "tags": [
+          "activity-controller"
+        ],
+        "operationId": "mySignups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/admin/signups": {
+      "get": {
+        "tags": [
+          "activity-controller"
+        ],
+        "operationId": "signups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseListMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity/admin/page": {
+      "get": {
+        "tags": [
+          "activity-admin-controller"
+        ],
+        "operationId": "page_6",
+        "parameters": [
+          {
+            "name": "current",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponsePageResultMapStringObject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponseVoid": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "ApiResponseMapStringObject": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "StationUpdateRequest": {
+        "required": [
+          "address",
+          "area",
+          "stationName"
+        ],
+        "type": "object",
+        "properties": {
+          "stationName": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "openTime": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "stationType": {
+            "type": "string"
+          },
+          "cityCode": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseStationDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StationDto"
+          }
+        }
+      },
+      "StationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cityCode": {
+            "type": "string"
+          },
+          "stationName": {
+            "type": "string"
+          },
+          "stationType": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "openTime": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "string"
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "managerId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "$ref": "#/components/schemas/StationSource"
+          },
+          "createTime": {
+            "type": "string"
+          }
+        }
+      },
+      "StationSource": {
+        "type": "object",
+        "properties": {
+          "sourceName": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "sourcePublishedAt": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string"
+          },
+          "dataStatus": {
+            "type": "string"
+          },
+          "dataNote": {
+            "type": "string"
+          },
+          "geocodeSource": {
+            "type": "string"
+          },
+          "geocodeAt": {
+            "type": "string"
+          },
+          "businessSource": {
+            "type": "string"
+          },
+          "businessSyncedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "StationServiceItemRequest": {
+        "required": [
+          "serviceName",
+          "stationId"
+        ],
+        "type": "object",
+        "properties": {
+          "stationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "serviceType": {
+            "type": "string"
+          },
+          "needAppoint": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ApiResponseStationServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/StationServiceItemDto"
+          }
+        }
+      },
+      "StationServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stationName": {
+            "type": "string"
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "serviceType": {
+            "type": "string"
+          },
+          "needAppoint": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createTime": {
+            "type": "string"
+          }
+        }
+      },
+      "StationCreateRequest": {
+        "required": [
+          "address",
+          "area",
+          "stationName"
+        ],
+        "type": "object",
+        "properties": {
+          "stationName": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "contactPhone": {
+            "type": "string"
+          },
+          "openTime": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "stationType": {
+            "type": "string"
+          },
+          "cityCode": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "required": [
+          "password",
+          "phone",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": [
+          "password",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseListMapStringObject": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "ApiResponsePageResultStationServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultStationServiceItemDto"
+          }
+        }
+      },
+      "PageResultStationServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationServiceItemDto"
+            }
+          }
+        }
+      },
+      "ApiResponseListStationServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationServiceItemDto"
+            }
+          }
+        }
+      },
+      "ApiResponsePageResultStationDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultStationDto"
+          }
+        }
+      },
+      "PageResultStationDto": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StationDto"
+            }
+          }
+        }
+      },
+      "ApiResponsePageResultMapStringObject": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResultMapStringObject"
+          }
+        }
+      },
+      "PageResultMapStringObject": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "ApiResponseCityDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CityDto"
+          }
+        }
+      },
+      "CityDto": {
+        "type": "object",
+        "properties": {
+          "cityCode": {
+            "type": "string"
+          },
+          "cityName": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "centerLng": {
+            "type": "number",
+            "format": "double"
+          },
+          "centerLat": {
+            "type": "number",
+            "format": "double"
+          },
+          "stationCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ApiResponseCityLocation": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/CityLocation"
+          }
+        }
+      },
+      "CityLocation": {
+        "type": "object",
+        "properties": {
+          "cityName": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "covered": {
+            "type": "boolean"
+          },
+          "city": {
+            "$ref": "#/components/schemas/CityDto"
+          },
+          "nearest": {
+            "$ref": "#/components/schemas/CityDto"
+          }
+        }
+      },
+      "ApiResponseListCityDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CityDto"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "登录接口返回的 token",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

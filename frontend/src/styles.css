@@ -1,0 +1,2212 @@
+:root {
+  --bg: #f4f7fa;
+  --panel: #ffffff;
+  --text: #202631;
+  --muted: #7b8494;
+  --line: #e5ebf1;
+  --primary: #009b84;
+  --primary-dark: #00836f;
+  --primary-soft: #e5f6f2;
+  --blue: #2f80ed;
+  --orange: #f59e0b;
+  --purple: #7c3aed;
+  /* 语义状态色：状态一律取这四色，避免每个页面各写一套"看起来差不多"的颜色 */
+  --info: #64748b;
+  --success: #009b84;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+  color-scheme: light;
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login-page {
+  display: grid;
+  grid-template-columns: minmax(470px, 0.92fr) minmax(560px, 1.08fr);
+  min-height: 100vh;
+  background: #f5f7f8;
+}
+
+.login-aside {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 42px clamp(48px, 7vw, 112px) 34px;
+  color: #fff;
+  background: #087f71;
+}
+
+.login-aside::before {
+  position: absolute;
+  right: -140px;
+  bottom: -190px;
+  width: 490px;
+  height: 490px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 36px rgba(255, 255, 255, 0.035), 0 0 0 72px rgba(255, 255, 255, 0.025);
+  content: "";
+}
+
+.login-topline,
+.login-aside-copy,
+.login-service-strip,
+.login-aside-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.login-topline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.login-brand-mark {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 10px;
+  font-size: 23px;
+}
+
+.login-eyebrow,
+.login-kicker {
+  margin: 0 0 22px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.login-aside h1 {
+  max-width: 520px;
+  margin: 0;
+  font-size: clamp(34px, 4vw, 60px);
+  font-weight: 700;
+  line-height: 1.13;
+  letter-spacing: 0;
+}
+
+.login-aside-copy > p:not(.login-eyebrow) {
+  max-width: 430px;
+  margin: 26px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.login-service-strip {
+  display: flex;
+  gap: 22px;
+  margin-top: 28px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+}
+
+.login-service-strip i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  vertical-align: 1px;
+  border-radius: 50%;
+  background: #f5bd69;
+}
+
+.login-aside-footer {
+  display: flex;
+  justify-content: space-between;
+  max-width: 420px;
+  margin-top: auto;
+  padding-top: 80px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+.login-panel {
+  display: grid;
+  place-items: center;
+  padding: 52px clamp(28px, 6vw, 100px);
+}
+
+.login-card {
+  width: min(100%, 480px);
+  padding: 46px 48px 34px;
+  background: #fff;
+  border: 1px solid #e2e8eb;
+  border-radius: 4px;
+  box-shadow: 0 24px 60px rgba(29, 51, 60, 0.08);
+}
+
+.login-heading h2 {
+  margin: 0;
+  color: #202631;
+  font-size: 32px;
+  letter-spacing: 0;
+}
+
+.login-heading p {
+  margin: 10px 0 34px;
+  color: #7b8494;
+  font-size: 14px;
+}
+
+.login-kicker {
+  display: block;
+  margin: 0 0 12px;
+  color: var(--primary);
+}
+
+.login-submit {
+  width: 100%;
+  height: 48px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 3px;
+  background: #087f71;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.login-submit:hover,
+.login-submit:focus-visible {
+  background: #076e62;
+}
+
+.demo-account {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.demo-account-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: #384552;
+  font-weight: 600;
+}
+
+.demo-account-heading small {
+  color: #9aa3af;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.demo-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.demo-actions button {
+  display: grid;
+  grid-template-columns: 25px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 8px;
+  padding: 11px 12px;
+  color: #465361;
+  border: 1px solid #e2e8eb;
+  border-radius: 3px;
+  background: #fbfcfc;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.demo-actions button:hover,
+.demo-actions button.active {
+  color: #087f71;
+  border-color: #8accc0;
+  background: #f0faf7;
+}
+
+.demo-actions .el-icon {
+  grid-row: 1 / span 2;
+  font-size: 18px;
+}
+
+.demo-actions span {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.demo-actions small {
+  margin-top: 3px;
+  color: #9aa3af;
+  font-size: 11px;
+}
+
+.demo-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 12px 0 0;
+  color: #8d98a5;
+  font-size: 11px;
+}
+
+.demo-hint b {
+  color: #65717e;
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-aside {
+    min-height: 300px;
+  }
+
+  .login-aside-footer {
+    padding-top: 44px;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    min-width: 0;
+  }
+
+  .login-aside,
+  .login-panel {
+    padding: 28px 20px;
+  }
+
+  .login-card {
+    padding: 32px 24px 26px;
+  }
+
+  .login-service-strip {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .login-aside h1 {
+    font-size: 38px;
+  }
+}
+
+body {
+  margin: 0;
+  /* 不设 min-width：那会把整页撑到桌面宽度，手机上只能左右拖。
+     窄屏布局由下面的媒体查询接管。 */
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex: 0 0 230px;
+  flex-direction: column;
+  width: 230px;
+  min-width: 230px;
+  max-width: 230px;
+  height: 100vh;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  box-shadow: 6px 0 20px rgba(28, 44, 64, 0.04);
+  transition: flex-basis 0.2s ease;
+}
+
+.sidebar.collapsed {
+  flex-basis: 78px;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 18px 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #009b84, #16b99e);
+}
+
+.brand-mark {
+  display: grid;
+  flex: 0 0 40px;
+  height: 40px;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  font-size: 25px;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.brand-text strong,
+.brand-text span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-text strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.brand-text span {
+  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.collapsed .brand {
+  justify-content: center;
+  padding-inline: 10px;
+}
+
+.collapsed .brand-text,
+.collapsed .nav-item span,
+.collapsed .collapse-button span,
+.collapsed .nav-item .el-badge {
+  display: none;
+}
+
+.nav-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 8px;
+}
+
+.nav-item,
+.collapse-button,
+.icon-button,
+.profile,
+.panel-head button,
+.panel-footer button,
+.news-row,
+.station-row {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  color: #303846;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: #f3f8f7;
+}
+
+.nav-item.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), #11b59a);
+}
+
+.nav-item .el-icon {
+  font-size: 18px;
+}
+
+.collapse-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  margin: 0 20px;
+  color: #5d6675;
+  border-top: 1px solid var(--line);
+}
+
+.workspace {
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 74px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+
+.icon-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #1f2937;
+  border-radius: 6px;
+  font-size: 22px;
+}
+
+.icon-button:hover {
+  background: #f2f5f7;
+}
+
+.city-select {
+  /* 多城市平台：固定足够宽度显示「城市名（驿站数）」，且不参与收缩，避免被搜索框挤到截断。 */
+  flex: 0 0 auto;
+  width: 176px;
+}
+
+.coverage-hint {
+  flex: 0 0 auto;
+  margin-right: 8px;
+  cursor: help;
+}
+
+.search {
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 520px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.role-select {
+  width: 136px;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #202631;
+}
+
+.profile img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border: 2px solid #eef2f6;
+  border-radius: 50%;
+}
+
+.content {
+  padding: 16px 20px 18px;
+}
+
+.data-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  color: #6b5a24;
+  background: #fff9e8;
+  border: 1px solid #f4e2a9;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.data-notice strong {
+  color: #8a6912;
+  font-weight: 650;
+}
+
+.metrics-grid {
+  display: grid;
+  /* 首页共 6 张指标卡：固定 5 列会让第 6 张单独换行、右侧留一大片空白。
+     下限取 158px，使常见宽度下正好排满 6 列；更窄的屏幕会自动减列。 */
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 14px;
+}
+
+/* ---------------------------------------------------------------- 指标卡
+   设计取舍：把大号圆形图标降为小尺寸方形标记，并把数值做成视觉主体。
+   配色一律取语义含义（主色=品牌/正向、蓝=进行中、橙=需关注、灰=未知），
+   不再用与含义无关的装饰色。数值使用等宽数位，多张卡片纵向对齐。 */
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(31, 45, 61, 0.09);
+}
+
+/* 左侧语义色条：一眼区分指标类别，比整块彩色图标克制 */
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--tone-color, var(--primary));
+}
+
+.stat-card--green { --tone-color: var(--primary); }
+.stat-card--blue { --tone-color: var(--blue); }
+.stat-card--orange { --tone-color: var(--orange); }
+.stat-card--purple { --tone-color: var(--primary); }
+.stat-card--neutral { --tone-color: var(--info); }
+
+.stat-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.stat-icon {
+  display: grid;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.stat-icon--green { color: var(--primary); background: var(--primary-soft); }
+.stat-icon--blue { color: var(--blue); background: #e7f0ff; }
+.stat-icon--orange { color: var(--orange); background: #fff1dc; }
+/* 办结率属于正向结果，用主色；此前用的紫色与含义无关 */
+.stat-icon--purple { color: var(--primary); background: var(--primary-soft); }
+.stat-icon--neutral { color: var(--info); background: #eef2f6; }
+
+.stat-label {
+  overflow: hidden;
+  color: #5e6877;
+  font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 10px;
+  color: var(--text);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stat-number {
+  font-size: 30px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat-unit {
+  color: #6b7585;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-note {
+  margin-top: 8px;
+  overflow: hidden;
+  color: #87909f;
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-body {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- 首页主区
+   布局意图：地图是首页的主角（找服务点靠它），所以给它最大的格子；
+   右侧驿站列表不是装饰，每行都能「地图定位」和「提前联系」；
+   预约、诉求、资讯等次要信息压到下面一行，趋势图默认收起，都不抢主区空间。 */
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  /* 桌面端给主区一个足够高的固定高度，地图才有「主角感」 */
+  height: clamp(420px, 56vh, 620px);
+}
+
+.map-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.map-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.station-side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.station-side-search {
+  margin: 0 16px 10px;
+  width: auto;
+}
+
+.station-side-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow-y: auto;
+}
+
+.station-side-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 6px;
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.station-side-item:hover {
+  background: #f8fbfc;
+  border-color: #c9dde4;
+}
+
+/* 当前在地图上聚焦的那一条 */
+.station-side-item.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.side-item-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.side-item-head strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-item-head em {
+  flex: 0 0 auto;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.side-item-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.side-item-hours {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-item-actions {
+  display: flex;
+  gap: 14px;
+  padding-top: 2px;
+}
+
+.side-link {
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.side-link:hover {
+  color: var(--text);
+}
+
+.side-link.primary {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.side-link.primary:hover {
+  color: var(--primary-dark);
+}
+
+/* ---------------------------------------------------------------- 次要信息区 */
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+  /* 固定行高，而不是让内容把行撑高：
+     三个面板的条目数不同，若按内容撑，最多的那个会带着另外两个一起变高，
+     空白就转移到短列表内部。固定行高后三者等高、页脚对齐、多余内容内部滚动。 */
+  grid-auto-rows: 288px;
+}
+
+/* 次要区的三个面板：列表吃掉剩余高度、页脚钉在底部。
+   不这样做的话，网格虽然把三个面板拉成等高，但内部按内容顺序排，
+   列表短的那个（例如「我的预约」）页脚会浮在中间，底下留一大片空白，
+   三个面板的页脚也不在同一水平线上。 */
+.secondary-grid > .panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.secondary-grid > .panel > .panel-footer {
+  margin-top: auto;
+}
+
+/* 高度由面板决定，不再写死 max-height，否则面板变高时列表不跟着长。
+   min-height 给一个下限：flex:1 + min-height:0 会让内容基准高度变 0，
+   三个面板都没有自然高度，整行会塌成只剩标题和页脚。 */
+.record-list.compact,
+.appeal-list.compact,
+.news-list.compact {
+  flex: 1;
+  min-height: 176px;
+  overflow-y: auto;
+}
+
+.record-list.compact .record-row,
+.appeal-list.compact .appeal-row,
+.news-list.compact .news-row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* 没有数据时让空状态占满列表区并居中，避免顶部一小块插画、下面一大片空白 */
+.record-list.compact .el-empty,
+.appeal-list.compact .el-empty,
+.news-list.compact .el-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 8px 0;
+}
+
+.panel-head-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 诉求与反馈的分类选择器：三选一决定表单措辞与子类型 */
+.category-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.category-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.category-option:hover {
+  background: #f8fbfc;
+  border-color: #c9dde4;
+}
+
+.category-option.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.category-option .el-icon {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.category-option.active .el-icon {
+  color: var(--primary);
+}
+
+.category-option strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.category-option small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* 列表里的分类标签：表扬用暖色、建议用主色、问题用中性灰 */
+.category-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  margin-right: 6px;
+  font-size: 11px;
+  border-radius: 9px;
+}
+
+.category-chip--request {
+  color: #5e6877;
+  background: #eef2f6;
+}
+
+.category-chip--praise {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.category-chip--suggestion {
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+/* 政策资讯的两个筛选组（来源 + 分类） */
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* 表单里解释「这个功能是干什么的」的说明文字 */
+.form-hint {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  color: #5e6877;
+  font-size: 12px;
+  line-height: 1.65;
+  background: #f4f9fb;
+  border-left: 3px solid var(--primary);
+  border-radius: 0 5px 5px 0;
+}
+
+.form-hint b {
+  color: var(--text);
+}
+
+.field-hint {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.panel {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-head h2 {
+  margin: 0;
+  color: #202631;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.panel-head span,
+.panel-head button,
+.panel-footer {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel-head button,
+.panel-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.station-content {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.82fr) minmax(300px, 1.18fr);
+  gap: 14px;
+  padding: 12px 14px 16px;
+}
+
+.map-box {
+  display: flex;
+  overflow: hidden;
+  height: 286px;
+  border: 1px solid #dce8ee;
+  border-radius: 5px;
+}
+
+.map-box > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 注意：这里不要再写 `.map-box img` 之类的宽泛选择器。
+   地图换成高德后，标记图标也是 <img>，被强制成 100%×100% 会变成 0 尺寸而看不见。 */
+
+.station-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.station-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 64px 18px;
+  align-items: center;
+  gap: 10px;
+  min-height: 55px;
+  padding: 6px 4px;
+  border-bottom: 1px solid #edf1f5;
+  color: #2a3341;
+  text-align: left;
+}
+
+.station-row:last-child {
+  border-bottom: 0;
+}
+
+.station-row:hover,
+.station-row.selected {
+  background: #f6fbfa;
+}
+
+.rank {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+.rank.muted {
+  color: #303846;
+  background: #fff;
+  border: 1px solid #aeb7c2;
+}
+
+.station-main {
+  min-width: 0;
+}
+
+.station-main strong {
+  display: block;
+  overflow: hidden;
+  color: #253042;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.distance {
+  color: #5f6978;
+  font-size: 13px;
+  text-align: right;
+}
+
+.appeal-list {
+  min-height: 275px;
+}
+
+.appeal-row {
+  display: grid;
+  grid-template-columns: 10px minmax(180px, 1fr) 52px 72px 64px;
+  align-items: center;
+  gap: 12px;
+  min-height: 55px;
+  padding: 0 16px;
+  border-bottom: 1px solid #edf1f5;
+  color: #697384;
+  font-size: 14px;
+}
+
+.appeal-row strong {
+  overflow: hidden;
+  color: #2b3442;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot--warning {
+  background: var(--orange);
+}
+
+.dot--primary {
+  background: var(--blue);
+}
+
+.panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 16px;
+}
+
+.panel-footer button {
+  color: var(--primary);
+}
+
+.right-only {
+  justify-content: flex-end;
+}
+
+.clean-table {
+  --el-table-border-color: #edf1f5;
+  --el-table-header-bg-color: #fff;
+}
+
+.news-list {
+  min-height: 266px;
+  padding: 8px 12px 0;
+}
+
+.news-row {
+  display: grid;
+  grid-template-columns: 54px 1fr 50px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 4px;
+  border-bottom: 1px solid #edf1f5;
+  color: #737d8c;
+  text-align: left;
+}
+
+.news-row strong {
+  overflow: hidden;
+  color: #303846;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-panel {
+  padding-bottom: 12px;
+}
+
+.chart {
+  width: 100%;
+  height: 248px;
+}
+
+/* 趋势数据全为 0 时的空状态：替代退化成 0~0 的坐标轴（那看起来像"图表坏了"） */
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 248px;
+  padding: 0 24px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fbfdfe;
+}
+
+.chart-empty-icon {
+  margin-bottom: 10px;
+  color: #b6c2cd;
+  font-size: 26px;
+}
+
+.chart-empty strong {
+  color: #5e6877;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chart-empty p {
+  max-width: 320px;
+  margin: 6px 0 0;
+  color: #98a4b0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 首页三个列表区的空状态：默认插画占了过多垂直空间，这里收紧内边距与文案间距 */
+.panel .el-empty {
+  padding: 18px 0 10px;
+}
+
+.panel .el-empty__description {
+  margin-top: 4px;
+}
+
+.panel .el-empty__description p {
+  color: #98a4b0;
+  font-size: 13px;
+}
+
+/* 小节标题右侧的计数徽标（如消息中心的未读条数） */
+.heading-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+  background: var(--primary-soft);
+  border-radius: 10px;
+}
+
+.chart-note {
+  margin: -4px 18px 0;
+  color: #9aa3af;
+  font-size: 12px;
+}
+
+.full {
+  width: 100%;
+}
+
+.el-tag {
+  border-radius: 4px;
+}
+
+.el-input__wrapper,
+.el-select__wrapper {
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px var(--line) inset;
+}
+
+.module-content {
+  min-height: calc(100vh - 74px);
+  padding: 28px 24px 36px;
+}
+
+.module-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+/* 标题块允许收缩，否则右侧按钮（flex-shrink:0）会把标题挤成一条竖排文字 */
+.module-heading > div:first-child {
+  min-width: 0;
+}
+
+.module-kicker {
+  margin-bottom: 8px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.module-heading h1 {
+  margin: 0;
+  color: #1e2936;
+  font-size: 28px;
+  font-weight: 650;
+}
+
+.module-heading p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.module-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.module-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.toolbar-search {
+  width: 360px;
+}
+
+.toolbar-select {
+  width: 150px;
+}
+
+.station-directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.directory-list {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.directory-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 74px 18px;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 102px;
+  padding: 16px 20px;
+  border: 0;
+  border-bottom: 1px solid #edf1f5;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.directory-row:last-child {
+  border-bottom: 0;
+}
+
+.directory-row:hover,
+.directory-row.selected {
+  background: #f5fbf9;
+}
+
+.directory-rank {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+.directory-info {
+  min-width: 0;
+}
+
+.directory-info strong,
+.directory-info small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.directory-info strong {
+  color: #253042;
+  font-size: 16px;
+}
+
+.directory-info small {
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.directory-info .tags {
+  margin-top: 8px;
+}
+
+.directory-detail {
+  overflow: hidden;
+}
+
+.detail-cover {
+  position: relative;
+  height: 184px;
+  overflow: hidden;
+}
+
+.detail-cover > * {
+  width: 100%;
+}
+
+/* 同理：不要给 .detail-cover 下的 <img> 设尺寸，否则会压掉高德地图的标记图标。 */
+
+.detail-body {
+  padding: 20px;
+}
+
+.detail-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-title h2 {
+  margin: 0;
+  color: #253042;
+  font-size: 18px;
+}
+
+.detail-title p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.detail-list {
+  margin: 20px 0;
+}
+
+.detail-list div {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf1f5;
+  font-size: 13px;
+}
+
+.detail-list dt {
+  color: var(--muted);
+}
+
+.detail-list dd {
+  margin: 0;
+  color: #374151;
+}
+
+.detail-services > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #556172;
+  font-size: 13px;
+}
+
+.detail-services {
+  margin-bottom: 18px;
+}
+
+/* 服务设施来自公开来源文本，高德没有该字段；这里弱化展示，把注意力让给可验证字段 */
+.detail-services-muted {
+  padding: 10px 12px;
+  background: #f7fafc;
+  border: 1px dashed #dbe7ed;
+  border-radius: 5px;
+}
+
+.detail-services-muted > span {
+  color: #7b8794;
+}
+
+.muted-hint {
+  margin-left: 6px;
+  color: #98a4b0;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.detail-services-muted p.muted-hint {
+  margin: 0;
+}
+
+.two-columns {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.82fr) minmax(0, 1.18fr);
+  gap: 18px;
+}
+
+.form-panel,
+.progress-panel,
+.profile-panel {
+  padding: 22px;
+}
+
+.sub-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sub-heading h2 {
+  margin: 0;
+  color: #253042;
+  font-size: 18px;
+}
+
+.sub-heading > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.form-submit {
+  margin-top: 18px;
+}
+
+.record-list,
+.evaluation-list,
+.message-list,
+.favorite-list,
+.news-directory {
+  padding: 0 4px;
+}
+
+.record-row,
+.evaluation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 70px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.record-row strong,
+.record-row span,
+.evaluation-row strong,
+.evaluation-row p {
+  display: block;
+}
+
+.record-row strong,
+.evaluation-row strong {
+  color: #303846;
+  font-size: 14px;
+}
+
+.record-row span,
+.evaluation-row p {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.record-meta {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.timeline {
+  padding: 6px 4px 10px;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 66px;
+}
+
+.timeline-dot {
+  flex: 0 0 10px;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+}
+
+.timeline-dot--warning {
+  background: var(--orange);
+}
+
+.timeline-dot--primary {
+  background: var(--blue);
+}
+
+.timeline-item strong {
+  color: #303846;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.timeline-item p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.help-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  color: #367167;
+  background: #effaf7;
+  border: 1px solid #d8f1eb;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.detail-progress {
+  margin-top: 18px;
+  padding: 22px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.activity-item {
+  display: flex;
+  min-height: 224px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.activity-accent {
+  flex: 0 0 8px;
+}
+
+.activity-accent--green { background: var(--primary); }
+.activity-accent--blue { background: var(--blue); }
+.activity-accent--orange { background: var(--orange); }
+.activity-accent--purple { background: var(--purple); }
+
+.activity-body {
+  flex: 1;
+  padding: 20px 22px;
+}
+
+.activity-top,
+.activity-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.activity-body h2 {
+  margin: 16px 0 14px;
+  color: #253042;
+  font-size: 20px;
+}
+
+.activity-body p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.activity-footer {
+  margin-top: 22px;
+  color: #657080;
+  font-size: 13px;
+}
+
+.compact-tabs {
+  margin-bottom: -15px;
+}
+
+.news-directory-row {
+  display: grid;
+  /* 列：分类 | 来源（官方/平台名） | 标题 | 城市 | 日期 | 箭头 */
+  grid-template-columns: 58px 76px minmax(0, 1fr) 68px 88px 18px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 66px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 1px solid #edf1f5;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.news-directory-row strong {
+  overflow: hidden;
+  color: #303846;
+  font-size: 15px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evaluation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.evaluation-row {
+  display: block;
+  padding: 16px 0;
+}
+
+.message-row,
+.favorite-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 1px solid #edf1f5;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.message-row > div,
+.favorite-row > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.message-row strong,
+.favorite-row strong {
+  display: block;
+  overflow: hidden;
+  color: #303846;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-row p,
+.favorite-row span {
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-row time {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.message-row.unread {
+  background: #fbfefd;
+}
+
+.message-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.message-icon--success { color: var(--primary); background: #e5f6f2; }
+.message-icon--primary { color: var(--blue); background: #e8f0ff; }
+.message-icon--warning { color: var(--orange); background: #fff1dc; }
+.message-icon--info { color: #7b8494; background: #f1f3f5; }
+
+.unread-dot {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.analytics-card {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}
+
+.analytics-card span,
+.analytics-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.analytics-card strong {
+  display: block;
+  margin: 12px 0 14px;
+  color: #202631;
+  font-size: 28px;
+}
+
+.analytics-card small {
+  margin-top: 10px;
+}
+
+.service-ranking {
+  margin-top: 18px;
+  padding: 22px;
+}
+
+.ranking-row {
+  display: grid;
+  grid-template-columns: 28px 150px minmax(180px, 1fr) 90px;
+  align-items: center;
+  gap: 16px;
+  min-height: 58px;
+  border-bottom: 1px solid #edf1f5;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.ranking-row b {
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.ranking-row strong {
+  color: #303846;
+  text-align: right;
+}
+
+.profile-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 2px 18px;
+  max-width: 760px;
+}
+
+.profile-form .el-button {
+  width: 120px;
+  margin-top: 10px;
+}
+
+/* ---------------------------------------------- 真实接口接入后新增的样式 */
+
+.module-note {
+  margin-bottom: 16px;
+}
+
+.profile span {
+  white-space: nowrap;
+}
+
+.analytics-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.detail-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pagination-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+.appeal-timeline {
+  margin-top: 26px;
+  padding-left: 4px;
+}
+
+.appeal-timeline p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.news-meta {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.news-content {
+  max-height: 420px;
+  margin: 0;
+  overflow-y: auto;
+  color: #303846;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* 中等屏幕：主区改为上下堆叠（地图在上、列表在下）。
+   注意：这里原先写 body { min-width: 1024px }，等于把整页锁死在桌面宽度，
+   手机端只能横向拖动，是「没有手机端适配」的根因，已移除。 */
+@media (max-width: 1180px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .map-canvas {
+    /* 父容器在窄屏下是 height:auto，此时 flex:1（basis 0）会把地图压成 0 高，
+       所以这里必须改成固定高度并取消 flex 伸缩。 */
+    flex: none;
+    height: clamp(300px, 46vh, 420px);
+  }
+
+  .station-side {
+    max-height: 380px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .secondary-grid,
+  .station-directory,
+  .two-columns {
+    grid-template-columns: 1fr;
+  }
+
+  /* 单列堆叠后不再需要固定行高，让每个面板按自身内容决定高度 */
+  .secondary-grid {
+    grid-auto-rows: auto;
+  }
+
+  .activity-grid,
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 平板与大屏手机：侧栏改为可收起的抽屉，内容占满宽度 */
+@media (max-width: 900px) {
+  .workspace {
+    padding: 12px;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 40;
+    height: 100vh;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.24);
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  /* 侧栏浮层的遮罩：点一下收起菜单 */
+  .sidebar-backdrop {
+    position: fixed;
+    z-index: 30;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.34);
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-number {
+    font-size: 26px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topbar .search {
+    order: 3;
+    width: 100%;
+  }
+
+  .city-select {
+    width: 150px;
+  }
+
+  .activity-grid,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 手机：单列、控件铺满、横向不出现滚动条 */
+@media (max-width: 640px) {
+  .workspace {
+    padding: 10px;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    padding: 11px 12px 12px;
+  }
+
+  .stat-card::before {
+    top: 11px;
+    bottom: 11px;
+  }
+
+  .stat-number {
+    font-size: 22px;
+  }
+
+  .stat-label,
+  .stat-note {
+    font-size: 12px;
+  }
+
+  .map-canvas {
+    flex: none;
+    height: 260px;
+  }
+
+  .station-side {
+    max-height: 320px;
+  }
+
+  .panel-head {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 14px 10px;
+  }
+
+  .panel-head h2 {
+    font-size: 15px;
+  }
+
+  /* 侧栏默认收起，展开时占满大半个屏幕 */
+  .sidebar {
+    width: min(78vw, 260px);
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* 模块页头在窄屏下改为上下排列：并排会把标题挤成竖排单字 */
+  .module-heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .module-heading h1 {
+    font-size: 21px;
+  }
+
+  .module-heading p {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  .module-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .module-actions .el-button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* 表单类页面在窄屏下改为单列 */
+  .form-panel {
+    padding: 14px;
+  }
+
+  /* 顶栏动作按钮在窄屏下只留图标与必要文字 */
+  .topbar-actions {
+    gap: 6px;
+  }
+
+  .role-tag {
+    display: none;
+  }
+
+  .el-dialog {
+    width: calc(100vw - 24px) !important;
+    margin-top: 8vh !important;
+  }
+
+  /* 表单控件铺满，避免窄屏横向滚动 */
+  .el-form-item__content > .el-input,
+  .el-form-item__content > .el-select,
+  .el-form-item__content > .el-date-editor {
+    width: 100%;
+  }
+
+  .el-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* 分类选择器在窄屏下改为单列，三项并排会把文字成竖排 */
+  .category-picker {
+    grid-template-columns: 1fr;
+  }
+
+  /* 资讯行有 6 列，窄屏下压不下，改成两行：标签行 + 标题行 */
+  .news-directory-row {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    gap: 6px 8px;
+    padding: 10px 8px;
+  }
+
+  .news-directory-row strong {
+    grid-column: 1 / -1;
+    order: 10;
+    white-space: normal;
+  }
+
+  .news-directory-row > .el-icon {
+    grid-column: -2 / -1;
+    grid-row: 1;
+  }
+
+  .news-filters {
+    width: 100%;
+  }
+
+  .category-option {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .category-option small {
+    margin-left: auto;
+  }
+}

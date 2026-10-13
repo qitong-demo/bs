@@ -1,0 +1,388 @@
+{
+ "name": "图4-20 后台统计分析模块流程图",
+ "style": {
+  "page_w": 8.27,
+  "page_h": 7.16,
+  "fs_msg": 12.25,
+  "fs_life": 12.25,
+  "fs_sub": 8.0,
+  "fs_tab": 11.5,
+  "fs_cond": 11.5,
+  "line_weight_pt": 0.75,
+  "box_w": 1.24,
+  "box_h": 0.64,
+  "box_top_margin": 0.3,
+  "box_bottom_gap": null,
+  "dy_msg": 0.335,
+  "dy_self": 0.5,
+  "frame_in": 0.5,
+  "frame_out": 0.08,
+  "tab_w": 0.46,
+  "tab_h": 0.24,
+  "tab_text_pad": 0.08,
+  "bar_w": 0.08,
+  "bar_pad": 0.12,
+  "loop_w": 0.28,
+  "loop_h": 0.22,
+  "txt_off": 0.34,
+  "life_bottom_pad": 0.1,
+  "min_bottom": 0.14,
+  "msg_text_lift": 0.02,
+  "text_pad": 0.1,
+  "insert_width_cm": 15.5,
+  "max_aspect": 1.52,
+  "ascii_em": 0.52,
+  "tol_text": 0.02,
+  "tol_bar": 0.03,
+  "tol_border": 0.01,
+  "fs_label": 11.5,
+  "box_bottom_margin": 0.3
+ },
+ "shapes": 20,
+ "messages": 0,
+ "lifelines": 0,
+ "frames": [],
+ "content_bbox": [
+  1.55,
+  0.30000000000000004,
+  7.85,
+  6.859999999999999
+ ],
+ "page_xml_bytes": 28545,
+ "png_size": [
+  1075,
+  930
+ ],
+ "prims": [
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "roundrect",
+   "geom_kind": "rect",
+   "rounding": 0.16,
+   "box": [
+    2.1,
+    6.34,
+    3.9,
+    6.859999999999999
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "开始",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.3402777777777778
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    5.420000000000001,
+    4.3,
+    6.04
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "进入数据统计页面",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    4.550000000000001,
+    4.3,
+    5.17
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "请求统计概览接口",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "diamond",
+   "geom_kind": "diamond",
+   "rounding": 0.0,
+   "box": [
+    1.55,
+    3.055,
+    4.45,
+    4.105
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "统计接口是否可用",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.3611111111111112
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    1.9899999999999998,
+    4.3,
+    2.61
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "按角色范围聚合业务数据",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.8715277777777777
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    1.7,
+    1.1199999999999999,
+    4.3,
+    1.74
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "展示指标与服务排行",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.53125
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "roundrect",
+   "geom_kind": "rect",
+   "rounding": 0.16,
+   "box": [
+    2.1,
+    0.30000000000000004,
+    3.9,
+    0.8200000000000001
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "结束",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.3402777777777778
+  },
+  {
+   "kind": "rect",
+   "role": "node",
+   "shape": "rect",
+   "geom_kind": "rect",
+   "rounding": 0.0,
+   "box": [
+    5.3,
+    3.27,
+    7.3999999999999995,
+    3.89
+   ],
+   "fill": "#FFFFFF",
+   "line": "#000000",
+   "text": "展示演示数据并标注来源",
+   "two": null,
+   "size": 12.25,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 1.8715277777777777
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    6.34,
+    3.0,
+    6.04
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    5.420000000000001,
+    3.0,
+    5.17
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    4.550000000000001,
+    3.0,
+    4.105
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    1.9899999999999998,
+    3.0,
+    1.74
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    1.1199999999999999,
+    3.0,
+    0.8200000000000001
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    3.0,
+    3.055,
+    3.0,
+    2.61
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    4.45,
+    3.58,
+    5.3,
+    3.58
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.3999999999999995,
+    3.58,
+    7.85,
+    3.58
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.85,
+    3.58,
+    7.85,
+    0.56
+   ],
+   "dash": false,
+   "arrow": null
+  },
+  {
+   "kind": "line",
+   "role": "flow",
+   "box": [
+    7.85,
+    0.56,
+    3.9,
+    0.56
+   ],
+   "dash": false,
+   "arrow": "filled"
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    3.050138888888889,
+    2.732673611111111,
+    3.269861111111111,
+    2.932326388888889
+   ],
+   "text": "是",
+   "size": 11.5,
+   "align": "left",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    3.080138888888889,
+    2.732673611111111,
+    3.2398611111111113,
+    2.932326388888889
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "flow_label",
+   "box": [
+    4.765138888888889,
+    3.6401736111111114,
+    4.984861111111111,
+    3.839826388888889
+   ],
+   "text": "否",
+   "size": 11.5,
+   "align": "center",
+   "valign": "middle",
+   "glyph_w": 0.1597222222222222,
+   "glyph_box": [
+    4.795138888888889,
+    3.6401736111111114,
+    4.954861111111111,
+    3.839826388888889
+   ]
+  }
+ ]
+}
