@@ -1786,7 +1786,7 @@ button {
   display: grid;
   /* 列：分类 | 来源（官方/平台名） | 标题 | 城市 | 日期 | 箭头
      日期列要放得下 "2026-08-04" 不换行——88px 会把日期折成两行。 */
-  grid-template-columns: 62px 76px minmax(0, 1fr) 72px 100px 18px;
+  grid-template-columns: 62px 118px minmax(0, 1fr) 72px 100px 18px;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -1798,6 +1798,13 @@ button {
   color: var(--muted);
   cursor: pointer;
   text-align: left;
+}
+
+/* 来源格子里可能同时有「来源」与「第三方」两个标签 */
+.news-source-cell {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 /* 日期与城市标签一律不换行：列宽不足时宁可省略，也不要折成两行 */
