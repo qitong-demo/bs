@@ -110,8 +110,21 @@ async function main() {
   await step("首页趋势图渲染", async () => {
     // 趋势图默认收起，先展开再断言（它是回顾性数据，不再常驻首屏）。
     await page.locator(".chart-panel .panel-head-actions button", { hasText: "展开" }).first().click();
-    // echarts 为按需加载的独立分包，首次冷启动可能需要更长时间，这里放宽等待时间。
-    await page.waitForSelector(".chart canvas", { timeout: 40000 });
+    // echarts 为按需加载的独立分包，首次冷启动需要更长时间。
+    // 数据全为 0 时组件刻意不画坐标轴（会退化成 0~0，看起来像图表坏了），而是给出空状态说明，
+    // 因此「有 canvas」或「有空状态」都算正确，两者都没有才是问题。
+    await page.waitForFunction(
+      () => Boolean(document.querySelector(".chart canvas") || document.querySelector(".chart-empty")),
+      { timeout: 40000 }
+    );
+    const chartState = await page.evaluate(() => ({
+      canvas: document.querySelectorAll(".chart canvas").length,
+      empty: document.querySelectorAll(".chart-empty").length
+    }));
+    if (chartState.canvas === 0 && chartState.empty === 0) {
+      throw new Error("趋势图展开后既没有图表也没有空状态说明");
+    }
+    console.log(`      趋势图：canvas ${chartState.canvas} 个，空状态 ${chartState.empty} 个`);
   });
 
   // ---------------------------------------------------------------- 用户端

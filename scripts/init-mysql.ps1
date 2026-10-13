@@ -14,11 +14,13 @@ if ([string]::IsNullOrWhiteSpace($User) -or [string]::IsNullOrWhiteSpace($Passwo
 if (-not (Test-Path $MysqlExe)) { throw "未找到 mysql.exe：$MysqlExe" }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-# 执行顺序：先建表，再导入真实驿站名录（stations.sql），最后导入演示账号与活动。
+# 执行顺序：先建表，再导入真实驿站名录（stations.sql）与政策资讯（news.sql），
+# 最后导入演示账号与活动（data.sql）。
 # 活动记录引用驿站编号，因此 stations.sql 必须先于 data.sql 执行。
 $sqlFiles = @(
   (Join-Path $projectRoot 'backend/src/main/resources/db/schema.sql'),
   (Join-Path $projectRoot 'backend/src/main/resources/db/stations.sql'),
+  (Join-Path $projectRoot 'backend/src/main/resources/db/news.sql'),
   (Join-Path $projectRoot 'backend/src/main/resources/db/data.sql')
 )
 foreach ($file in $sqlFiles) {
