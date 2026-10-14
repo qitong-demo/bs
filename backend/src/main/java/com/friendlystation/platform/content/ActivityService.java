@@ -11,7 +11,13 @@ import java.util.Map;
  */
 public interface ActivityService {
     /** 前台分页，仅返回已发布活动，stationId 非空时按驿站过滤。 */
-    PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword);
+    /**
+     * 前台活动分页。
+     *
+     * @param cityCode 当前城市编码；非空时只返回「本市 + 全国性」活动，并把本市排在前面。
+     *                 与政策资讯同一套口径。
+     */
+    PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword, String cityCode);
 
     /** 后台分页，返回全部状态，status 非空时按状态过滤。 */
     PageResult<Map<String, Object>> adminPage(long current, long size, String status, String keyword);

@@ -36,9 +36,10 @@ public class ActivityController {
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
             @RequestParam(required = false) Long stationId,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String cityCode
     ) {
-        return ApiResponse.ok(activityService.publicPage(current, size, stationId, keyword));
+        return ApiResponse.ok(activityService.publicPage(current, size, stationId, keyword, cityCode));
     }
 
     @GetMapping("/my")

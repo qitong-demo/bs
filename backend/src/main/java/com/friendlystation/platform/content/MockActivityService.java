@@ -47,13 +47,15 @@ public class MockActivityService implements ActivityService {
     }
 
     @Override
-    public PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword) {
-        return page(current, size, stationId, keyword, "PUBLISHED");
+    public PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword,
+                                                     String cityCode) {
+        return page(current, size, stationId, keyword, "PUBLISHED", cityCode);
     }
 
     @Override
     public PageResult<Map<String, Object>> adminPage(long current, long size, String status, String keyword) {
-        return page(current, size, null, keyword, status);
+        // 管理端不做城市过滤
+        return page(current, size, null, keyword, status, null);
     }
 
     @Override
@@ -131,19 +133,37 @@ public class MockActivityService implements ActivityService {
         return remaining(record);
     }
 
-    private PageResult<Map<String, Object>> page(long current, long size, Long stationId, String keyword, String status) {
+    private PageResult<Map<String, Object>> page(long current, long size, Long stationId, String keyword,
+                                                String status, String cityCode) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 100);
         String normalizedKeyword = ContentSupport.trimText(keyword);
         String normalizedStatus = ContentSupport.trimText(status);
+        String normalizedCity = ContentSupport.trimText(cityCode);
         List<Map<String, Object>> filtered = store.stream()
                 .filter(item -> normalizedStatus.isEmpty() || normalizedStatus.equals(item.get("status")))
                 .filter(item -> stationId == null || stationId.equals(item.get("stationId")))
+                // 城市口径与 mysql 一致：只看「本市 + 全国性」
+                .filter(item -> normalizedCity.isEmpty()
+                        || normalizedCity.equals(item.get("cityCode"))
+                        || ContentSupport.trimText(item.get("cityCode")).isEmpty())
                 .filter(item -> normalizedKeyword.isEmpty()
                         || String.valueOf(item.get("title")).contains(normalizedKeyword)
                         || String.valueOf(item.get("address")).contains(normalizedKeyword)
                         || String.valueOf(item.get("content")).contains(normalizedKeyword))
-                .sorted(Comparator.comparing((Map<String, Object> item) -> (LocalDateTime) item.get("activityTime")).reversed())
+                .sorted((left, right) -> {
+                    // 本市优先，其次按活动时间倒序——与 mysql 的 ORDER BY 同口径
+                    if (!normalizedCity.isEmpty()) {
+                        boolean leftLocal = normalizedCity.equals(left.get("cityCode"));
+                        boolean rightLocal = normalizedCity.equals(right.get("cityCode"));
+                        if (leftLocal != rightLocal) {
+                            return leftLocal ? -1 : 1;
+                        }
+                    }
+                    LocalDateTime leftTime = (LocalDateTime) left.get("activityTime");
+                    LocalDateTime rightTime = (LocalDateTime) right.get("activityTime");
+                    return rightTime.compareTo(leftTime);
+                })
                 .toList();
         int from = (int) Math.min((safeCurrent - 1) * safeSize, filtered.size());
         int to = (int) Math.min(from + safeSize, filtered.size());

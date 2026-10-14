@@ -35,13 +35,15 @@ public class MysqlActivityService implements ActivityService {
     }
 
     @Override
-    public PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword) {
-        return doPage(current, size, "PUBLISHED", stationId, keyword);
+    public PageResult<Map<String, Object>> publicPage(long current, long size, Long stationId, String keyword,
+                                                     String cityCode) {
+        return doPage(current, size, "PUBLISHED", stationId, keyword, cityCode);
     }
 
     @Override
     public PageResult<Map<String, Object>> adminPage(long current, long size, String status, String keyword) {
-        return doPage(current, size, status, null, keyword);
+        // 管理端不做城市过滤：管理员要看全平台
+        return doPage(current, size, status, null, keyword, null);
     }
 
     @Override
@@ -171,12 +173,32 @@ public class MysqlActivityService implements ActivityService {
         };
     }
 
-    private PageResult<Map<String, Object>> doPage(long current, long size, String status, Long stationId, String keyword) {
+    private PageResult<Map<String, Object>> doPage(long current, long size, String status, Long stationId,
+                                                   String keyword, String cityCode) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 100);
-        LambdaQueryWrapper<Activity> query = new LambdaQueryWrapper<Activity>()
-                .orderByDesc(Activity::getActivityTime)
-                .orderByDesc(Activity::getId);
+        LambdaQueryWrapper<Activity> query = new LambdaQueryWrapper<>();
+        // 排序：有城市上下文时本市优先，否则纯按时间倒序。
+        // 本地优先必须放在 SQL 里排，不能取回分页结果再排——否则第一页可能是别市的。
+        String normalizedCity = null;
+        if (!ContentSupport.isBlank(cityCode)) {
+            String candidate = cityCode.trim();
+            // 拼进 ORDER BY 前先校验：这里只能用字面量，不能走参数绑定
+            if (!candidate.matches("\\d{6}")) {
+                throw new BusinessException("城市编码不合法");
+            }
+            normalizedCity = candidate;
+            query.and(wrapper -> wrapper
+                    .eq(Activity::getCityCode, candidate)
+                    .or()
+                    .isNull(Activity::getCityCode)
+                    .or()
+                    .eq(Activity::getCityCode, ""));
+            query.last("ORDER BY (CASE WHEN city_code = '" + candidate
+                    + "' THEN 0 ELSE 1 END), activity_time DESC, id DESC");
+        } else {
+            query.orderByDesc(Activity::getActivityTime).orderByDesc(Activity::getId);
+        }
         if (!ContentSupport.isBlank(status)) {
             query.eq(Activity::getStatus, status.trim());
         }
