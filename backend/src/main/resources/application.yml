@@ -8,6 +8,30 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
+  # 邮件服务：用于发送邮箱验证码（改账号 ID / 改密码 / 改联系方式）。
+  # 为什么不用短信：个人开发者申请不到短信资质（阿里云 2025-06-06 公告明确
+  # 「短信服务不支持申请个人自用资质」），邮箱是能真实送达的唯一验证通道。
+  #
+  # 账号密码全部通过环境变量注入，绝不入库。
+  # **未配置时不会假装成功**：验证码只写后端日志，接口返回 delivered=false，
+  # 前端据此显著标注「演示环境未真实发送邮件」。
+  # 本地想真发：MAIL_HOST=smtp.qq.com MAIL_USERNAME=你的邮箱 MAIL_PASSWORD=SMTP授权码
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

@@ -565,4 +565,26 @@ public class DemoWorkflowStore implements WorkflowService {
             default -> "用户" + userId;
         };
     }
+
+    // -------------------------------------------------------------- 邮箱绑定（演示模式）
+
+    /**
+     * 演示模式的邮箱绑定。与 userName 一样用内存维护——演示库没有 sys_user 表，
+     * 但邮箱验证码是敏感操作的前置条件，两种 profile 都必须能走通。
+     */
+    private final Map<Long, String> boundEmails = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 读取账号绑定的邮箱，未绑定返回 null。 */
+    public String emailOf(long userId) {
+        return boundEmails.get(userId);
+    }
+
+    /** 绑定或更换邮箱。 */
+    public void bindEmail(long userId, String email) {
+        if (email == null || email.isBlank()) {
+            boundEmails.remove(userId);
+        } else {
+            boundEmails.put(userId, email.trim().toLowerCase());
+        }
+    }
 }

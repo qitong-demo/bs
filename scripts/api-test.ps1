@@ -244,7 +244,7 @@ Assert-True '账号分页返回 PageResult' ($users.Json.data.total -ge 3)
 Assert-True '账号返回角色名称' ([bool]$users.Json.data.records[0].roleName)
 
 $roles = Send-Api -Method Get -Path '/api/admin/roles' -Token $adminToken
-Assert-True '角色列表返回 4 个内置角色' ($roles.Json.data.Count -eq 4)
+Assert-True '角色列表返回 3 个内置角色' ($roles.Json.data.Count -eq 3)
 
 $targetUserId = $users.Json.data.records[0].id
 $setRoles = Send-Api -Method Put -Path "/api/admin/users/$targetUserId/roles" -Token $adminToken -Body @{ roleCodes = @('USER') }

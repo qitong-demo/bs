@@ -16,6 +16,8 @@ public class SysUser {
     private String password;
     private String realName;
     private String phone;
+    /** 邮箱：用于收发验证码（改账号 ID / 改密码 / 改联系方式时校验身份）。可为空。 */
+    private String email;
     private String avatar;
     private String userType;
     private String jobType;
