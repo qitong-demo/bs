@@ -1,6 +1,7 @@
 package com.friendlystation.platform.auth;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.friendlystation.platform.common.BusinessException;
 import com.friendlystation.platform.persistence.entity.SysRole;
 import com.friendlystation.platform.persistence.entity.SysUser;
@@ -67,6 +68,83 @@ public class MysqlAccountService implements AccountService {
         userRole.setRoleId(role.getId());
         userRoleMapper.insert(userRole);
         return toAccountUser(user);
+    }
+
+    // ------------------------------------------------------------ 凭据维护
+
+    @Override
+    public boolean usernameExists(String username) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        // 不区分大小写查重：MySQL 默认排序规则本身不区分，这里显式说明意图
+        Long count = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, username.trim()));
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean usernameTakenByOther(String username, long selfId) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        Long count = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, username.trim())
+                .ne(SysUser::getId, selfId));
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean exists(long userId) {
+        return userMapper.selectById(userId) != null;
+    }
+
+    @Override
+    public String usernameOf(long userId) {
+        SysUser user = userMapper.selectById(userId);
+        return user == null ? null : user.getUsername();
+    }
+
+    @Override
+    public String emailOf(long userId) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank()) {
+            return null;
+        }
+        return user.getEmail();
+    }
+
+    @Override
+    @Transactional
+    public void updateUsername(long userId, String newUsername) {
+        int updated = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getUsername, newUsername.trim()));
+        if (updated == 0) {
+            throw new BusinessException("账号不存在");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(long userId, String encodedPassword) {
+        int updated = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getPassword, encodedPassword));
+        if (updated == 0) {
+            throw new BusinessException("账号不存在");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateEmail(long userId, String email) {
+        int updated = userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId)
+                .set(SysUser::getEmail, email));
+        if (updated == 0) {
+            throw new BusinessException("账号不存在");
+        }
     }
 
     private AccountUser toAccountUser(SysUser user) {

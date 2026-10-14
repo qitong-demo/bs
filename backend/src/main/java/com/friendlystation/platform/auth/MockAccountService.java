@@ -130,4 +130,78 @@ public class MockAccountService implements AccountService {
         users.put(username, user);
         return user;
     }
+
+    // ------------------------------------------------------------ 凭据维护
+
+    @Override
+    public boolean usernameExists(String username) {
+        return username != null && users.containsKey(username.trim());
+    }
+
+    @Override
+    public boolean usernameTakenByOther(String username, long selfId) {
+        if (username == null) {
+            return false;
+        }
+        AccountUser owner = users.get(username.trim());
+        return owner != null && owner.id() != selfId;
+    }
+
+    @Override
+    public boolean exists(long userId) {
+        return users.values().stream().anyMatch(user -> user.id() == userId);
+    }
+
+    @Override
+    public String usernameOf(long userId) {
+        return users.values().stream()
+                .filter(user -> user.id() == userId)
+                .map(AccountUser::username)
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public String emailOf(long userId) {
+        return emails.get(userId);
+    }
+
+    @Override
+    public void updateUsername(long userId, String newUsername) {
+        AccountUser old = users.values().stream()
+                .filter(user -> user.id() == userId)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("账号不存在"));
+        // AccountUser 是 record，只能整体替换：先移除旧键，再以新账号为键放回
+        users.remove(old.username());
+        users.put(newUsername.trim(), new AccountUser(
+                old.id(), newUsername.trim(), old.passwordHash(), old.phone(),
+                old.role(), old.realName(), old.jobType(), old.area()));
+    }
+
+    @Override
+    public void updatePassword(long userId, String encodedPassword) {
+        users.values().stream()
+                .filter(user -> user.id() == userId)
+                .findFirst()
+                .ifPresentOrElse(old -> users.put(old.username(), new AccountUser(
+                        old.id(), old.username(), encodedPassword, old.phone(),
+                        old.role(), old.realName(), old.jobType(), old.area())),
+                        () -> { throw new BusinessException("账号不存在"); });
+    }
+
+    @Override
+    public void updateEmail(long userId, String email) {
+        if (!exists(userId)) {
+            throw new BusinessException("账号不存在");
+        }
+        if (email == null || email.isBlank()) {
+            emails.remove(userId);
+        } else {
+            emails.put(userId, email.trim().toLowerCase());
+        }
+    }
+
+    /** 演示模式下的邮箱绑定；与 DemoWorkflowStore 的内存邮箱保持同一份数据。 */
+    private final Map<Long, String> emails = new ConcurrentHashMap<>();
 }
