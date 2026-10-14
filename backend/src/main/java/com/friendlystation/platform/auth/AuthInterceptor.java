@@ -17,12 +17,15 @@ public class AuthInterceptor implements HandlerInterceptor {
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
     private final CredentialVersionService credentialVersionService;
+    private final com.friendlystation.platform.admin.AdminPermissionService adminPermissionService;
 
     public AuthInterceptor(JwtService jwtService, ObjectMapper objectMapper,
-                           CredentialVersionService credentialVersionService) {
+                           CredentialVersionService credentialVersionService,
+                           com.friendlystation.platform.admin.AdminPermissionService adminPermissionService) {
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
         this.credentialVersionService = credentialVersionService;
+        this.adminPermissionService = adminPermissionService;
     }
 
     @Override
@@ -58,6 +61,21 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (required != null && Arrays.stream(required.value()).noneMatch(currentUser.role()::equals)) {
                 writeError(response, 403, "当前角色无权执行此操作");
                 return false;
+            }
+            // 功能权限校验：角色对了不代表这件事能做。
+            // 之前只校验角色，子账号绕过前端直接调接口即可越权——权限体系等于装饰。
+            RequirePermission permission = handlerMethod.getMethodAnnotation(RequirePermission.class);
+            if (permission == null) {
+                permission = handlerMethod.getBeanType().getAnnotation(RequirePermission.class);
+            }
+            if (permission != null) {
+                java.util.List<String> effective =
+                        adminPermissionService.effectiveOf(currentUser.id(), currentUser.role());
+                boolean allowed = Arrays.stream(permission.value()).anyMatch(effective::contains);
+                if (!allowed) {
+                    writeError(response, 403, "当前账号未被授予该功能权限");
+                    return false;
+                }
             }
             return true;
         } catch (JwtException | IllegalArgumentException exception) {

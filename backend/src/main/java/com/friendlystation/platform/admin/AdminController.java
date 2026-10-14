@@ -3,6 +3,7 @@ package com.friendlystation.platform.admin;
 import com.friendlystation.platform.auth.CurrentUser;
 import com.friendlystation.platform.auth.CurrentUserContext;
 import com.friendlystation.platform.auth.DataScopeService;
+import com.friendlystation.platform.auth.RequirePermission;
 import com.friendlystation.platform.auth.RequireRole;
 import com.friendlystation.platform.common.ApiResponse;
 import com.friendlystation.platform.common.FormatUtils;
@@ -10,6 +11,7 @@ import com.friendlystation.platform.common.PageResult;
 import com.friendlystation.platform.workflow.WorkflowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,14 +32,17 @@ public class AdminController {
     private final AdminUserService adminUserService;
     private final DataScopeService dataScopeService;
     private final AdminPermissionService adminPermissionService;
+    private final com.friendlystation.platform.auth.AdminCredentialService adminCredentialService;
 
     public AdminController(WorkflowService workflowService, AdminUserService adminUserService,
                            DataScopeService dataScopeService,
-                           AdminPermissionService adminPermissionService) {
+                           AdminPermissionService adminPermissionService,
+                           com.friendlystation.platform.auth.AdminCredentialService adminCredentialService) {
         this.workflowService = workflowService;
         this.adminUserService = adminUserService;
         this.dataScopeService = dataScopeService;
         this.adminPermissionService = adminPermissionService;
+        this.adminCredentialService = adminCredentialService;
     }
 
     @GetMapping("/overview")
@@ -54,6 +59,7 @@ public class AdminController {
         return ApiResponse.ok(out);
     }
 
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @GetMapping("/users")
     @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> users(
@@ -65,18 +71,21 @@ public class AdminController {
         return ApiResponse.ok(adminUserService.userPage(current, size, role, keyword));
     }
 
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @GetMapping("/users/{id}")
     @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> userDetail(@PathVariable Long id) {
         return ApiResponse.ok(adminUserService.userDetail(id));
     }
 
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @PutMapping("/users/{id}")
     @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.updateUser(id, payload));
     }
 
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @PutMapping("/users/{id}/status")
     @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUserStatus(@PathVariable Long id,
@@ -84,11 +93,70 @@ public class AdminController {
         return ApiResponse.ok(adminUserService.updateStatus(id, String.valueOf(payload.getOrDefault("status", "正常"))));
     }
 
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @PutMapping("/users/{id}/roles")
     @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUserRoles(@PathVariable Long id,
                                                             @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.setRoles(id, readRoleCodes(payload)));
+    }
+
+    // ---------------------------------------------------------------- 子账号与凭据
+
+    /**
+     * 创建管理员子账号并分发权限。
+     *
+     * <p>需要管理员输入**自己的**登录密码二次确认——管理员账号一旦被盗，
+     * 最省事的破坏就是批量建号或改密。</p>
+     */
+    @RequirePermission({"ACCOUNT_MANAGE"})
+    @PostMapping("/users")
+    @RequireRole({"PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> createSubAccount(@RequestBody Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        java.util.List<String> permissions = new java.util.ArrayList<>();
+        if (data.get("permissions") instanceof java.util.List<?> list) {
+            for (Object item : list) {
+                if (item != null) {
+                    permissions.add(String.valueOf(item));
+                }
+            }
+        }
+        return ApiResponse.ok(adminCredentialService.createSubAccount(
+                CurrentUserContext.require().id(),
+                text(data.get("adminPassword")),
+                text(data.get("username")),
+                text(data.get("phone")),
+                text(data.get("password")),
+                permissions));
+    }
+
+    /** 改他人账号 ID：管理员密码 + 被改账号邮箱的验证码。 */
+    @RequirePermission({"ACCOUNT_MANAGE"})
+    @PutMapping("/users/{id}/username")
+    @RequireRole({"PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> changeOtherUsername(@PathVariable Long id,
+                                                               @RequestBody Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        return ApiResponse.ok(adminCredentialService.changeOtherUsername(
+                CurrentUserContext.require().id(), text(data.get("adminPassword")),
+                id, text(data.get("code")), text(data.get("newUsername"))));
+    }
+
+    /** 重置他人密码：管理员密码即可，不需要被改账号配合（忘密码场景的兜底）。 */
+    @RequirePermission({"ACCOUNT_MANAGE"})
+    @PutMapping("/users/{id}/password")
+    @RequireRole({"PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> resetOtherPassword(@PathVariable Long id,
+                                                              @RequestBody Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        return ApiResponse.ok(adminCredentialService.resetOtherPassword(
+                CurrentUserContext.require().id(), text(data.get("adminPassword")),
+                id, text(data.get("newPassword")), text(data.get("confirmPassword"))));
+    }
+
+    private static String text(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     // ---------------------------------------------------------------- 功能权限
@@ -118,6 +186,7 @@ public class AdminController {
     }
 
     /** 某账号被显式授予的权限。 */
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @GetMapping("/users/{id}/permissions")
     public ApiResponse<Map<String, Object>> userPermissions(@PathVariable Long id) {
         Map<String, Object> out = new LinkedHashMap<>();
@@ -128,6 +197,7 @@ public class AdminController {
     }
 
     /** 覆盖式分发权限。 */
+    @RequirePermission({"ACCOUNT_MANAGE"})
     @PutMapping("/users/{id}/permissions")
     public ApiResponse<Map<String, Object>> grantPermissions(@PathVariable Long id,
                                                             @RequestBody Map<String, Object> payload) {

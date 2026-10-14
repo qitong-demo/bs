@@ -204,4 +204,17 @@ public class MockAccountService implements AccountService {
 
     /** 演示模式下的邮箱绑定；与 DemoWorkflowStore 的内存邮箱保持同一份数据。 */
     private final Map<Long, String> emails = new ConcurrentHashMap<>();
+
+    @Override
+    public AccountUser createAdminSubAccount(String username, String phone, String password) {
+        if (users.containsKey(username)) {
+            throw new BusinessException("账号 ID 已被占用");
+        }
+        long id = idGenerator.incrementAndGet();
+        AccountUser created = new AccountUser(
+                id, username, passwordService.encode(password), phone,
+                "PLATFORM_ADMIN", username, "子管理员", "杭州市");
+        users.put(username, created);
+        return created;
+    }
 }

@@ -31,4 +31,15 @@ public interface AccountService {
 
     /** 绑定或更换邮箱。 */
     void updateEmail(long userId, String email);
+
+    /**
+     * 创建管理员子账号。
+     *
+     * <p>与 {@link #register} 的区别：子账号的角色是管理员（`PLATFORM_ADMIN`），
+     * 但能否做具体的事由授权表决定，而不是角色。</p>
+     *
+     * <p>{@code password} 传**明文**，编码由实现内部完成——与 {@code register} 一致。
+     * 调用方若先编码，会被再编码一次，密码双重哈希后永远登录不上。</p>
+     */
+    AccountUser createAdminSubAccount(String username, String phone, String password);
 }

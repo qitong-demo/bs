@@ -70,6 +70,37 @@ public class MysqlAccountService implements AccountService {
         return toAccountUser(user);
     }
 
+    @Override
+    @Transactional
+    public AccountUser createAdminSubAccount(String username, String phone, String password) {
+        Long duplicate = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, username)
+                .or()
+                .eq(SysUser::getPhone, phone));
+        if (duplicate != null && duplicate > 0) {
+            throw new BusinessException("账号 ID 或手机号已被占用");
+        }
+        SysUser user = new SysUser();
+        user.setUsername(username);
+        user.setPhone(phone);
+        user.setPassword(passwordService.encode(password));
+        // 角色是管理员，但能做哪些事由 sys_user_permission 决定
+        user.setUserType("ADMIN");
+        user.setStatus(1);
+        userMapper.insert(user);
+
+        SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
+                .eq(SysRole::getRoleCode, "PLATFORM_ADMIN"));
+        if (role == null) {
+            throw new BusinessException("管理员角色未初始化");
+        }
+        SysUserRole userRole = new SysUserRole();
+        userRole.setUserId(user.getId());
+        userRole.setRoleId(role.getId());
+        userRoleMapper.insert(userRole);
+        return toAccountUser(user);
+    }
+
     // ------------------------------------------------------------ 凭据维护
 
     @Override
