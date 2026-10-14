@@ -26,9 +26,12 @@ import java.util.Map;
 @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
 public class ActivityAdminController {
     private final ActivityService activityService;
+    private final com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher;
 
-    public ActivityAdminController(ActivityService activityService) {
+    public ActivityAdminController(ActivityService activityService,
+                                   com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher) {
         this.activityService = activityService;
+        this.sourceFetcher = sourceFetcher;
     }
 
     /** 后台活动分页，返回全部状态。 */
@@ -52,6 +55,19 @@ public class ActivityAdminController {
     @PutMapping("/{id}")
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(activityService.update(id, payload));
+    }
+
+    /**
+     * 半自动采集：抓取网页标题与摘要，供管理员核对后录入。
+     *
+     * <p>只做机械提取，不做内容加工。返回结果带 note 提示"需人工核对"——
+     * 采集来的信息最终由人负责。主办方、活动日期、分类仍需管理员手工填写，
+     * 程序无法从新闻页可靠地推出这些字段，硬猜会污染数据。</p>
+     */
+    @PostMapping("/fetch-source")
+    public ApiResponse<Map<String, Object>> fetchSource(@RequestBody Map<String, Object> payload) {
+        Object url = payload == null ? null : payload.get("url");
+        return ApiResponse.ok(sourceFetcher.fetch(url == null ? "" : String.valueOf(url)));
     }
 
     /** 删除活动。 */

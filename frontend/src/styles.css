@@ -1869,10 +1869,15 @@ button {
   flex: 0 0 8px;
 }
 
-.activity-accent--green { background: var(--primary); }
-.activity-accent--blue { background: var(--blue); }
-.activity-accent--orange { background: var(--orange); }
-.activity-accent--purple { background: var(--purple); }
+/* 色条只区分来源，不区分卡片序号：站内自办用品牌主色，采集活动用中性信息色。
+   原来按绿/蓝/橙/紫轮换，颜色与活动含义无关（见 AGENTS.md「语义色，不要装饰色」）。 */
+.activity-accent--station {
+  background: var(--primary);
+}
+
+.activity-accent--external {
+  background: var(--info);
+}
 
 .activity-body {
   flex: 1;
@@ -1885,6 +1890,19 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+/* 一行里可能有来源、来源等级、分类、城市四个标签，窄卡片下允许换行，
+   否则会把右侧状态标签挤成竖排文字。 */
+.activity-top {
+  align-items: flex-start;
+}
+
+.activity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .activity-body h2 {
@@ -1902,10 +1920,48 @@ button {
   font-size: 13px;
 }
 
+/* 主办方比地址更靠前一级：谁办的决定了这条活动能不能站内报名 */
+.activity-body p.activity-publisher {
+  align-items: flex-start;
+  color: #46505f;
+  line-height: 1.6;
+}
+
+/* 摘要：最多三行，超出省略。正文留给详情弹窗，列表只给一屏能读完的信息。 */
+.activity-body p.activity-summary {
+  display: -webkit-box;
+  margin: 12px 0 0;
+  overflow: hidden;
+  color: #5e6877;
+  font-size: 13px;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .activity-footer {
-  margin-top: 22px;
+  margin-top: 18px;
   color: #657080;
   font-size: 13px;
+}
+
+/* 采集活动的说明可能是一整句，允许换行并占满左侧 */
+.activity-footer .activity-hint {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+/* 两个按钮同排：Element 默认给相邻按钮 12px 左外边距，这里改由 gap 统一控制 */
+.activity-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-actions .el-button + .el-button {
+  margin-left: 0;
 }
 
 .compact-tabs {
@@ -2161,6 +2217,62 @@ button {
   white-space: pre-wrap;
 }
 
+/* ------------------------------------------------------ 活动详情弹窗 */
+
+/* 顶部标签行与卡片同源：来源 / 来源等级 / 分类 / 城市 / 状态 */
+.activity-detail .activity-tags {
+  margin-bottom: 14px;
+}
+
+/* 字段清单用「标签 + 值」两列：主办方、时间、地点、名额的键名固定，值长短不一 */
+.activity-detail-meta {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.activity-detail-meta > div {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.activity-detail-meta dt {
+  color: var(--muted);
+}
+
+.activity-detail-meta dd {
+  margin: 0;
+  color: #303846;
+  line-height: 1.6;
+}
+
+/* 摘要与正文分开：摘要是一句话结论，正文是主办方原文 */
+.activity-detail-summary {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  color: #2b4a52;
+  background: var(--primary-soft);
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.activity-detail-content {
+  max-height: 300px;
+  margin: 0;
+  overflow-y: auto;
+  color: #303846;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.activity-detail-note {
+  margin-top: 14px;
+}
+
 /* 中等屏幕：主区改为上下堆叠（地图在上、列表在下）。
    注意：这里原先写 body { min-width: 1024px }，等于把整页锁死在桌面宽度，
    手机端只能横向拖动，是「没有手机端适配」的根因，已移除。 */
@@ -2396,6 +2508,17 @@ button {
   .news-directory-row > .el-icon {
     grid-column: -2 / -1;
     grid-row: 1;
+  }
+
+  /* 活动卡片在窄屏下按钮另起一行：提示文字与两个按钮挤在一行会互相压缩 */
+  .activity-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .activity-actions {
+    justify-content: flex-end;
   }
 
   /* 我的报名列表：一次报名一条，重点是承办方的回复 */

@@ -416,40 +416,70 @@
     <!-- ------------------------------------------------------ 活动报名 -->
     <template v-else-if="view === '活动报名'">
       <div class="activity-grid" v-loading="loading.activities">
-        <article v-for="(activity, index) in activityItems" :key="activity.id" class="activity-item">
-          <div class="activity-accent" :class="`activity-accent--${accentTones[index % accentTones.length]}`"></div>
+        <article v-for="activity in activityItems" :key="activity.id" class="activity-item">
+          <!-- 色条按来源分两种，不用装饰色区分卡片序号：紫色/蓝色/橙色与活动含义无关。
+               站内自办用品牌主色，采集活动用中性信息色，扫一眼就知道哪类不能站内报名。 -->
+          <div
+            class="activity-accent"
+            :class="isExternalActivity(activity) ? 'activity-accent--external' : 'activity-accent--station'"
+          ></div>
           <div class="activity-body">
             <div class="activity-top">
-              <el-tag effect="light">{{ activity.stationName || "平台活动" }}</el-tag>
-              <!-- 承办方：驿站 / 平台管理员 / 第三方机构。第三方活动只在站内展示并跳转。 -->
-              <el-tag :type="activity.organizerType === 'EXTERNAL' ? 'warning' : 'info'" effect="plain">
-                {{ activity.organizerLabel || "驿站" }}
-              </el-tag>
-              <el-tag :type="activity.remaining > 0 ? 'success' : 'info'" effect="plain">
-                {{ activity.organizerType === 'EXTERNAL' ? "外部活动" : (activity.remaining > 0 ? "报名中" : "已满") }}
+              <div class="activity-tags">
+                <!-- 来源：驿站 / 平台 / 第三方机构（采集活动带来源等级） -->
+                <el-tag :type="isExternalActivity(activity) ? 'warning' : 'info'" effect="light">
+                  {{ activitySourceLabel(activity) }}
+                </el-tag>
+                <!-- 来源等级只对采集活动有值（政府群团 / 官方媒体）；驿站自办的 sourceLevel 为空，
+                     sourceLevelLabel 却是「驿站自办」，与来源标签重复，所以按 sourceLevel 判断。 -->
+                <el-tag v-if="activity.sourceLevel && activity.sourceLevelLabel" type="info" effect="plain" size="small">
+                  {{ activity.sourceLevelLabel }}
+                </el-tag>
+                <!-- 活动分类：后端可能为空串，空则不出标签 -->
+                <el-tag v-if="activity.category" effect="plain" size="small">{{ activity.category }}</el-tag>
+                <!-- 采集活动可能来自其他城市或全国：标明地点口径，别让人以为是本地活动 -->
+                <el-tag :type="activityCityTagType(activity)" effect="plain" size="small">
+                  {{ activityCityName(activity) }}
+                </el-tag>
+              </div>
+              <el-tag :type="activityStatusTagType(activity)" effect="plain" size="small">
+                {{ activityStatusText(activity) }}
               </el-tag>
             </div>
             <h2>{{ activity.title }}</h2>
-            <p><el-icon><Location /></el-icon>{{ activity.address || activity.stationName || "地点待确认" }}</p>
-            <p><el-icon><Calendar /></el-icon>{{ activity.activityTime }}</p>
+            <!-- 主办方：采集活动有 publisher；驿站自办为空，则退回显示承办驿站。
+                 两者都为空时整行不渲染，不出现「主办：」后面跟空白的标签。 -->
+            <p v-if="activity.publisher || activity.stationName" class="activity-publisher">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ activity.publisher ? `主办：${activity.publisher}` : `承办驿站：${activity.stationName}` }}
+            </p>
+            <p><el-icon><Location /></el-icon>{{ activityPlaceText(activity) }}</p>
+            <p><el-icon><Calendar /></el-icon>{{ activityTimeText(activity) }}</p>
+            <!-- 摘要优先：采集活动的正文是新闻正文，摘要是为列表读一屏写的 -->
+            <p class="activity-summary">{{ activity.summary || activity.content || "主办方暂未提供活动说明" }}</p>
             <div class="activity-footer">
-              <span v-if="activity.organizerType === 'EXTERNAL'">由第三方机构举办，报名请前往来源页面</span>
+              <span v-if="isExternalActivity(activity)" class="activity-hint">{{ activitySignupHint(activity) }}</span>
               <span v-else>已报名 {{ activity.signedCount }} / {{ activity.maxCount }}</span>
-              <!-- 第三方活动不提供站内报名：报名与审核都在对方平台，
-                   在站内收报名没人能处理。这里改为跳转链接。 -->
-              <el-button
-                v-if="activity.organizerType === 'EXTERNAL'"
-                type="primary"
-                plain
-                @click="openExternalActivity(activity)"
-              >前往报名<el-icon class="el-icon--right"><TopRight /></el-icon></el-button>
-              <el-button
-                v-else
-                :disabled="activity.remaining <= 0 || signedActivityIds.includes(activity.id)"
-                type="primary"
-                plain
-                @click="openSignup(activity)"
-              >{{ signedActivityIds.includes(activity.id) ? "已报名" : "立即报名" }}</el-button>
+              <div class="activity-actions">
+                <el-button plain @click="openActivityDetail(activity)">查看详情</el-button>
+                <!-- 采集活动不接受站内报名：后端报名接口会直接 400，报名与审核都在主办方，
+                     所以这里只保留「前往原文」跳转，不出现站内报名按钮。 -->
+                <el-button
+                  v-if="isExternalActivity(activity)"
+                  type="primary"
+                  :disabled="!externalUrlText(activity)"
+                  @click="openExternalActivity(activity)"
+                >
+                  {{ externalUrlText(activity) ? "前往原文" : "暂无原文链接" }}
+                  <el-icon v-if="externalUrlText(activity)" class="el-icon--right"><TopRight /></el-icon>
+                </el-button>
+                <el-button
+                  v-else
+                  :disabled="activity.remaining <= 0 || signedActivityIds.includes(activity.id)"
+                  type="primary"
+                  @click="openSignup(activity)"
+                >{{ signedActivityIds.includes(activity.id) ? "已报名" : "立即报名" }}</el-button>
+              </div>
             </div>
           </div>
         </article>
@@ -504,6 +534,82 @@
           </div>
           <el-empty v-else-if="!mySignupsLoading" :image-size="64" description="还没有报名记录" />
         </div>
+      </el-dialog>
+
+      <!-- 活动详情：站内自办与采集活动共用一套，采集活动额外给原文入口与免责说明 -->
+      <el-dialog v-model="activityDetailVisible" :title="activeActivity?.title" width="660px">
+        <div v-if="activeActivity" class="activity-detail">
+          <div class="activity-tags">
+            <el-tag :type="isExternalActivity(activeActivity) ? 'warning' : 'info'" effect="light">
+              {{ activitySourceLabel(activeActivity) }}
+            </el-tag>
+            <el-tag v-if="activeActivity.sourceLevel && activeActivity.sourceLevelLabel" type="info" effect="plain" size="small">
+              {{ activeActivity.sourceLevelLabel }}
+            </el-tag>
+            <el-tag v-if="activeActivity.category" effect="plain" size="small">{{ activeActivity.category }}</el-tag>
+            <el-tag :type="activityCityTagType(activeActivity)" effect="plain" size="small">
+              {{ activityCityName(activeActivity) }}
+            </el-tag>
+            <el-tag :type="activityStatusTagType(activeActivity)" effect="plain" size="small">
+              {{ activityStatusText(activeActivity) }}
+            </el-tag>
+          </div>
+          <dl class="activity-detail-meta">
+            <div v-if="activeActivity.publisher">
+              <dt>主办方</dt>
+              <dd>{{ activeActivity.publisher }}</dd>
+            </div>
+            <div v-if="activeActivity.stationName">
+              <dt>承办驿站</dt>
+              <dd>{{ activeActivity.stationName }}</dd>
+            </div>
+            <div>
+              <dt>活动时间</dt>
+              <dd>{{ activityTimeText(activeActivity) }}</dd>
+            </div>
+            <div>
+              <dt>活动地点</dt>
+              <dd>{{ activityPlaceText(activeActivity) }}</dd>
+            </div>
+            <!-- 名额只对站内报名有意义：采集活动本站不放号 -->
+            <div v-if="!isExternalActivity(activeActivity)">
+              <dt>报名情况</dt>
+              <dd>已报名 {{ activeActivity.signedCount }} / {{ activeActivity.maxCount }}，剩余 {{ activeActivity.remaining }}</dd>
+            </div>
+          </dl>
+          <p v-if="activeActivity.summary" class="activity-detail-summary">{{ activeActivity.summary }}</p>
+          <p v-if="activityBodyText(activeActivity)" class="activity-detail-content">
+            {{ activityBodyText(activeActivity) }}
+          </p>
+          <!-- 采集活动：说清报名与审核不在本站，避免用户以为站内能报上 -->
+          <el-alert
+            v-if="isExternalActivity(activeActivity)"
+            class="activity-detail-note"
+            type="info"
+            :closable="false"
+            show-icon
+          >
+            该活动由主办方负责报名与审核，本站仅提供信息。
+            <template v-if="!externalUrlText(activeActivity)">
+              该条记录未提供原文链接，暂无法跳转，可联系平台管理员核对。
+            </template>
+          </el-alert>
+        </div>
+        <template #footer>
+          <el-button @click="activityDetailVisible = false">关闭</el-button>
+          <el-button
+            v-if="isExternalActivity(activeActivity)"
+            type="primary"
+            :disabled="!externalUrlText(activeActivity)"
+            @click="openExternalActivity(activeActivity)"
+          >前往原文</el-button>
+          <el-button
+            v-else
+            type="primary"
+            :disabled="!activeActivity || activeActivity.remaining <= 0 || signedActivityIds.includes(activeActivity.id)"
+            @click="signupFromDetail(activeActivity)"
+          >{{ signedActivityIds.includes(activeActivity?.id) ? "已报名" : "立即报名" }}</el-button>
+        </template>
       </el-dialog>
     </template>
 
@@ -826,6 +932,12 @@ import { getMonthlyTrend, getServiceRanking, getStatOverview } from "../api/stat
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
+import {
+  activitySignupHint,
+  activitySourceLabel,
+  externalUrlText,
+  isExternalActivity
+} from "../utils/activity-source";
 import AccountSecurityPanel from "./AccountSecurityPanel.vue";
 import { JOB_TYPES } from "../utils/profile-options";
 import { NEWS_CATEGORIES, NEWS_PLATFORMS } from "../constants/news-platforms";
@@ -1054,7 +1166,9 @@ const signupVisible = ref(false);
 const signupSubmitting = ref(false);
 const signupTarget = ref(null);
 const signupForm = reactive({ contactName: "", phone: "", remark: "" });
-const accentTones = ["green", "blue", "orange", "purple"];
+/** 活动详情弹窗：数据全部来自列表记录（后端详情字段与列表一致，不再多请求一次）。 */
+const activityDetailVisible = ref(false);
+const activeActivity = ref(null);
 
 // 分类筛选初始为空：下拉是 clearable 的，选项只有真实分类（权益保障/职业伤害/…），
 // 没有「全部」这一项。原先初始值写 "全部"，它是真值，会被当成分类名发给后端，
@@ -1592,7 +1706,72 @@ function openSignup(activity) {
   signupVisible.value = true;
 }
 
-/** 第三方活动的跳转：只做展示与跳转，报名在对方平台完成。 */
+/** 活动详情：直接复用列表记录（详情字段与列表一致），关闭详情再开报名表单，避免两层弹窗叠着。 */
+function openActivityDetail(activity) {
+  activeActivity.value = activity;
+  activityDetailVisible.value = true;
+}
+
+function signupFromDetail(activity) {
+  if (!activity) return;
+  activityDetailVisible.value = false;
+  openSignup(activity);
+}
+
+/** 活动城市标签：cityCode 为空表示全国性活动（后端约定），否则转成城市名。 */
+function activityCityName(activity) {
+  const code = String(activity?.cityCode || "").trim();
+  return code ? cityNameOf(code) : "全国";
+}
+
+/**
+ * 活动地点：采集活动的 address 是原文里的举办地，没有地址时说明「见原文」，
+ * 不要用「地点待确认」——那会让用户以为本站能确认，其实本站只有原文这一条线索。
+ */
+function activityPlaceText(activity) {
+  const place = String(activity?.address || "").trim() || String(activity?.stationName || "").trim();
+  if (place) return place;
+  return isExternalActivity(activity) ? "地点见原文" : "地点待确认";
+}
+
+/**
+ * 活动时间：采集活动只有日期（时间为 00:00:00）时只显示日期。
+ * 00:00:00 是「没有具体时刻」的占位，原样显示等于报了一个不存在的精确时间。
+ */
+function activityTimeText(activity) {
+  const raw = String(activity?.activityTime || "").trim();
+  if (!raw) return "时间待主办方确认";
+  return raw.endsWith(" 00:00:00") ? raw.slice(0, 10) : raw;
+}
+
+/** 城市标签配色：当前城市的用品牌色标出，其他城市与全国性活动用中性色。 */
+function activityCityTagType(activity) {
+  const code = String(activity?.cityCode || "").trim();
+  return code && code === userStore.cityCode ? "success" : "info";
+}
+
+/** 活动状态文案：采集活动本站不放号，写明「仅提供信息」而不是「报名中」。 */
+function activityStatusText(activity) {
+  if (isExternalActivity(activity)) return "仅提供信息";
+  return activity?.remaining > 0 ? "报名中" : "已满";
+}
+
+function activityStatusTagType(activity) {
+  if (isExternalActivity(activity)) return "info";
+  return activity?.remaining > 0 ? "success" : "info";
+}
+
+/**
+ * 详情正文：采集数据的 summary 与 content 常常是同一段话，重复渲染等于读两遍。
+ * 与摘要相同（或没有正文）时返回空串，由摘要块单独承担展示。
+ */
+function activityBodyText(activity) {
+  const summary = String(activity?.summary || "").trim();
+  const content = String(activity?.content || "").trim();
+  if (!content) return summary ? "" : "主办方暂未提供活动正文。";
+  return content === summary ? "" : content;
+}
+
 /** 报名状态配色，与用户端语义一致。 */
 function signupTagType(status) {
   if (status === "APPROVED") return "success";
@@ -1601,10 +1780,14 @@ function signupTagType(status) {
   return "info";
 }
 
+/**
+ * 采集活动（第三方主办）的跳转：站内只做展示，报名与审核都在主办方那边完成。
+ * 链接由后端保证非空，这里仍做一次兜底，避免点出一个空白窗口。
+ */
 function openExternalActivity(activity) {
-  const url = String(activity.externalUrl || "").trim();
+  const url = externalUrlText(activity);
   if (!url) {
-    ElMessage.warning("该活动未提供报名链接，请联系平台管理员");
+    ElMessage.warning("该活动未提供原文链接，暂无法跳转，可联系平台管理员核对");
     return;
   }
   window.open(url, "_blank", "noopener,noreferrer");
@@ -1916,7 +2099,10 @@ async function loadView() {
       await loadMyAppeals();
       break;
     case "活动报名":
-      dataNote.value = "活动名额由服务端校验，名额已满或重复报名会被拒绝。";
+      dataNote.value =
+        "活动名额由服务端校验，名额已满或重复报名会被拒绝；驿站自办活动可在站内报名。" +
+        "带「政府群团 / 官方媒体」标签的活动信息采集自公开来源，含全国性及其他城市的活动，" +
+        "报名与审核由主办方负责，本站仅提供信息与跳转。";
       await loadActivities();
       break;
     case "政策资讯":

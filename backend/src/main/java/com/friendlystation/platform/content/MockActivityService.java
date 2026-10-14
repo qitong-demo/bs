@@ -81,6 +81,7 @@ public class MockActivityService implements ActivityService {
                 ContentSupport.trimText(data.get("content")),
                 ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"),
                 LocalDateTime.now());
+        applySourceFields(record, data);
         store.add(record);
         signedCounts.put(id, 0);
         return view(record);
@@ -169,6 +170,44 @@ public class MockActivityService implements ActivityService {
         int to = (int) Math.min(from + safeSize, filtered.size());
         List<Map<String, Object>> records = filtered.subList(from, to).stream().map(this::view).toList();
         return new PageResult<>(safeCurrent, safeSize, filtered.size(), records);
+    }
+
+    /**
+     * 写入来源相关字段，与 mysql 实现同口径。
+     *
+     * <p>内存实现里字段存在 Map 上，缺键即为"未填写"。</p>
+     */
+    private static void applySourceFields(Map<String, Object> record, Map<String, Object> data) {
+        putIfPresent(record, data, "externalUrl", 500, "原文链接");
+        putIfPresent(record, data, "publisher", 120, "主办方");
+        putIfPresent(record, data, "category", 30, "活动分类");
+        putIfPresent(record, data, "summary", 500, "摘要");
+        if (data.containsKey("cityCode")) {
+            String code = ContentSupport.trimText(data.get("cityCode"));
+            if (!code.isEmpty() && !code.matches("\\d{6}")) {
+                throw new BusinessException("城市编码应为 6 位数字");
+            }
+            record.put("cityCode", code);
+        }
+        if (data.containsKey("sourceLevel")) {
+            String level = ContentSupport.trimText(data.get("sourceLevel")).toUpperCase();
+            if (!level.isEmpty() && !java.util.Set.of("GOV", "MEDIA", "PLATFORM").contains(level)) {
+                throw new BusinessException("来源等级只能是 GOV、MEDIA 或留空（驿站自办）");
+            }
+            record.put("sourceLevel", level);
+        }
+    }
+
+    private static void putIfPresent(Map<String, Object> record, Map<String, Object> data,
+                                     String key, int max, String label) {
+        if (!data.containsKey(key)) {
+            return;
+        }
+        String text = ContentSupport.trimText(data.get(key));
+        if (text.length() > max) {
+            throw new BusinessException(label + "不能超过 " + max + " 个字符");
+        }
+        record.put(key, text);
     }
 
     private Map<String, Object> require(Long id) {

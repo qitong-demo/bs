@@ -69,6 +69,7 @@ public class MysqlActivityService implements ActivityService {
         activity.setContent(ContentSupport.trimText(data.get("content")));
         activity.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
         applyOrganizer(activity, data);
+        applySourceFields(activity, data);
         activityMapper.insert(activity);
         return toMap(require(activity.getId()));
     }
@@ -132,6 +133,7 @@ public class MysqlActivityService implements ActivityService {
         }        if (data.containsKey("status")) {
             activity.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
         }
+        applySourceFields(activity, data);
         activityMapper.updateById(activity);
         return toMap(require(id));
     }
@@ -171,6 +173,50 @@ public class MysqlActivityService implements ActivityService {
             case "PLATFORM" -> "平台自办";
             default -> "驿站自办";
         };
+    }
+
+    /**
+     * 写入来源相关字段。
+     *
+     * <p>采集来的活动必须能核对到原文与主办方，因此 externalUrl / publisher /
+     * sourceLevel / cityCode / category / summary 都要能被管理端写入。
+     * 留空即清空，便于撤销误填。</p>
+     */
+    private static void applySourceFields(Activity activity, Map<String, Object> data) {
+        if (data.containsKey("externalUrl")) {
+            activity.setExternalUrl(limit(ContentSupport.trimText(data.get("externalUrl")), 500, "原文链接"));
+        }
+        if (data.containsKey("publisher")) {
+            activity.setPublisher(limit(ContentSupport.trimText(data.get("publisher")), 120, "主办方"));
+        }
+        if (data.containsKey("category")) {
+            activity.setCategory(limit(ContentSupport.trimText(data.get("category")), 30, "活动分类"));
+        }
+        if (data.containsKey("summary")) {
+            activity.setSummary(limit(ContentSupport.trimText(data.get("summary")), 500, "摘要"));
+        }
+        if (data.containsKey("cityCode")) {
+            String code = ContentSupport.trimText(data.get("cityCode"));
+            if (!code.isEmpty() && !code.matches("\\d{6}")) {
+                throw new BusinessException("城市编码应为 6 位数字");
+            }
+            activity.setCityCode(code);
+        }
+        if (data.containsKey("sourceLevel")) {
+            String level = ContentSupport.trimText(data.get("sourceLevel")).toUpperCase();
+            // 只允许这套口径，避免写进任意字符串让前端标签失效
+            if (!level.isEmpty() && !java.util.Set.of("GOV", "MEDIA", "PLATFORM").contains(level)) {
+                throw new BusinessException("来源等级只能是 GOV、MEDIA 或留空（驿站自办）");
+            }
+            activity.setSourceLevel(level);
+        }
+    }
+
+    private static String limit(String text, int max, String label) {
+        if (text.length() > max) {
+            throw new BusinessException(label + "不能超过 " + max + " 个字符");
+        }
+        return text;
     }
 
     private PageResult<Map<String, Object>> doPage(long current, long size, String status, Long stationId,
