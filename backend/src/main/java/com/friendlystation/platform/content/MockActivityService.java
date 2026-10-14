@@ -231,6 +231,45 @@ public class MockActivityService implements ActivityService {
         out.put("status", record.get("status"));
         out.put("statusLabel", ContentSupport.statusLabel((String) record.get("status")));
         out.put("createTime", ContentSupport.formatDateTime((LocalDateTime) record.get("createTime")));
+
+        // 以下字段 mysql 实现一直会返回，而这里原先缺失——两套 profile 的 JSON 不一致，
+        // 会让"内存模式与 MySQL 模式行为相同"这个约定失效。本次一并补齐。
+        String organizerType = record.get("organizerType") == null
+                ? "STATION" : String.valueOf(record.get("organizerType"));
+        out.put("organizerType", organizerType);
+        out.put("organizerLabel", organizerTypeLabel(organizerType));
+        out.put("externalUrl", record.get("externalUrl") == null ? "" : String.valueOf(record.get("externalUrl")));
+
+        // 采集来的真实活动：来源必须可核对，字段缺失时返回空串而不是省略
+        out.put("cityCode", record.get("cityCode") == null ? "" : String.valueOf(record.get("cityCode")));
+        out.put("publisher", record.get("publisher") == null ? "" : String.valueOf(record.get("publisher")));
+        out.put("category", record.get("category") == null ? "" : String.valueOf(record.get("category")));
+        out.put("summary", record.get("summary") == null ? "" : String.valueOf(record.get("summary")));
+        String sourceLevel = record.get("sourceLevel") == null ? "" : String.valueOf(record.get("sourceLevel"));
+        out.put("sourceLevel", sourceLevel);
+        out.put("sourceLevelLabel", sourceLevelLabel(sourceLevel));
         return out;
+    }
+
+    /** 承办方中文文案。第三方活动只提供跳转、不接受站内报名，文案上要讲清楚。 */
+    private static String organizerTypeLabel(String organizerType) {
+        return switch (organizerType == null ? "" : organizerType.trim().toUpperCase()) {
+            case "EXTERNAL" -> "第三方机构";
+            case "PLATFORM" -> "平台";
+            default -> "驿站";
+        };
+    }
+
+    /** 来源等级中文文案，与 mysql 实现同口径。 */
+    private static String sourceLevelLabel(String level) {
+        if (level == null || level.isBlank() || "null".equals(level)) {
+            return "驿站自办";
+        }
+        return switch (level.trim().toUpperCase()) {
+            case "GOV" -> "政府群团";
+            case "MEDIA" -> "官方媒体";
+            case "PLATFORM" -> "平台自办";
+            default -> "驿站自办";
+        };
     }
 }

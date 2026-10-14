@@ -246,8 +246,21 @@ CREATE TABLE IF NOT EXISTS activity (
     -- 第三方活动只在站内展示并提供跳转链接，**不接受站内报名**——
     -- 报名与审核由对方平台负责，我们既不掌握名单也无法联系报名人。
     organizer_type VARCHAR(20) NOT NULL DEFAULT 'STATION',
-    -- 仅 organizer_type=EXTERNAL 时有值：跳转到对方平台的详情/报名页
+    -- 仅 organizer_type=EXTERNAL 时有值：跳转到对方平台的详情/报名页。
+    -- 采集来的真实活动也走这里：用户点过去看原文并自行报名，我们不代收报名。
     external_url VARCHAR(500),
+    -- 以下字段用于「像政策资讯一样接入真实数据」：采集来的活动必须能核对到原文。
+    -- 城市编码与 station/news 保持一致，便于按当前城市过滤与排序。
+    city_code VARCHAR(10),
+    -- 主办/发布机构，如「杭州市总工会」。驿站自办活动留空，由 station_id 表达主办方。
+    publisher VARCHAR(120),
+    -- 活动分类：技能培训 / 权益保障 / 健康关爱 / 法律援助 / 文体活动 / 子女关爱
+    category VARCHAR(30),
+    -- 一句话摘要，取自原文，不做发挥
+    summary VARCHAR(500),
+    -- 来源等级：GOV 政府群团 / MEDIA 官方媒体 / STATION 驿站自办 / PLATFORM 平台自办。
+    -- 与 news.source_level 同一套口径，前端据此显示来源标签。
+    source_level VARCHAR(20),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_activity_station FOREIGN KEY (station_id) REFERENCES station (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

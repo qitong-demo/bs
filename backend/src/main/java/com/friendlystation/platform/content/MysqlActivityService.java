@@ -158,6 +158,19 @@ public class MysqlActivityService implements ActivityService {
         return remaining(activity, signedCount(activityId));
     }
 
+    /** 来源等级中文文案，与 news 的 source_level 同一套口径。 */
+    private static String sourceLevelLabel(String level) {
+        if (level == null || level.isBlank()) {
+            return "驿站自办";
+        }
+        return switch (level.trim().toUpperCase()) {
+            case "GOV" -> "政府群团";
+            case "MEDIA" -> "官方媒体";
+            case "PLATFORM" -> "平台自办";
+            default -> "驿站自办";
+        };
+    }
+
     private PageResult<Map<String, Object>> doPage(long current, long size, String status, Long stationId, String keyword) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 100);
@@ -258,6 +271,14 @@ public class MysqlActivityService implements ActivityService {
         out.put("organizerType", organizer);
         out.put("organizerLabel", ActivityOrganizer.typeLabel(organizer));
         out.put("externalUrl", activity.getExternalUrl() == null ? "" : activity.getExternalUrl());
+        // 采集来的真实活动：必须能核对到原文与主办方，字段缺失时返回空串而不是省略，
+        // 否则前端拿到 undefined 会显示成 "undefined"。
+        out.put("cityCode", activity.getCityCode() == null ? "" : activity.getCityCode());
+        out.put("publisher", activity.getPublisher() == null ? "" : activity.getPublisher());
+        out.put("category", activity.getCategory() == null ? "" : activity.getCategory());
+        out.put("summary", activity.getSummary() == null ? "" : activity.getSummary());
+        out.put("sourceLevel", activity.getSourceLevel() == null ? "" : activity.getSourceLevel());
+        out.put("sourceLevelLabel", sourceLevelLabel(activity.getSourceLevel()));
         out.put("acceptsSignup", ActivityOrganizer.acceptsSignup(organizer));
         out.put("createTime", ContentSupport.formatDateTime(activity.getCreateTime()));
         return out;
