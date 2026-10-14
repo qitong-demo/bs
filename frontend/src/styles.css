@@ -1004,6 +1004,18 @@ button {
   font-size: 13px;
 }
 
+/* 权限勾选：两列网格，比竖排一行一个更紧凑，也便于横向对比 */
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2px 12px;
+  width: 100%;
+}
+
+.admin-dialog-hint {
+  margin-bottom: 14px;
+}
+
 /* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */
 .admin-todo {
   display: flex;
@@ -2439,6 +2451,18 @@ button {
   margin: 8px 0 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* 权限勾选：两列网格，比竖排一行一个更紧凑，也便于横向对比 */
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2px 12px;
+  width: 100%;
+}
+
+.admin-dialog-hint {
+  margin-bottom: 14px;
 }
 
 /* 管理员首页的待办数字：比列表更直接，点进去就到对应处理页 */

@@ -16,6 +16,10 @@
       </el-select>
       <el-button type="primary" @click="search"><el-icon><Search /></el-icon>查询</el-button>
       <el-button @click="reset"><el-icon><RefreshLeft /></el-icon>重置</el-button>
+      <!-- 子账号：角色同样是管理员，能做哪些事由勾选的权限决定 -->
+      <el-button type="success" class="admin-toolbar-action" @click="openCreate">
+        <el-icon><Plus /></el-icon>新建子账号
+      </el-button>
       <span class="admin-toolbar-total">共 {{ total }} 个账号</span>
     </div>
 
@@ -53,6 +57,7 @@
         <template #default="{ row }">
           <el-button size="small" @click="openEdit(row)">编辑资料</el-button>
           <el-button size="small" @click="openRoles(row)">设置角色</el-button>
+          <el-button size="small" @click="openPermissions(row)">分发权限</el-button>
           <el-button
             size="small"
             :type="Number(row.status) === 1 ? 'danger' : 'success'"
@@ -103,6 +108,81 @@
       </template>
     </el-dialog>
 
+    <!-- 新建子账号：一次性填账号信息并勾选权限 -->
+    <el-dialog v-model="createVisible" title="新建子账号" width="620px">
+      <el-alert
+        type="info"
+        show-icon
+        :closable="false"
+        class="admin-dialog-hint"
+        title="子账号的角色同样是管理员，但只能做被勾选的事"
+        description="「账号管理」不可授予子账号——否则子账号能给自己加权限。创建后对方用这里填的账号密码登录管理工作台。"
+      />
+      <el-form label-position="top">
+        <el-form-item label="账号 ID" required>
+          <el-input v-model="createForm.username" placeholder="4~20 位，字母开头，可用字母数字下划线" />
+        </el-form-item>
+        <el-form-item label="手机号" required>
+          <el-input v-model="createForm.phone" placeholder="用于账号识别" />
+        </el-form-item>
+        <el-form-item label="初始密码" required>
+          <el-input v-model="createForm.password" type="password" show-password placeholder="8~32 位，需含字母与数字" />
+        </el-form-item>
+        <el-form-item label="功能权限" required>
+          <el-checkbox-group v-model="createForm.permissions" class="permission-grid">
+            <el-checkbox
+              v-for="item in catalog"
+              :key="item.permissionCode"
+              :value="item.permissionCode"
+              :disabled="!item.grantable"
+            >
+              {{ item.permissionName }}
+              <span v-if="!item.grantable" class="muted">（仅管理员本人）</span>
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <!-- 二次确认：管理员账号被盗后最省事的破坏就是批量建号 -->
+        <el-form-item label="你的登录密码" required>
+          <el-input v-model="createForm.adminPassword" type="password" show-password placeholder="确认本次操作，防止账号被盗后被人建号" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitCreate">创建</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="permissionVisible" title="分发功能权限" width="620px">
+      <el-descriptions v-if="current" :column="1" border size="small" class="admin-dialog-meta">
+        <el-descriptions-item label="账号">{{ textOf(current.username) }}</el-descriptions-item>
+        <el-descriptions-item label="当前角色">{{ textOf(current.roleName) }}</el-descriptions-item>
+      </el-descriptions>
+      <el-alert
+        v-if="isStationAdmin"
+        type="info"
+        show-icon
+        :closable="false"
+        class="admin-dialog-hint"
+        title="驿站管理员不走权限表"
+        description="驿站管理员的标签由角色固定（预约审核、诉求处理、活动管理、报名记录、变更审批、报表导出），不需要逐个勾选。此处设置仅对管理员子账号生效。"
+      />
+      <el-checkbox-group v-model="permissionForm.permissions" class="permission-grid">
+        <el-checkbox
+          v-for="item in catalog"
+          :key="item.permissionCode"
+          :value="item.permissionCode"
+          :disabled="!item.grantable"
+        >
+          {{ item.permissionName }}
+          <span v-if="!item.grantable" class="muted">（仅管理员本人）</span>
+        </el-checkbox>
+      </el-checkbox-group>
+      <template #footer>
+        <el-button @click="permissionVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitPermissions">保存权限</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="rolesVisible" title="设置角色" width="520px">
       <el-alert
         class="admin-dialog-tip"
@@ -130,7 +210,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getAdminUsers,
@@ -139,11 +219,77 @@ import {
   updateAdminUserStatus
 } from "../../api/admin";
 import { errorMessage } from "../../api/http";
+import {
+  createSubAccount, getPermissionCatalog, getUserPermissions, grantPermissions
+} from "../../api/admin";
 import { ROLE_OPTIONS, textOf, userStatusLabel, userStatusTag } from "./admin-shared";
 
 const jobTypes = ["外卖骑手", "快递员", "网约车司机", "货车司机", "家政服务", "驿站工作人员"];
 
 const loading = ref(false);
+
+// ---------------------------------------------------------------- 子账号与权限
+
+const catalog = ref([]);
+const createVisible = ref(false);
+const permissionVisible = ref(false);
+const isStationAdmin = computed(() => current.value?.role === "STATION_ADMIN");
+const createForm = reactive({
+  username: "", phone: "", password: "", adminPassword: "", permissions: []
+});
+const permissionForm = reactive({ permissions: [] });
+
+async function loadCatalog() {
+  try {
+    catalog.value = (await getPermissionCatalog()) || [];
+  } catch {
+    catalog.value = [];
+  }
+}
+
+function openCreate() {
+  Object.assign(createForm, { username: "", phone: "", password: "", adminPassword: "", permissions: [] });
+  createVisible.value = true;
+}
+
+async function submitCreate() {
+  submitting.value = true;
+  try {
+    await createSubAccount({ ...createForm });
+    createVisible.value = false;
+    ElMessage.success("子账号已创建，对方可用该账号登录管理工作台");
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "创建失败"));
+  } finally {
+    submitting.value = false;
+  }
+}
+
+async function openPermissions(row) {
+  current.value = row;
+  try {
+    const data = await getUserPermissions(row.id);
+    permissionForm.permissions = data?.permissions || [];
+  } catch {
+    permissionForm.permissions = [];
+  }
+  permissionVisible.value = true;
+}
+
+async function submitPermissions() {
+  submitting.value = true;
+  try {
+    await grantPermissions(current.value.id, permissionForm.permissions);
+    permissionVisible.value = false;
+    ElMessage.success("权限已保存，对方下次进入管理端即按新权限显示");
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "保存失败"));
+  } finally {
+    submitting.value = false;
+  }
+}
 const submitting = ref(false);
 const rows = ref([]);
 const total = ref(0);
@@ -287,7 +433,10 @@ async function toggleStatus(row) {
   }
 }
 
-onMounted(load);
+onMounted(() => {
+  loadCatalog();
+  load();
+});
 </script>
 
 <style scoped>

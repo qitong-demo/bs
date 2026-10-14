@@ -14,6 +14,20 @@ export function getMyPermissions() {
 export function getPermissionCatalog() {
   return request({ url: "/admin/permissions" });
 }
+/** 创建管理员子账号并分发权限；需管理员的登录密码二次确认。 */
+export function createSubAccount(data) {
+  return request({ url: "/admin/users", method: "post", data });
+}
+
+/** 某账号被显式授予的权限。 */
+export function getUserPermissions(id) {
+  return request({ url: `/admin/users/${id}/permissions` });
+}
+
+/** 覆盖式分发权限。 */
+export function grantPermissions(id, permissions) {
+  return request({ url: `/admin/users/${id}/permissions`, method: "put", data: { permissions } });
+}
 export function getAdminOverview() {
   return request({ url: "/admin/overview" });
 }
