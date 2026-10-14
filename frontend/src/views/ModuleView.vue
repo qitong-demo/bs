@@ -736,6 +736,9 @@
           <el-button type="primary" :loading="loading.submit" @click="saveProfile">保存修改</el-button>
         </el-form>
       </section>
+
+      <!-- 账号安全：改账号 ID、改密码、绑定邮箱，三项都需邮箱验证码 -->
+      <AccountSecurityPanel />
     </template>
 
     <!-- ------------------------------------------------------ 预约弹窗 -->
@@ -827,6 +830,7 @@ import { getMonthlyTrend, getServiceRanking, getStatOverview } from "../api/stat
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
+import AccountSecurityPanel from "./AccountSecurityPanel.vue";
 import { NEWS_CATEGORIES, NEWS_PLATFORMS } from "../constants/news-platforms";
 
 const props = defineProps({
