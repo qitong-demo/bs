@@ -21,7 +21,13 @@ $sqlFiles = @(
   (Join-Path $projectRoot 'backend/src/main/resources/db/schema.sql'),
   (Join-Path $projectRoot 'backend/src/main/resources/db/stations.sql'),
   (Join-Path $projectRoot 'backend/src/main/resources/db/news.sql'),
-  (Join-Path $projectRoot 'backend/src/main/resources/db/data.sql')
+  # data.sql 必须排在 activity.sql **之前**：它用 INSERT IGNORE 硬编码了活动 id 1、2，
+  # 那是驿站自办活动、也是用户唯一能报名的两条。若 activity.sql 先跑，
+  # 自增 id 已占到 1~38，这两条会因主键冲突被静默跳过，且不报任何错。
+  (Join-Path $projectRoot 'backend/src/main/resources/db/data.sql'),
+  # 采集来的真实活动（各级工会/人社局/社区办的）：organizer_type=EXTERNAL，
+  # 站内只展示并提供跳转、不接受报名。
+  (Join-Path $projectRoot 'backend/src/main/resources/db/activity.sql')
 )
 foreach ($file in $sqlFiles) {
   if (-not (Test-Path $file)) { throw "未找到 SQL 文件：$file" }
