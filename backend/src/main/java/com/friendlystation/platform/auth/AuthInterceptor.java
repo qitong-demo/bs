@@ -16,10 +16,13 @@ import java.util.Arrays;
 public class AuthInterceptor implements HandlerInterceptor {
     private final JwtService jwtService;
     private final ObjectMapper objectMapper;
+    private final CredentialVersionService credentialVersionService;
 
-    public AuthInterceptor(JwtService jwtService, ObjectMapper objectMapper) {
+    public AuthInterceptor(JwtService jwtService, ObjectMapper objectMapper,
+                           CredentialVersionService credentialVersionService) {
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
+        this.credentialVersionService = credentialVersionService;
     }
 
     @Override
@@ -44,6 +47,13 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         try {
             CurrentUser currentUser = jwtService.parse(token);
+            // 凭据版本比对：账号 ID 或密码改过之后，旧令牌立即失效。
+            // 只让前端清本地令牌是不够的——JWT 无状态，旧令牌在过期前仍然可用。
+            int currentVersion = credentialVersionService.versionOf(currentUser.id());
+            if (currentVersion < 0 || currentVersion != currentUser.tokenVersion()) {
+                writeError(response, 401, "登录凭证已失效，请重新登录");
+                return false;
+            }
             CurrentUserContext.set(currentUser);
             if (required != null && Arrays.stream(required.value()).noneMatch(currentUser.role()::equals)) {
                 writeError(response, 403, "当前角色无权执行此操作");

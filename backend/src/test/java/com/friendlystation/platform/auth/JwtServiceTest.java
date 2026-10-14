@@ -16,7 +16,7 @@ class JwtServiceTest {
         AccountUser user = new AccountUser(7L, "station_admin_01", "hash", "13800002089",
                 "STATION_ADMIN", "陈管理员", "驿站管理员", "拱墅区");
 
-        String token = jwtService.issue(user);
+        String token = jwtService.issue(user, 0);
         CurrentUser parsed = jwtService.parse(token);
 
         assertEquals(7L, parsed.id());
@@ -34,7 +34,7 @@ class JwtServiceTest {
         AccountUser user = new AccountUser(7L, "rider_xiaowang", "hash", "13800002088",
                 "USER", "骑手小王", "外卖骑手", "西湖区");
 
-        CurrentUser refreshed = jwtService.parse(jwtService.refresh(jwtService.issue(user)));
+        CurrentUser refreshed = jwtService.parse(jwtService.refresh(jwtService.issue(user, 0)));
 
         assertEquals(user.id(), refreshed.id());
         assertEquals(user.username(), refreshed.username());

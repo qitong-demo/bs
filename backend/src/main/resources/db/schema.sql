@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS sys_user (
     -- 邮箱：用于收发验证码（改账号 ID / 改密码 / 改联系方式时校验身份）。
     -- 允许为空；未绑定时敏感操作会被拒绝并提示先绑定。
     email VARCHAR(120),
+    -- 凭据版本：改账号 ID 或密码时 +1，并写入新签发的 JWT。
+    -- 拦截器比对令牌里的版本与当前值，不一致即 401——这样"改完强制重新登录"才是真的失效，
+    -- 而不是只让前端清掉本地令牌、旧令牌却还能继续用满 120 分钟。
+    credential_version INT NOT NULL DEFAULT 0,
     avatar VARCHAR(255),
     user_type VARCHAR(30) NOT NULL DEFAULT 'USER',
     job_type VARCHAR(50),

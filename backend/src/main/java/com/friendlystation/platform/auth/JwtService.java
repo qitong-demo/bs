@@ -24,12 +24,19 @@ public class JwtService {
         this.expireMinutes = expireMinutes;
     }
 
-    public String issue(AccountUser user) {
+    /**
+     * 签发令牌。
+     *
+     * @param tokenVersion 账号当前的凭据版本。改账号 ID 或密码后该值会 +1，
+     *                     旧令牌因版本不符在拦截器处被拒——这是"改完强制重新登录"的实现方式。
+     */
+    public String issue(AccountUser user, int tokenVersion) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(String.valueOf(user.id()))
                 .claim("username", user.username())
                 .claim("role", user.role())
+                .claim("ver", tokenVersion)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expireMinutes * 60)))
                 .signWith(signingKey)
@@ -42,13 +49,16 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+        Integer version = claims.get("ver", Integer.class);
         return new CurrentUser(
                 Long.valueOf(claims.getSubject()),
                 claims.get("username", String.class),
-                claims.get("role", String.class)
+                claims.get("role", String.class),
+                version == null ? 0 : version
         );
     }
 
+    /** 续签：沿用令牌里的版本，续签不会让其他设备失效。 */
     public String refresh(String token) {
         CurrentUser currentUser = parse(token);
         return issue(new AccountUser(
@@ -60,6 +70,6 @@ public class JwtService {
                 null,
                 null,
                 null
-        ));
+        ), currentUser.tokenVersion());
     }
 }

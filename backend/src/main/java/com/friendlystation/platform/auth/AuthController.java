@@ -17,11 +17,14 @@ public class AuthController {
     private final AccountService accountService;
     private final PasswordService passwordService;
     private final JwtService jwtService;
+    private final CredentialVersionService credentialVersionService;
 
-    public AuthController(AccountService accountService, PasswordService passwordService, JwtService jwtService) {
+    public AuthController(AccountService accountService, PasswordService passwordService, JwtService jwtService,
+                          CredentialVersionService credentialVersionService) {
         this.accountService = accountService;
         this.passwordService = passwordService;
         this.jwtService = jwtService;
+        this.credentialVersionService = credentialVersionService;
     }
 
     @PostMapping("/login")
@@ -30,8 +33,10 @@ public class AuthController {
         if (user == null || !passwordService.matches(request.password(), user.passwordHash())) {
             throw new BusinessException("用户名或密码错误");
         }
+        // 签发时带上账号当前的凭据版本；账号 ID 或密码一旦被改，此令牌立即失效
+        int version = Math.max(0, credentialVersionService.versionOf(user.id()));
         return ApiResponse.ok(Map.of(
-                "token", jwtService.issue(user),
+                "token", jwtService.issue(user, version),
                 "username", user.username(),
                 "realName", user.realName() == null ? user.username() : user.realName(),
                 "role", user.role(),

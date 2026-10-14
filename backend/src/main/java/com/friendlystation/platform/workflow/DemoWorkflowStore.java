@@ -587,4 +587,22 @@ public class DemoWorkflowStore implements WorkflowService {
             boundEmails.put(userId, email.trim().toLowerCase());
         }
     }
+
+    /**
+     * 凭据版本：改账号 ID 或密码时递增，让已签发令牌失效。
+     *
+     * <p>与 mysql 实现的 sys_user.credential_version 同一语义。
+     * 用 computeIfAbsent 保证首次读取即为 0，与数据库默认值一致。</p>
+     */
+    private final Map<Long, Integer> credentialVersions = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public int credentialVersionOf(long userId) {
+        // 演示模式没有用户表，未知账号视为版本 0（而非 -1），
+        // 否则演示环境的既有令牌会全部被判为失效。
+        return credentialVersions.computeIfAbsent(userId, key -> 0);
+    }
+
+    public void bumpCredentialVersion(long userId) {
+        credentialVersions.merge(userId, 1, Integer::sum);
+    }
 }
