@@ -22,6 +22,16 @@ public interface WorkflowService {
 
     Map<String, Object> cancelAppointment(long id, long userId);
 
+    /**
+     * 标记预约爽约：用户预约了但未按时到场。
+     *
+     * <p>驿站可标记；同一用户累计爽约会体现在返回的 noShowCount 里，
+     * 供驿站与管理员判断是否值得继续接受该用户的预约。</p>
+     *
+     * @param remark 备注，可选
+     */
+    Map<String, Object> markNoShow(long id, long operatorId, String remark);
+
     Map<String, Object> addAppeal(Map<String, Object> request, long userId);
 
     List<Map<String, Object>> appeals(long userId);

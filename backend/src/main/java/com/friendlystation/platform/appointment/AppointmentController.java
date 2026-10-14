@@ -2,6 +2,7 @@ package com.friendlystation.platform.appointment;
 
 import com.friendlystation.platform.auth.CurrentUserContext;
 import com.friendlystation.platform.auth.DataScopeService;
+import com.friendlystation.platform.auth.RequirePermission;
 import com.friendlystation.platform.auth.RequireRole;
 import com.friendlystation.platform.common.ApiResponse;
 import com.friendlystation.platform.common.PageResult;
@@ -45,6 +46,23 @@ public class AppointmentController {
     @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> cancel(@PathVariable Long id) {
         return ApiResponse.ok(workflowService.cancelAppointment(id, CurrentUserContext.require().id()));
+    }
+
+    /**
+     * 标记预约爽约：用户预约了但未按时到场。
+     *
+     * <p>只允许标记已确认的预约——待审核或被拒绝的预约本来就没成立，
+     * 标记爽约没有意义，还会误伤用户。</p>
+     */
+    @PutMapping("/{id}/no-show")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @RequirePermission({"APPOINTMENT_AUDIT"})
+    public ApiResponse<Map<String, Object>> markNoShow(@PathVariable Long id,
+                                                       @RequestBody(required = false) Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        Object remark = data.get("remark");
+        return ApiResponse.ok(workflowService.markNoShow(
+                id, CurrentUserContext.require().id(), remark == null ? "" : String.valueOf(remark)));
     }
 
     @GetMapping("/admin/page")

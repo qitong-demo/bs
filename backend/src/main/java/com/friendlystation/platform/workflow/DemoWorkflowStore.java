@@ -326,6 +326,29 @@ public class DemoWorkflowStore implements WorkflowService {
         return evaluation;
     }
 
+    /**
+     * 标记预约爽约，与 mysql 实现同口径：只允许标记已确认的预约。
+     */
+    @Override
+    public synchronized Map<String, Object> markNoShow(long id, long operatorId, String remark) {
+        Map<String, Object> item = appointments.stream()
+                .filter(row -> FormatUtils.number(row.get("id")) == id)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("预约不存在"));
+        if (Integer.valueOf(1).equals(item.get("noShow"))) {
+            throw new IllegalArgumentException("该预约已标记为爽约");
+        }
+        if (!WorkflowStatus.APPOINTMENT_CONFIRMED.equals(item.get("status"))) {
+            throw new IllegalArgumentException("只能标记已确认的预约为爽约");
+        }
+        item.put("noShow", 1);
+        item.put("noShowAt", FormatUtils.dateTime(LocalDateTime.now()));
+        if (remark != null && !remark.isBlank()) {
+            item.put("auditReason", remark.trim());
+        }
+        return view(item);
+    }
+
     // -------------------------------------------------------------- 活动报名
 
     @Override

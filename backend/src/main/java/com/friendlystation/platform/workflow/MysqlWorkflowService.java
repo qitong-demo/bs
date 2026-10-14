@@ -525,6 +525,41 @@ public class MysqlWorkflowService implements WorkflowService {
         return out;
     }
 
+    /**
+     * 标记预约爽约。
+     *
+     * <p>只允许标记**已确认**的预约：待审核或被拒绝的预约本来就没成立，
+     * 标记爽约没有意义，还会误伤用户。</p>
+     */
+    @Override
+    @Transactional
+    public Map<String, Object> markNoShow(long id, long operatorId, String remark) {
+        ServiceAppointment item = appointmentMapper.selectById(id);
+        if (item == null) {
+            throw new BusinessException("预约不存在");
+        }
+        if (Boolean.TRUE.equals(item.getNoShow() != null && item.getNoShow() == 1)) {
+            throw new BusinessException("该预约已标记为爽约");
+        }
+        if (!WorkflowStatus.APPOINTMENT_CONFIRMED.equals(item.getStatus())) {
+            throw new BusinessException("只能标记已确认的预约为爽约");
+        }
+        appointmentMapper.update(null, new LambdaUpdateWrapper<ServiceAppointment>()
+                .eq(ServiceAppointment::getId, id)
+                .set(ServiceAppointment::getNoShow, 1)
+                .set(ServiceAppointment::getNoShowAt, LocalDateTime.now()));
+        // 备注写进审核说明，驿站与管理员都能看到当时的情况
+        if (remark != null && !remark.isBlank()) {
+            appointmentMapper.update(null, new LambdaUpdateWrapper<ServiceAppointment>()
+                    .eq(ServiceAppointment::getId, id)
+                    .set(ServiceAppointment::getAuditReason, remark.trim()));
+        }
+        ServiceAppointment updated = appointmentMapper.selectById(id);
+        return appointmentView(updated,
+                stationNames(List.of(updated.getStationId())).get(updated.getStationId()),
+                appointmentSubject(updated), userName(updated.getUserId()));
+    }
+
     // ------------------------------------------------------------ 内部工具
 
     private void insertRecord(Long appealId, Long handlerId, String action, String content) {
@@ -576,6 +611,11 @@ public class MysqlWorkflowService implements WorkflowService {
         out.put("status", item.getStatus());
         out.put("statusLabel", WorkflowStatus.label(item.getStatus()));
         out.put("auditReason", item.getAuditReason() == null ? "" : item.getAuditReason());
+        // 爽约：用户预约了没来。驿站据此判断是否还值得排时段给这个人。
+        boolean noShow = item.getNoShow() != null && item.getNoShow() == 1;
+        out.put("noShow", noShow);
+        out.put("noShowLabel", noShow ? "已爽约" : "");
+        out.put("noShowAt", FormatUtils.dateTime(item.getNoShowAt()));
         out.put("createTime", FormatUtils.dateTime(item.getCreateTime()));
         out.put("dataStatus", "系统计算结果");
         return out;

@@ -24,6 +24,12 @@ public class ServiceAppointment {
     private String appointTime;
     private String status;
     private String auditReason;
+    /**
+     * 爽约标记：用户预约了但未按时到场。1 = 已爽约。
+     * 驿站据此判断是否还值得为这个人排时段。
+     */
+    private Integer noShow;
+    private LocalDateTime noShowAt;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }
