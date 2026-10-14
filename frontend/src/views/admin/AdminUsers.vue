@@ -219,12 +219,14 @@ import {
   updateAdminUserStatus
 } from "../../api/admin";
 import { errorMessage } from "../../api/http";
+import { JOB_TYPES } from "../../utils/profile-options";
 import {
   createSubAccount, getPermissionCatalog, getUserPermissions, grantPermissions
 } from "../../api/admin";
 import { ROLE_OPTIONS, textOf, userStatusLabel, userStatusTag } from "./admin-shared";
 
-const jobTypes = ["外卖骑手", "快递员", "网约车司机", "货车司机", "家政服务", "驿站工作人员"];
+// 与管理端共用同一份群体类型清单，避免两处各写一份而漂移
+const jobTypes = JOB_TYPES;
 
 const loading = ref(false);
 

@@ -717,12 +717,8 @@
           <el-form-item label="姓名"><el-input v-model="profileForm.realName" /></el-form-item>
           <el-form-item label="手机号"><el-input v-model="profileForm.phone" /></el-form-item>
           <el-form-item label="职业类型">
-            <el-select v-model="profileForm.jobType" class="full">
-              <el-option label="外卖骑手" value="外卖骑手" />
-              <el-option label="快递员" value="快递员" />
-              <el-option label="网约车司机" value="网约车司机" />
-              <el-option label="驿站管理员" value="驿站管理员" />
-              <el-option label="平台管理员" value="平台管理员" />
+            <el-select v-model="profileForm.jobType" class="full" placeholder="请选择你从事的工作">
+              <el-option v-for="item in JOB_TYPES" :key="item" :label="item" :value="item" />
             </el-select>
           </el-form-item>
           <el-form-item label="所属区域">
@@ -831,6 +827,7 @@ import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
 import AccountSecurityPanel from "./AccountSecurityPanel.vue";
+import { JOB_TYPES } from "../utils/profile-options";
 import { NEWS_CATEGORIES, NEWS_PLATFORMS } from "../constants/news-platforms";
 
 const props = defineProps({
