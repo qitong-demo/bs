@@ -128,8 +128,13 @@ describe("驿站接口契约", () => {
 
 describe("预约与诉求接口契约", () => {
   it("预约相关路径正确", async () => {
-    await workflowApi.createAppointment({ stationId: 1, serviceId: 2 });
-    expect(request).toHaveBeenLastCalledWith({ url: "/appointment", method: "post", data: { stationId: 1, serviceId: 2 } });
+    // 预约事项已由「选服务项目」改为用户自填 serviceName，并新增可选 contactPhone
+    await workflowApi.createAppointment({ stationId: 1, serviceName: "想借用场地开小组会", contactPhone: "13800002088" });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/appointment",
+      method: "post",
+      data: { stationId: 1, serviceName: "想借用场地开小组会", contactPhone: "13800002088" }
+    });
 
     await workflowApi.getMyAppointments();
     expect(request).toHaveBeenLastCalledWith({ url: "/appointment/my" });
@@ -179,8 +184,13 @@ describe("预约与诉求接口契约", () => {
   });
 
   it("活动报名路径正确", async () => {
-    await workflowApi.signupActivity({ activityId: 2 });
-    expect(request).toHaveBeenLastCalledWith({ url: "/activity/signup", method: "post", data: { activityId: 2 } });
+    // 报名信息必填姓名与电话，承办方要靠这些联系报名人；备注选填
+    await workflowApi.signupActivity({ activityId: 2, contactName: "王骑手", phone: "13800002088", remark: "周六上午方便" });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/activity/signup",
+      method: "post",
+      data: { activityId: 2, contactName: "王骑手", phone: "13800002088", remark: "周六上午方便" }
+    });
 
     await workflowApi.getMySignups();
     expect(request).toHaveBeenLastCalledWith({ url: "/activity/my" });
@@ -188,12 +198,71 @@ describe("预约与诉求接口契约", () => {
     await workflowApi.getAdminSignups();
     expect(request).toHaveBeenLastCalledWith({ url: "/activity/admin/signups" });
   });
+
+  it("承办方处理报名命中 /activity/signup/review", async () => {
+    await workflowApi.reviewSignup({ id: 5, status: "APPROVED", reviewNote: "已电话确认" });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/activity/signup/review",
+      method: "put",
+      data: { id: 5, status: "APPROVED", reviewNote: "已电话确认" }
+    });
+  });
+});
+
+describe("诉求分类与反馈对象契约", () => {
+  it("提交诉求带 category 与 receiverTarget", async () => {
+    await workflowApi.createAppeal({
+      category: "PRAISE",
+      receiverTarget: "STATION",
+      title: "感谢湖滨驿站帮我处理伤口",
+      type: "热心帮助"
+    });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/appeal",
+      method: "post",
+      data: {
+        category: "PRAISE",
+        receiverTarget: "STATION",
+        title: "感谢湖滨驿站帮我处理伤口",
+        type: "热心帮助"
+      }
+    });
+  });
+});
+
+describe("活动承办方契约", () => {
+  it("创建活动带 organizerType，第三方活动带 externalUrl", async () => {
+    await contentApi.createActivity({ title: "驿站理发志愿服务", organizerType: "STATION", stationId: 1 });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/activity/admin",
+      method: "post",
+      data: { title: "驿站理发志愿服务", organizerType: "STATION", stationId: 1 }
+    });
+
+    await contentApi.createActivity({
+      title: "市总工会技能大赛",
+      organizerType: "EXTERNAL",
+      externalUrl: "https://example.org/race"
+    });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/activity/admin",
+      method: "post",
+      data: { title: "市总工会技能大赛", organizerType: "EXTERNAL", externalUrl: "https://example.org/race" }
+    });
+  });
 });
 
 describe("资讯、公告与活动接口契约", () => {
   it("资讯前台默认 size=10，后台带 status", async () => {
     await contentApi.getNewsPage();
     expect(request).toHaveBeenLastCalledWith({ url: "/news/page", params: { current: 1, size: 10 } });
+
+    // 分城市与来源筛选：cityCode 决定「本地优先 + 全国可见」，sourceType 区分官方/平台
+    await contentApi.getNewsPage({ cityCode: "330100", sourceType: "OFFICIAL", platform: "美团" });
+    expect(request).toHaveBeenLastCalledWith({
+      url: "/news/page",
+      params: { current: 1, size: 10, cityCode: "330100", sourceType: "OFFICIAL", platform: "美团" }
+    });
 
     await contentApi.getAdminNewsPage({ status: "DRAFT" });
     expect(request).toHaveBeenLastCalledWith({ url: "/news/admin/page", params: { current: 1, size: 10, status: "DRAFT" } });
