@@ -19,12 +19,12 @@ INSERT INTO news (title, category, content, view_count, status, source_type, sou
 发布方：人力资源社会保障部等八部门
 发布日期：2021-07-16
 适用范围：全国
-原文链接：https://www.gov.cn/zhengce/zhengceku/2021-07/23/content_5626761.htm', 0, 'PUBLISHED', 'OFFICIAL', 'SECONDARY', '人力资源社会保障部等八部门', NULL, NULL, '2021-07-16', 'https://www.gov.cn/zhengce/zhengceku/2021-07/23/content_5626761.htm'),
+原文链接：https://www.gov.cn/zhengce/zhengceku/2021-07/23/content_5626761.htm', 0, 'PUBLISHED', 'OFFICIAL', 'AUTHORITATIVE', '人力资源社会保障部等八部门', NULL, NULL, '2021-07-16', 'https://www.gov.cn/zhengce/zhengceku/2021-07/23/content_5626761.htm'),
   ('关于扩大新就业形态人员职业伤害保障试点的通知（人社部发〔2025〕24号）', '职业伤害', '三年分步扩围职业伤害保障试点，新增十省份与滴滴、顺丰同城、满帮等平台。
 发布方：人力资源社会保障部等九部门
 发布日期：2025-04-22
 适用范围：全国
-原文链接：https://www.gov.cn/gongbao/2025/issue_12186/202507/content_7034087.html', 0, 'PUBLISHED', 'OFFICIAL', 'SECONDARY', '人力资源社会保障部等九部门', NULL, NULL, '2025-04-22', 'https://www.gov.cn/gongbao/2025/issue_12186/202507/content_7034087.html'),
+原文链接：https://www.gov.cn/gongbao/2025/issue_12186/202507/content_7034087.html', 0, 'PUBLISHED', 'OFFICIAL', 'AUTHORITATIVE', '人力资源社会保障部等九部门', NULL, NULL, '2025-04-22', 'https://www.gov.cn/gongbao/2025/issue_12186/202507/content_7034087.html'),
   ('《新就业形态劳动者权益保障办法》公开征求意见', '权益保障', '新就业形态权益保障拟由指导意见升格为部门规章，公开向社会征求意见。
 发布方：智慧普法平台（司法部，转载人力资源社会保障部征求意见稿）
 发布日期：2026-10-09

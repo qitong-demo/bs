@@ -58,7 +58,12 @@ function classifySource(url) {
   } catch {
     return "SECONDARY";
   }
-  if (host.endsWith(".gov.cn") || host.endsWith(".npc.gov.cn")) return "AUTHORITATIVE";
+  // 注意必须显式判断 host === "gov.cn"：上一行剥掉了 www. 前缀，
+  // 国务院门户 www.gov.cn 会变成 "gov.cn"，而 "gov.cn".endsWith(".gov.cn") 是 false，
+  // 于是最权威的门户反而被判成第三方来源。子域名（mohrss.gov.cn 等）不受影响，
+  // 所以这个错误只在 www.gov.cn 上暴露，很容易漏掉。
+  if (host === "gov.cn" || host.endsWith(".gov.cn")) return "AUTHORITATIVE";
+  if (host === "npc.gov.cn" || host.endsWith(".npc.gov.cn")) return "AUTHORITATIVE";
   if (OFFICIAL_MEDIA_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return "OFFICIAL_MEDIA";
   return "SECONDARY";
 }
