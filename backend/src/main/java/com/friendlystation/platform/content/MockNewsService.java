@@ -105,6 +105,7 @@ public class MockNewsService implements NewsService {
                 0,
                 ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"),
                 LocalDateTime.now());
+        applyEditorContent(record, data);
         store.add(record);
         return view(record);
     }
@@ -122,6 +123,9 @@ public class MockNewsService implements NewsService {
         }
         if (data.containsKey("content")) {
             record.put("content", ContentSupport.trimText(data.get("content")));
+        }
+        if (data.containsKey("statement") || data.containsKey("advice") || data.containsKey("editorName")) {
+            applyEditorContent(record, data);
         }
         if (data.containsKey("status")) {
             record.put("status", ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
@@ -164,6 +168,26 @@ public class MockNewsService implements NewsService {
                 .filter(item -> id.equals(item.get("id")))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("资讯不存在"));
+    }
+
+    /** 写入管理员的内容创作三字段；留空即清空，便于撤销误写。 */
+    private static void applyEditorContent(Map<String, Object> record, Map<String, Object> data) {
+        if (data.containsKey("statement")) {
+            record.put("statement", limit(ContentSupport.trimText(data.get("statement")), 1000, "平台声明"));
+        }
+        if (data.containsKey("advice")) {
+            record.put("advice", limit(ContentSupport.trimText(data.get("advice")), 1000, "行动建议"));
+        }
+        if (data.containsKey("editorName")) {
+            record.put("editorName", limit(ContentSupport.trimText(data.get("editorName")), 50, "整理人"));
+        }
+    }
+
+    private static String limit(String text, int max, String label) {
+        if (text.length() > max) {
+            throw new BusinessException(label + "不能超过 " + max + " 个字符");
+        }
+        return text;
     }
 
     private static String requireTitle(Object value) {
@@ -216,6 +240,10 @@ public class MockNewsService implements NewsService {
         out.put("cityLabel", cityCode.isEmpty() ? "全国" : "");
         out.put("publishedAt", ContentSupport.trimText(record.get("publishedAt")));
         out.put("sourceUrl", ContentSupport.trimText(record.get("sourceUrl")));
+        // 管理员的内容创作，用户端详情页会展示
+        out.put("statement", ContentSupport.trimText(record.get("statement")));
+        out.put("advice", ContentSupport.trimText(record.get("advice")));
+        out.put("editorName", ContentSupport.trimText(record.get("editorName")));
         out.put("source", "news");
         return out;
     }

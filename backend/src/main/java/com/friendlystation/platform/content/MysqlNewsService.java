@@ -56,7 +56,8 @@ public class MysqlNewsService implements NewsService {
         news.setCategory(ContentSupport.textOrDefault(data.get("category"), "政策"));
         news.setContent(ContentSupport.trimText(data.get("content")));
         news.setViewCount(0);
-        news.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
+        news.setStatus(requireStatus(data.get("status")));
+        applyEditorContent(news, data);
         newsMapper.insert(news);
         return toMap(require(news.getId()));
     }
@@ -76,7 +77,12 @@ public class MysqlNewsService implements NewsService {
             news.setContent(ContentSupport.trimText(data.get("content")));
         }
         if (data.containsKey("status")) {
-            news.setStatus(ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
+            news.setStatus(requireStatus(data.get("status")));
+        }
+        // 管理员的内容创作三字段与状态无关，单独判断；
+        // 放在状态分支内会导致"只改声明不改状态"时不生效
+        if (data.containsKey("statement") || data.containsKey("advice") || data.containsKey("editorName")) {
+            applyEditorContent(news, data);
         }
         news.setUpdateTime(LocalDateTime.now());
         newsMapper.updateById(news);
@@ -146,6 +152,42 @@ public class MysqlNewsService implements NewsService {
         return new PageResult<>(result.getCurrent(), result.getSize(), result.getTotal(), records);
     }
 
+    /**
+     * 状态白名单。
+     *
+     * <p>新增 EXPIRED 已失效：政策会过期或被新政策取代，
+     * 若只能"已发布/草稿"，失效政策要么继续挂着误导人，要么只能删掉丢历史。</p>
+     */
+    private static final java.util.Set<String> ALLOWED_STATUS = java.util.Set.of("PUBLISHED", "DRAFT", "EXPIRED");
+
+    private static String requireStatus(Object value) {
+        String status = ContentSupport.textOrDefault(value, "PUBLISHED").trim().toUpperCase();
+        if (!ALLOWED_STATUS.contains(status)) {
+            throw new BusinessException("资讯状态只能是 PUBLISHED、DRAFT 或 EXPIRED");
+        }
+        return status;
+    }
+
+    /** 写入管理员的内容创作三字段。留空即清空，便于撤销误写。 */
+    private static void applyEditorContent(News news, Map<String, Object> data) {
+        if (data.containsKey("statement")) {
+            news.setStatement(limit(ContentSupport.trimText(data.get("statement")), 1000, "平台声明"));
+        }
+        if (data.containsKey("advice")) {
+            news.setAdvice(limit(ContentSupport.trimText(data.get("advice")), 1000, "行动建议"));
+        }
+        if (data.containsKey("editorName")) {
+            news.setEditorName(limit(ContentSupport.trimText(data.get("editorName")), 50, "整理人"));
+        }
+    }
+
+    private static String limit(String text, int max, String label) {
+        if (text.length() > max) {
+            throw new BusinessException(label + "不能超过 " + max + " 个字符");
+        }
+        return text;
+    }
+
     private News require(Long id) {
         if (id == null) {
             throw new BusinessException("资讯不存在");
@@ -190,6 +232,10 @@ public class MysqlNewsService implements NewsService {
         out.put("cityLabel", news.getCityCode() == null || news.getCityCode().isBlank() ? "全国" : "");
         out.put("publishedAt", news.getPublishedAt() == null ? "" : news.getPublishedAt().toString());
         out.put("sourceUrl", news.getSourceUrl() == null ? "" : news.getSourceUrl());
+        // 管理员对政策的内容创作，用户端详情页会展示
+        out.put("statement", news.getStatement() == null ? "" : news.getStatement());
+        out.put("advice", news.getAdvice() == null ? "" : news.getAdvice());
+        out.put("editorName", news.getEditorName() == null ? "" : news.getEditorName());
         out.put("source", "news");
         return out;
     }

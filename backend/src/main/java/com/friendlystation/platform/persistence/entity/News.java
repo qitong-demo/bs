@@ -32,7 +32,12 @@ public class News {
     /** 来源发布日期。 */
     private LocalDate publishedAt;
     /** 原文链接，便于逐条核对。 */
-    private String sourceUrl;
+    /** 平台声明：管理员对政策的立场、适用范围与免责说明，用户可见。 */
+    private String statement;
+    /** 行动建议：管理员给新就业群体的具体可执行建议，用户可见。 */
+    private String advice;
+    /** 整理人署名。 */
+    private String editorName;    private String sourceUrl;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

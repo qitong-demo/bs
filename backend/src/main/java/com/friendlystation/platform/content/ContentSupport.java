@@ -31,13 +31,17 @@ final class ContentSupport {
         return text.isEmpty() ? fallback : text;
     }
 
-    /** 状态中文文案：PUBLISHED→已发布，DRAFT→草稿，其他原样返回。 */
+    /** 状态中文文案：PUBLISHED→已发布，DRAFT→草稿，EXPIRED→已失效，其他原样返回。 */
     static String statusLabel(String status) {
         if ("PUBLISHED".equals(status)) {
             return "已发布";
         }
         if ("DRAFT".equals(status)) {
             return "草稿";
+        }
+        // 政策会过期或被新政策取代；没有这个分支时界面会直接显示英文 "EXPIRED"
+        if ("EXPIRED".equals(status)) {
+            return "已失效";
         }
         return status == null ? "" : status;
     }
