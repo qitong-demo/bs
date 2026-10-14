@@ -73,6 +73,7 @@ import { getStatOverview } from "../api/stat";
 import { errorMessage } from "../api/http";
 import { useUserStore } from "../stores/user";
 import { PLATFORM_ROLES, numberText } from "./admin/admin-shared";
+import { getMyPermissions } from "../api/admin";
 import AdminOverview from "./admin/AdminOverview.vue";
 import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
@@ -84,20 +85,43 @@ import AdminUsers from "./admin/AdminUsers.vue";
 import AdminRoles from "./admin/AdminRoles.vue";
 import AdminReports from "./admin/AdminReports.vue";
 
-/** 标签页定义：platformOnly 为 true 时仅平台管理员与超级管理员可见。 */
+/**
+ * 标签页定义：每个标签声明它需要的**功能权限**。
+ *
+ * 原先是前端硬编码 platformOnly，问题是子账号角色同样是管理员，
+ * 于是会看到自己无权使用的标签、点进去只拿到 403。
+ * 现在改为由后端返回的生效权限驱动，界面与后端的判断保持一致。
+ * 不声明 permission 的标签（运营概览）对所有管理角色可见。
+ */
 const tabs = [
   { name: "overview", label: "运营概览" },
-  { name: "appointments", label: "预约审核" },
-  { name: "appeals", label: "诉求处理" },
-  { name: "stations", label: "驿站管理", platformOnly: true },
-  { name: "services", label: "服务项目管理", platformOnly: true },
-  { name: "contents", label: "资讯公告管理", platformOnly: true },
-  { name: "activities", label: "活动管理" },
-  { name: "signups", label: "报名记录" },
-  { name: "users", label: "账号管理", platformOnly: true },
-  { name: "roles", label: "角色权限", platformOnly: true },
-  { name: "reports", label: "报表导出" }
+  { name: "appointments", label: "预约审核", permission: "APPOINTMENT_AUDIT" },
+  { name: "appeals", label: "诉求处理", permission: "APPEAL_HANDLE" },
+  { name: "changeRequests", label: "变更审批", permission: "CHANGE_APPROVE" },
+  { name: "stations", label: "驿站管理", permission: "STATION_MANAGE" },
+  { name: "services", label: "服务项目管理", permission: "SERVICE_MANAGE" },
+  { name: "contents", label: "资讯公告管理", permission: "NEWS_MANAGE" },
+  { name: "activities", label: "活动管理", permission: "ACTIVITY_MANAGE" },
+  { name: "signups", label: "报名记录", permission: "SIGNUP_MANAGE" },
+  { name: "dataReview", label: "数据复核", permission: "DATA_REVIEW" },
+  { name: "users", label: "账号管理", permission: "ACCOUNT_MANAGE" },
+  { name: "roles", label: "角色权限", permission: "ACCOUNT_MANAGE" },
+  { name: "reports", label: "报表导出", permission: "REPORT_EXPORT" }
 ];
+
+/** 当前账号的生效权限；null 表示获取失败、退回按角色判断。 */
+const myPermissions = ref(null);
+
+async function loadMyPermissions() {
+  try {
+    const data = await getMyPermissions();
+    myPermissions.value = data?.permissions || [];
+  } catch {
+    // 取不到权限时退回"按角色判断"，至少不让管理端整页不可用。
+    // 后端仍会独立校验，界面判断错不会造成越权。
+    myPermissions.value = null;
+  }
+}
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -109,7 +133,16 @@ const workflow = ref({});
 
 const isPlatformAdmin = computed(() => PLATFORM_ROLES.includes(userStore.roleCode));
 const roleLabel = computed(() => userStore.role || "未知角色");
-const visibleTabs = computed(() => tabs.filter((tab) => !tab.platformOnly || isPlatformAdmin.value));
+const visibleTabs = computed(() => tabs.filter((tab) => {
+  if (!tab.permission) {
+    return true;
+  }
+  // 权限获取失败时退回按角色判断（仅管理员角色可见）
+  if (myPermissions.value === null) {
+    return isPlatformAdmin.value;
+  }
+  return myPermissions.value.includes(tab.permission);
+}));
 
 const metrics = computed(() => [
   {
@@ -167,6 +200,7 @@ async function loadSummary() {
 }
 
 onMounted(() => {
+  loadMyPermissions();
   loadSummary();
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
   const tab = String(route.query.tab || "");

@@ -21,17 +21,18 @@ import {
 } from "./admin-shared";
 
 describe("管理端公共常量", () => {
-  it("平台角色只包含平台管理员与超级管理员", () => {
+  it("平台角色只包含管理员（标签可见性已改由权限接口驱动，此处仅作兜底）", () => {
     expect(PLATFORM_ROLES).toEqual(["PLATFORM_ADMIN"]);
   });
 
-  it("内置角色选项与后端 RoleCatalog 的四类角色一致", () => {
+  it("内置角色选项与后端 RoleCatalog 的三类角色一致", () => {
     expect(ROLE_OPTIONS.map((item) => item.value)).toEqual([
       "USER",
       "STATION_ADMIN",
       "PLATFORM_ADMIN"
     ]);
-    expect(Object.keys(ROLE_SCOPE)).toHaveLength(4);
+    // 角色收敛为三个身份：原 SUPER_ADMIN 只是定义了角色行、从未分配给任何账号，已删除
+    expect(Object.keys(ROLE_SCOPE)).toHaveLength(3);
   });
 
   it("资讯与公告选项非空", () => {
