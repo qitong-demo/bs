@@ -53,11 +53,18 @@ import { getRoles } from "../../api/admin";
 import { errorMessage } from "../../api/http";
 import { ROLE_SCOPE, numberText, textOf } from "./admin-shared";
 
+/**
+ * 各角色实际可见的标签页。
+ *
+ * 与 AdminView.vue 的 tabs 定义保持一致：驿站管理员由角色固定的 6 项权限
+ * 加「运营概览」共 7 个；管理员是权限定义 12 项中的 11 个
+ * （「数据复核」页面尚未实现，标签未放出）。
+ * 改 AdminView 的标签时这里要同步，否则本页会显示过期的说明。
+ */
 const ROLE_TABS = {
   USER: ["无（不可进入管理工作台）"],
-  STATION_ADMIN: ["运营概览", "预约审核", "诉求处理", "活动管理", "报表导出"],
-  PLATFORM_ADMIN: ["运营概览", "预约审核", "诉求处理", "驿站管理", "服务项目管理", "资讯公告管理", "活动管理", "账号管理", "角色权限", "报表导出"],
-  
+  STATION_ADMIN: ["运营概览", "预约审核", "诉求处理", "变更审批", "活动管理", "报名记录", "报表导出"],
+  PLATFORM_ADMIN: ["运营概览", "预约审核", "诉求处理", "变更审批", "驿站管理", "服务项目管理", "资讯公告管理", "活动管理", "报名记录", "账号管理", "角色权限", "报表导出"]
 };
 
 const loading = ref(false);

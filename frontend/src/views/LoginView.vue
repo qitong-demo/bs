@@ -35,7 +35,7 @@
           <div class="demo-actions">
             <button type="button" :class="{ active: form.username === 'rider_xiaowang' }" @click="useDemo('rider_xiaowang')"><el-icon><User /></el-icon><span>普通用户</span><small>浏览服务</small></button>
             <button type="button" :class="{ active: form.username === 'station_admin_01' }" @click="useDemo('station_admin_01')"><el-icon><Setting /></el-icon><span>驿站管理员</span><small>管理驿站</small></button>
-            <button type="button" :class="{ active: form.username === 'platform_admin' }" @click="useDemo('platform_admin')"><el-icon><Monitor /></el-icon><span>平台管理员</span><small>运营工作台</small></button>
+            <button type="button" :class="{ active: form.username === 'platform_admin' }" @click="useDemo('platform_admin')"><el-icon><Monitor /></el-icon><span>管理员</span><small>运营工作台</small></button>
           </div>
           <p class="demo-hint"><el-icon><InfoFilled /></el-icon> 演示账号密码均为 <b>password</b></p>
         </div>
