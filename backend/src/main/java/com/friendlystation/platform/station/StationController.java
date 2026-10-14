@@ -85,7 +85,7 @@ public class StationController {
     }
 
     @PostMapping
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationDto> create(@Valid @RequestBody StationCreateRequest request) {
         return ApiResponse.ok(stationService.create(request));
     }
@@ -94,7 +94,7 @@ public class StationController {
      * 编辑驿站基础信息。
      */
     @PutMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationDto> update(@PathVariable Long id, @Valid @RequestBody StationUpdateRequest request) {
         return ApiResponse.ok(stationService.update(id, request));
     }
@@ -103,7 +103,7 @@ public class StationController {
      * 修改驿站状态，status 只接受 OPEN / CLOSED。
      */
     @PutMapping("/{id}/status")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationDto> updateStatus(@PathVariable Long id, @RequestParam String status) {
         return ApiResponse.ok(stationService.updateStatus(id, status));
     }
@@ -112,7 +112,7 @@ public class StationController {
      * 逻辑删除驿站，把 status 置为 DELETED。
      */
     @DeleteMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         stationService.delete(id);
         Map<String, Object> result = new LinkedHashMap<>();

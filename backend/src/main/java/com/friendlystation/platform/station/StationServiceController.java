@@ -52,13 +52,13 @@ public class StationServiceController {
     }
 
     @PostMapping
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationServiceItemDto> create(@Valid @RequestBody StationServiceItemRequest request) {
         return ApiResponse.ok(stationServiceItemService.create(request));
     }
 
     @PutMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationServiceItemDto> update(@PathVariable Long id,
                                                     @Valid @RequestBody StationServiceItemRequest request) {
         return ApiResponse.ok(stationServiceItemService.update(id, request));
@@ -68,13 +68,13 @@ public class StationServiceController {
      * 启用（1）/ 停用（0）服务项目。
      */
     @PutMapping("/{id}/status")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<StationServiceItemDto> updateStatus(@PathVariable Long id, @RequestParam Integer status) {
         return ApiResponse.ok(stationServiceItemService.updateStatus(id, status));
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         stationServiceItemService.delete(id);
         Map<String, Object> result = new LinkedHashMap<>();

@@ -323,7 +323,7 @@ const PanelHeader = {
 
 const userStore = useUserStore();
 const router = useRouter();
-const isAdmin = computed(() => ["STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"].includes(userStore.roleCode));
+const isAdmin = computed(() => ["STATION_ADMIN", "PLATFORM_ADMIN"].includes(userStore.roleCode));
 const keyword = ref("");
 const activeNav = ref("首页");
 /** 消息与已读状态（顶栏角标与消息中心共用）。 */

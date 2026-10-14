@@ -22,15 +22,14 @@ import {
 
 describe("管理端公共常量", () => {
   it("平台角色只包含平台管理员与超级管理员", () => {
-    expect(PLATFORM_ROLES).toEqual(["PLATFORM_ADMIN", "SUPER_ADMIN"]);
+    expect(PLATFORM_ROLES).toEqual(["PLATFORM_ADMIN"]);
   });
 
   it("内置角色选项与后端 RoleCatalog 的四类角色一致", () => {
     expect(ROLE_OPTIONS.map((item) => item.value)).toEqual([
       "USER",
       "STATION_ADMIN",
-      "PLATFORM_ADMIN",
-      "SUPER_ADMIN"
+      "PLATFORM_ADMIN"
     ]);
     expect(Object.keys(ROLE_SCOPE)).toHaveLength(4);
   });

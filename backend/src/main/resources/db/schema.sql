@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS sys_user (
     password VARCHAR(100) NOT NULL,
     real_name VARCHAR(50),
     phone VARCHAR(20) NOT NULL UNIQUE,
+    -- 邮箱：用于收发验证码（改账号 ID / 改密码 / 改联系方式时校验身份）。
+    -- 允许为空；未绑定时敏感操作会被拒绝并提示先绑定。
+    email VARCHAR(120),
     avatar VARCHAR(255),
     user_type VARCHAR(30) NOT NULL DEFAULT 'USER',
     job_type VARCHAR(50),
@@ -82,6 +85,11 @@ CREATE TABLE IF NOT EXISTS station (
     -- SOURCE = 来自公开来源文本；AMAP_POI = 来自高德地图 POI（第三方数据）；NULL = 未知。
     business_source VARCHAR(20),
     business_synced_at DATE,
+    -- 暂停服务时段：驿站临时关门 / 装修时设置，期间不接受新预约，
+    -- 并通知该时段内已预约的用户（而不是让人白跑一趟）。
+    suspended_from DATETIME,
+    suspended_to DATETIME,
+    suspend_reason VARCHAR(255),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_station_city (city_code),
@@ -118,6 +126,10 @@ CREATE TABLE IF NOT EXISTS service_appointment (
     appoint_time VARCHAR(30) NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     audit_reason VARCHAR(255),
+    -- 爽约标记：用户预约了但未按时到场。驿站可标记；同一用户累计爽约达到阈值后，
+    -- 后续预约需要管理员确认（避免有人反复占时段又不来）。
+    no_show TINYINT NOT NULL DEFAULT 0,
+    no_show_at DATETIME,
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_appointment_user (user_id),
@@ -177,6 +189,12 @@ CREATE TABLE IF NOT EXISTS news (
     content LONGTEXT NOT NULL,
     view_count INT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
+    -- 平台声明：管理员对政策的立场、适用范围与免责说明，**用户可见**
+    statement VARCHAR(1000),
+    -- 行动建议：管理员给新就业群体的具体可执行建议，**用户可见**
+    advice VARCHAR(1000),
+    -- 整理人署名：让用户知道这条政策是谁整理的
+    editor_name VARCHAR(50),
     -- 来源类型：OFFICIAL 官方（政府/群团/官方媒体）/ PLATFORM 平台企业自行发布
     source_type VARCHAR(20) NOT NULL DEFAULT 'OFFICIAL',
     -- 来源等级：AUTHORITATIVE 一手规范性文件 / OFFICIAL_MEDIA 官方媒体 / SECONDARY 第三方来源。
@@ -263,8 +281,94 @@ CREATE TABLE IF NOT EXISTS station_evaluation (
     CONSTRAINT fk_station_evaluation_station FOREIGN KEY (station_id) REFERENCES station (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 系统只有三个身份。
+-- 原 SUPER_ADMIN（超级管理员）已删除：它此前只是定义了角色行，从未分配给任何账号，
+-- 却被 27 个文件的 @RequireRole 引用，属于"从未启用的幽灵角色"，徒增权限矩阵的复杂度。
+-- 原 PLATFORM_ADMIN 保留编码、显示名改为「管理员」：管理员唯一统筹平台，
+-- 通过**子账号 + 功能权限**（sys_user_permission）分工，而不是靠角色分级。
 INSERT IGNORE INTO sys_role (role_code, role_name, remark) VALUES
     ('USER', '普通用户', '新就业群体用户'),
     ('STATION_ADMIN', '驿站管理员', '负责本驿站运营'),
-    ('PLATFORM_ADMIN', '平台管理员', '负责平台全局管理'),
-    ('SUPER_ADMIN', '超级管理员', '负责系统最高权限');
+    ('PLATFORM_ADMIN', '管理员', '统一统筹平台，可创建子账号并分发功能权限');
+
+-- 功能权限目录：管理端的一个标签页或一类关键操作对应一个权限。
+-- 管理员创建子账号时勾选授予哪些权限；子账号登录后只看到被授权的部分。
+CREATE TABLE IF NOT EXISTS sys_permission (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    permission_code VARCHAR(50) NOT NULL UNIQUE,
+    permission_name VARCHAR(50) NOT NULL,
+    remark VARCHAR(255),
+    -- 是否可授予子账号。ACCOUNT_MANAGE 这类为 0：否则子账号能给自己加权限，等于没有权限体系。
+    grantable TINYINT NOT NULL DEFAULT 1,
+    sort_no INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 账号 ↔ 权限。系统管理员（非子账号）不受此表限制，拥有全部权限。
+CREATE TABLE IF NOT EXISTS sys_user_permission (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    permission_code VARCHAR(50) NOT NULL,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_permission (user_id, permission_code),
+    KEY idx_permission_code (permission_code),
+    CONSTRAINT fk_user_permission_user FOREIGN KEY (user_id) REFERENCES sys_user (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 邮箱验证码：改账号 ID / 改密码 / 改联系方式时校验身份。
+-- 只存哈希不存明文；同一邮箱 60 秒内不可重复发送；校验失败累计 5 次作废。
+CREATE TABLE IF NOT EXISTS verification_code (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    -- 用途：CHANGE_USERNAME / CHANGE_PASSWORD / CHANGE_CONTACT / BIND_EMAIL
+    purpose VARCHAR(30) NOT NULL,
+    -- 收件邮箱
+    target VARCHAR(120) NOT NULL,
+    -- 申请该验证码的账号，防止 A 的验证码被用于改 B
+    user_id BIGINT,
+    code_hash VARCHAR(100) NOT NULL,
+    expire_at DATETIME NOT NULL,
+    used TINYINT NOT NULL DEFAULT 0,
+    attempt_count INT NOT NULL DEFAULT 0,
+    -- 是否真实发送。演示环境未配置 SMTP 时为 0，此时验证码只写后端日志，
+    -- 界面必须显著标注「演示环境未真实发送邮件」——不能把没发出去的说成发了。
+    delivered TINYINT NOT NULL DEFAULT 1,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_code_target_purpose (target, purpose),
+    KEY idx_code_expire (expire_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 驿站信息变更申请与审批。
+-- 驿站最清楚自己门口在哪，但坐标是权威数据（现有 1247/1344 条由高德 POI 派生并经三重校验），
+-- 不能自改，因此位置变更走审批；营业时间与联系电话按需求可直接改（需邮箱验证）。
+CREATE TABLE IF NOT EXISTS station_change_request (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    station_id BIGINT NOT NULL,
+    applicant_id BIGINT NOT NULL,
+    -- LOCATION 位置 / BUSINESS_HOURS 营业时间 / PHONE 联系电话 / ADDRESS 地址 / OTHER 其他
+    change_type VARCHAR(30) NOT NULL,
+    old_value VARCHAR(500),
+    new_value VARCHAR(500) NOT NULL,
+    reason VARCHAR(500) NOT NULL,
+    -- PENDING 待审批 / APPROVED 已通过 / REJECTED 已驳回 / CANCELLED 已撤回
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    reviewer_id BIGINT,
+    review_note VARCHAR(500),
+    review_time DATETIME,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_change_station (station_id),
+    KEY idx_change_status (status),
+    CONSTRAINT fk_change_station FOREIGN KEY (station_id) REFERENCES station (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 功能权限目录种子。grantable=0 的两项不可授予子账号，只能由管理员本人使用。
+INSERT IGNORE INTO sys_permission (permission_code, permission_name, remark, grantable, sort_no) VALUES
+    ('STATION_MANAGE',    '驿站管理',     '新增、修改、删除驿站',                        1, 10),
+    ('SERVICE_MANAGE',    '服务项目管理', '服务项目增删改',                              1, 20),
+    ('NEWS_MANAGE',       '资讯公告管理', '政策与公告的增删改、声明与建议创作、状态变更', 1, 30),
+    ('ACTIVITY_MANAGE',   '活动管理',     '活动增删改、取消活动',                        1, 40),
+    ('SIGNUP_MANAGE',     '报名记录',     '查看报名、联系与审核、给出反馈',              1, 50),
+    ('APPOINTMENT_AUDIT', '预约审核',     '确认、拒绝预约、标记爽约',                    1, 60),
+    ('APPEAL_HANDLE',     '诉求处理',     '分派、回复、办结诉求',                        1, 70),
+    ('CHANGE_APPROVE',    '变更审批',     '审批驿站提交的信息与位置变更申请',            1, 80),
+    ('DATA_REVIEW',       '数据复核',     '处理来源待核对、坐标为高德派生的驿站条目',    1, 90),
+    ('REPORT_EXPORT',     '报表导出',     '导出各类台账',                                1, 100),
+    ('ACCOUNT_MANAGE',    '账号管理',     '新建子账号、分发权限、改账号 ID、重置密码',   0, 110);

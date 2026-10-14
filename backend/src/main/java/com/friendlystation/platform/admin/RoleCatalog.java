@@ -16,8 +16,7 @@ public final class RoleCatalog {
     public static final List<RoleDefinition> DEFINITIONS = List.of(
             new RoleDefinition("USER", "普通用户", "新就业群体用户"),
             new RoleDefinition("STATION_ADMIN", "驿站管理员", "负责本驿站运营"),
-            new RoleDefinition("PLATFORM_ADMIN", "平台管理员", "负责平台全局管理"),
-            new RoleDefinition("SUPER_ADMIN", "超级管理员", "负责系统最高权限")
+            new RoleDefinition("PLATFORM_ADMIN", "管理员", "统一统筹平台，可创建子账号并分发功能权限")
     );
 
     public static boolean isValid(String roleCode) {

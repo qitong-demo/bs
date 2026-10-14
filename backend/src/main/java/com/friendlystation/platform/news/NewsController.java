@@ -47,7 +47,7 @@ public class NewsController {
 
     /** 后台资讯分页，返回全部状态。 */
     @GetMapping("/admin/page")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> adminPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -66,21 +66,21 @@ public class NewsController {
 
     /** 新增资讯。 */
     @PostMapping
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(newsService.create(payload));
     }
 
     /** 修改资讯。 */
     @PutMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(newsService.update(id, payload));
     }
 
     /** 删除资讯。 */
     @DeleteMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         newsService.delete(id);
         return ApiResponse.ok(Map.of("id", id, "deleted", true));

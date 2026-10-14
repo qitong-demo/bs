@@ -24,7 +24,7 @@ import java.util.Map;
 /** 管理端工作台：运营概览、账号管理与角色权限管理。 */
 @RestController
 @RequestMapping("/api/admin")
-@RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+@RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
 public class AdminController {
     private final WorkflowService workflowService;
     private final AdminUserService adminUserService;
@@ -52,7 +52,7 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> users(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -63,33 +63,33 @@ public class AdminController {
     }
 
     @GetMapping("/users/{id}")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> userDetail(@PathVariable Long id) {
         return ApiResponse.ok(adminUserService.userDetail(id));
     }
 
     @PutMapping("/users/{id}")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.updateUser(id, payload));
     }
 
     @PutMapping("/users/{id}/status")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUserStatus(@PathVariable Long id,
                                                              @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.updateStatus(id, String.valueOf(payload.getOrDefault("status", "正常"))));
     }
 
     @PutMapping("/users/{id}/roles")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateUserRoles(@PathVariable Long id,
                                                             @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.setRoles(id, readRoleCodes(payload)));
     }
 
     @GetMapping("/roles")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> roles() {
         return ApiResponse.ok(adminUserService.roles());
     }

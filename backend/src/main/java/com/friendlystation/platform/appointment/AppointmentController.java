@@ -30,25 +30,25 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.addAppointment(payload, CurrentUserContext.require().id()));
     }
 
     @GetMapping("/my")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> myAppointments() {
         return ApiResponse.ok(workflowService.appointments(CurrentUserContext.require().id()));
     }
 
     @PutMapping("/{id}/cancel")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> cancel(@PathVariable Long id) {
         return ApiResponse.ok(workflowService.cancelAppointment(id, CurrentUserContext.require().id()));
     }
 
     @GetMapping("/admin/page")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> adminPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -60,7 +60,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/audit")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> audit(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.auditAppointment(payload, CurrentUserContext.require().id()));
     }

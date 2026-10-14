@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/activity/admin")
-@RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+@RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
 public class ActivityAdminController {
     private final ActivityService activityService;
 

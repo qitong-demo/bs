@@ -4,14 +4,14 @@
  */
 
 /** 平台级角色：可见驿站、服务项目、资讯公告、账号与角色权限标签页。 */
-export const PLATFORM_ROLES = ["PLATFORM_ADMIN", "SUPER_ADMIN"];
+export const PLATFORM_ROLES = ["PLATFORM_ADMIN"];
 
 /** 系统内置的四个角色编码，与后端 RoleCatalog 一致。 */
 export const ROLE_OPTIONS = [
   { value: "USER", label: "普通用户" },
   { value: "STATION_ADMIN", label: "驿站管理员" },
   { value: "PLATFORM_ADMIN", label: "平台管理员" },
-  { value: "SUPER_ADMIN", label: "超级管理员" }
+  { value: label: "超级管理员" }
 ];
 
 /** 每个角色的数据范围说明，用于角色权限页。 */
@@ -19,7 +19,7 @@ export const ROLE_SCOPE = {
   USER: "仅本人数据：本人预约、本人诉求、本人报名与本人评价，不能进入管理工作台。",
   STATION_ADMIN: "本驿站范围：所属驿站的服务项目、预约审核、诉求处理、活动管理与报表导出。",
   PLATFORM_ADMIN: "平台全域：全部驿站、服务项目、预约、诉求、资讯公告、活动、账号与角色权限。",
-  SUPER_ADMIN: "全系统最高权限：在平台管理员范围之上，可调整任意账号的角色与启用状态。"
+  
 };
 
 const APPOINTMENT_STATUS_LABELS = {

@@ -39,7 +39,7 @@ public class NoticeController {
 
     /** 后台公告分页，返回全部状态。 */
     @GetMapping("/admin/page")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> adminPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -58,21 +58,21 @@ public class NoticeController {
 
     /** 新增公告。 */
     @PostMapping
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(noticeService.create(payload));
     }
 
     /** 修改公告。 */
     @PutMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(noticeService.update(id, payload));
     }
 
     /** 删除公告。 */
     @DeleteMapping("/{id}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         noticeService.delete(id);
         return ApiResponse.ok(Map.of("id", id, "deleted", true));

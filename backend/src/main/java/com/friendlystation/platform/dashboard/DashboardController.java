@@ -46,7 +46,7 @@ public class DashboardController {
 
     /** 报表导出：appeals、appointments、stations、signups、evaluations。 */
     @GetMapping("/export/{type}")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ResponseEntity<byte[]> export(@PathVariable String type) {
         CsvExport export = csvExportBuilder.build(type);
         return ResponseEntity.ok()

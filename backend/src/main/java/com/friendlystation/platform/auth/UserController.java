@@ -24,13 +24,13 @@ public class UserController {
     }
 
     @GetMapping("/info")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> info() {
         return ApiResponse.ok(adminUserService.userDetail(CurrentUserContext.require().id()));
     }
 
     @GetMapping("/page")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> page(
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String keyword
@@ -39,13 +39,13 @@ public class UserController {
     }
 
     @PutMapping("/info")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateInfo(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.updateUser(CurrentUserContext.require().id(), payload));
     }
 
     @PutMapping("/{id}/status")
-    @RequireRole({"PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.updateStatus(id, String.valueOf(payload.getOrDefault("status", "正常"))));
     }

@@ -294,7 +294,7 @@ async function main() {
   lines.push("");
   lines.push("鉴权：登录接口返回 `token`，后续请求携带 `Authorization: Bearer <token>`。");
   lines.push("");
-  lines.push("角色：`USER`（普通用户）、`STATION_ADMIN`（驿站管理员）、`PLATFORM_ADMIN`（平台管理员）、`SUPER_ADMIN`（超级管理员）。");
+  lines.push("角色：`USER`（普通用户）、`STATION_ADMIN`（驿站管理员）、`PLATFORM_ADMIN`（管理员，统一统筹并可创建子账号分发功能权限）。");
   lines.push("");
 
   lines.push("## 接口分组总览");

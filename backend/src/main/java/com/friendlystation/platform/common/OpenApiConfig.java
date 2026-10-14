@@ -28,7 +28,7 @@ public class OpenApiConfig {
                                 分页结构：`{ "current": 1, "size": 10, "total": 0, "records": [] }`。
 
                                 鉴权：登录后取得的 token 通过 `Authorization: Bearer <token>` 传递。
-                                角色为 USER、STATION_ADMIN、PLATFORM_ADMIN、SUPER_ADMIN，
+                                角色为 USER、STATION_ADMIN、PLATFORM_ADMIN（管理员），
                                 受保护接口会校验角色，越权返回 403，未登录或凭证失效返回 401。
                                 """)
                         .contact(new Contact().name("毕业设计项目"))

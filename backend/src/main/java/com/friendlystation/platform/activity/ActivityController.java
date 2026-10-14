@@ -42,14 +42,14 @@ public class ActivityController {
     }
 
     @GetMapping("/my")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> mySignups() {
         return ApiResponse.ok(workflowService.mySignups(CurrentUserContext.require().id()));
     }
 
     /** 报名前先校验剩余名额，重复报名由工作流层按用户与活动校验。 */
     @PostMapping("/signup")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> signup(@RequestBody Map<String, Object> payload) {
         long activityId = FormatUtils.number(payload.get("activityId"));
         if (activityId <= 0) {
@@ -68,13 +68,13 @@ public class ActivityController {
      * 处理结果与反馈会回传给报名人。</p>
      */
     @PutMapping("/signup/review")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> reviewSignup(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.reviewSignup(payload, CurrentUserContext.require().id()));
     }
 
     @GetMapping("/admin/signups")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> signups() {
         return ApiResponse.ok(workflowService.allSignups());
     }

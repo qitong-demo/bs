@@ -50,7 +50,7 @@ export const useUserStore = defineStore("user", {
         USER: "普通用户",
         STATION_ADMIN: "驿站管理员",
         PLATFORM_ADMIN: "平台管理员",
-        SUPER_ADMIN: "超级管理员"
+        
       }[payload.role] || "普通用户";
     },
     clearSession() {

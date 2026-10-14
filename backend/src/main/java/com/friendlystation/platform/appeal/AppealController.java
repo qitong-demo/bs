@@ -30,19 +30,19 @@ public class AppealController {
     }
 
     @PostMapping
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.addAppeal(payload, CurrentUserContext.require().id()));
     }
 
     @GetMapping("/my")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> myAppeals() {
         return ApiResponse.ok(workflowService.appeals(CurrentUserContext.require().id()));
     }
 
     @GetMapping("/admin/page")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<PageResult<Map<String, Object>>> adminPage(
             @RequestParam(defaultValue = "1") long current,
             @RequestParam(defaultValue = "10") long size,
@@ -54,31 +54,31 @@ public class AppealController {
     }
 
     @GetMapping("/{id}")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> detail(@PathVariable Long id) {
         return ApiResponse.ok(workflowService.appealDetail(id));
     }
 
     @GetMapping("/{id}/records")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> records(@PathVariable Long id) {
         return ApiResponse.ok(workflowService.appealRecords(id));
     }
 
     @PutMapping("/assign")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> assign(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.assignAppeal(payload, CurrentUserContext.require().id()));
     }
 
     @PutMapping("/handle")
-    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> handle(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.handleAppeal(payload, CurrentUserContext.require().id()));
     }
 
     @PostMapping("/evaluate")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> evaluate(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.evaluateAppeal(payload, CurrentUserContext.require().id()));
     }

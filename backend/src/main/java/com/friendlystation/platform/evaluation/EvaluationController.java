@@ -30,7 +30,7 @@ public class EvaluationController {
 
     /** 提交驿站评价，返回结果同时包含评价明细与 status、dataStatus，供前端直接使用 */
     @PostMapping("/station")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> createStationEvaluation(@RequestBody Map<String, Object> payload) {
         long userId = CurrentUserContext.require().id();
         return ApiResponse.ok(evaluationService.create(payload, userId));
@@ -55,7 +55,7 @@ public class EvaluationController {
 
     /** 当前登录用户的全部评价 */
     @GetMapping("/my")
-    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN", "SUPER_ADMIN"})
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> myEvaluations() {
         long userId = CurrentUserContext.require().id();
         return ApiResponse.ok(evaluationService.myEvaluations(userId));
