@@ -485,6 +485,17 @@
         </article>
         <el-empty v-if="!loading.activities && activityItems.length === 0" description="暂无可报名活动" />
       </div>
+      <!-- 活动一共 40 条（38 条采集 + 2 条驿站自办），一页 12 条翻不完就看不到后面，
+           所以列表补一个分页，控件与「政策资讯」保持同一套。 -->
+      <div class="pagination-row">
+        <el-pagination
+          layout="prev, pager, next"
+          :total="activityTotal"
+          :page-size="activityQuery.size"
+          :current-page="activityQuery.current"
+          @current-change="onActivityPageChange"
+        />
+      </div>
 
       <!-- 报名表单：姓名与电话必填，承办方要靠这些联系报名人 -->
       <el-dialog v-model="signupVisible" title="填写报名信息" width="460px">
@@ -1161,6 +1172,9 @@ const appealEvaluationForm = reactive({ appealId: null, score: 5, content: "" })
 
 const activityItems = ref([]);
 const signedActivityIds = ref([]);
+/** 活动列表分页：后端一页最多 100 条，这里按 12 条一页翻。 */
+const activityQuery = reactive({ current: 1, size: 12 });
+const activityTotal = ref(0);
 /** 报名表单：姓名与电话必填，承办方要靠这些联系报名人。 */
 const signupVisible = ref(false);
 const signupSubmitting = ref(false);
@@ -1680,16 +1694,30 @@ async function submitAppealEvaluation() {
 
 async function loadActivities() {  loading.activities = true;
   try {
-    const page = await getActivityPage({ current: 1, size: 12 });
+    // 传当前城市：后端只返回「本市 + 全国性」，并把本市排在最前。
+      // 与政策资讯同一套口径——不传会把其他城市的活动也混进来。
+      const page = await getActivityPage({
+        current: activityQuery.current,
+        size: activityQuery.size,
+        cityCode: userStore.cityCode || undefined
+      });
     activityItems.value = page.records || [];
+    activityTotal.value = page.total || 0;
     const mySignups = await getMySignups().catch(() => []);
     signedActivityIds.value = (mySignups || []).map((item) => item.activityId);
   } catch (error) {
     ElMessage.error(errorMessage(error, "活动列表加载失败"));
     activityItems.value = [];
+    activityTotal.value = 0;
   } finally {
     loading.activities = false;
   }
+}
+
+/** 翻页：保持在当前页重新加载，报名成功后刷新也不会跳回第一页。 */
+function onActivityPageChange(page) {
+  activityQuery.current = page;
+  loadActivities();
 }
 
 /**

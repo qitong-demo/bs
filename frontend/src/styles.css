@@ -2520,6 +2520,7 @@ button {
   .activity-actions {
     justify-content: flex-end;
   }
+}
 
   /* 我的报名列表：一次报名一条，重点是承办方的回复 */
 .my-signup-list {
@@ -2660,4 +2661,3 @@ button {
   .category-option small {
     margin-left: auto;
   }
-}

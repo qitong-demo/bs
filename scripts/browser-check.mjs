@@ -36,12 +36,29 @@ function fail(name, detail) {
   results.push({ name, ok: false, detail });
   console.log(`  [FAIL] ${name} :: ${detail}`);
 }
+/** 当前活动页。step() 在模块作用域，看不到 main() 里的局部 page，故用模块级引用。 */
+let activePage = null;
+
 async function step(name, action) {
   try {
     await action();
     pass(name);
   } catch (error) {
     fail(name, String(error?.message || error).split("\n")[0]);
+  } finally {
+    // 某一步失败时若留下弹窗遮罩，后续所有点击都会被它挡住而级联超时，
+    // 真正的失败点会被淹没（实测过：1 个真失败会放大成 18 个）。
+    // 这里统一收尾：按 Esc、并清掉 Element Plus 可能残留的遮罩层。
+    const target = activePage;
+    if (target) {
+      await target.keyboard.press("Escape").catch(() => {});
+      await target
+        .evaluate(() => {
+          document.querySelectorAll(".el-overlay, .el-modal, .v-modal").forEach((el) => el.remove());
+          document.body.style.overflow = "";
+        })
+        .catch(() => {});
+    }
   }
 }
 
@@ -71,6 +88,7 @@ async function main() {
   const browser = await chromium.connectOverCDP(cdp);
   const context = browser.contexts()[0] || (await browser.newContext());
   const page = await context.newPage();
+  activePage = page;
   page.setDefaultTimeout(15000);
 
   console.log(`页面地址：${base}   截图目录：${outDir}\n`);
@@ -177,6 +195,35 @@ async function main() {
     // 账号安全面板：改账号 ID / 改密码 / 绑邮箱三项都需邮箱验证码
     ["个人中心", "账号安全", "29-个人中心-账号安全.png"],
   ];
+
+  // 先自己建一条报名记录。走查不能依赖 api-test.ps1 遗留的数据——
+  // 那个脚本现在已经会自清理，留下的报名会被一并删掉。
+  await step("准备一条本用户的报名记录", async () => {
+    const result = await page.evaluate(async () => {
+      const token = localStorage.getItem("friendly_station_token");
+      const headers = { "Content-Type": "application/json", Authorization: "Bearer " + token };
+      const listRes = await fetch("/api/activity/page?current=1&size=50", { headers });
+      const list = await listRes.json();
+      // 只能报名驿站/平台自办活动，第三方活动后端会拒绝
+      const target = (list?.data?.records || []).find((item) => item.organizerType !== "EXTERNAL");
+      if (!target) return { ok: false, reason: "演示库里没有可报名的站内活动" };
+      const res = await fetch("/api/activity/signup", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          activityId: target.id,
+          contactName: "骑手小王",
+          phone: "13800002088"
+        })
+      });
+      const body = await res.json();
+      // 重复报名会返回业务错误，说明已有记录，同样满足后续断言
+      return { ok: body.code === 200 || /已报名/.test(body.message || ""), message: body.message };
+    });
+    if (!result.ok) {
+      throw new Error(result.reason || result.message || "报名记录准备失败");
+    }
+  });
 
   await step("「我的报名」能看到承办方的审核反馈", async () => {
     // 报名之后必须能看到进展与承办方说了什么，否则报名等于石沉大海。
