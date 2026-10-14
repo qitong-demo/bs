@@ -36,6 +36,9 @@
       <el-tab-pane v-if="canSee('appeals')" label="诉求处理" name="appeals">
         <AdminAppeals />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('changeRequests')" label="变更审批" name="changeRequests">
+        <AdminChangeRequests />
+      </el-tab-pane>
       <el-tab-pane v-if="canSee('stations')" label="驿站管理" name="stations">
         <AdminStations />
       </el-tab-pane>
@@ -77,6 +80,7 @@ import { getMyPermissions } from "../api/admin";
 import AdminOverview from "./admin/AdminOverview.vue";
 import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
+import AdminChangeRequests from "./admin/AdminChangeRequests.vue";
 import AdminStations from "./admin/AdminStations.vue";
 import AdminServices from "./admin/AdminServices.vue";
 import AdminContents from "./admin/AdminContents.vue";
@@ -103,7 +107,6 @@ const tabs = [
   { name: "contents", label: "资讯公告管理", permission: "NEWS_MANAGE" },
   { name: "activities", label: "活动管理", permission: "ACTIVITY_MANAGE" },
   { name: "signups", label: "报名记录", permission: "SIGNUP_MANAGE" },
-  { name: "dataReview", label: "数据复核", permission: "DATA_REVIEW" },
   { name: "users", label: "账号管理", permission: "ACCOUNT_MANAGE" },
   { name: "roles", label: "角色权限", permission: "ACCOUNT_MANAGE" },
   { name: "reports", label: "报表导出", permission: "REPORT_EXPORT" }
