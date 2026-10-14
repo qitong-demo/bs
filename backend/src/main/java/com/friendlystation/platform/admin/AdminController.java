@@ -29,12 +29,15 @@ public class AdminController {
     private final WorkflowService workflowService;
     private final AdminUserService adminUserService;
     private final DataScopeService dataScopeService;
+    private final AdminPermissionService adminPermissionService;
 
     public AdminController(WorkflowService workflowService, AdminUserService adminUserService,
-                           DataScopeService dataScopeService) {
+                           DataScopeService dataScopeService,
+                           AdminPermissionService adminPermissionService) {
         this.workflowService = workflowService;
         this.adminUserService = adminUserService;
         this.dataScopeService = dataScopeService;
+        this.adminPermissionService = adminPermissionService;
     }
 
     @GetMapping("/overview")
@@ -86,6 +89,58 @@ public class AdminController {
     public ApiResponse<Map<String, Object>> updateUserRoles(@PathVariable Long id,
                                                             @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(adminUserService.setRoles(id, readRoleCodes(payload)));
+    }
+
+    // ---------------------------------------------------------------- 功能权限
+
+    /**
+     * 权限目录。管理员创建子账号时据此渲染勾选项。
+     * grantable=false 的项在界面上要禁用——例如账号管理，授给子账号等于让它自我提权。
+     */
+    @GetMapping("/permissions")
+    public ApiResponse<List<Map<String, Object>>> permissions() {
+        return ApiResponse.ok(adminPermissionService.catalog());
+    }
+
+    /**
+     * 当前账号实际生效的权限。
+     *
+     * <p>前端据此决定管理端显示哪些标签页——不再前端硬编码 platformOnly，
+     * 否则子账号会看到点进去就 403 的标签。</p>
+     */
+    @GetMapping("/my-permissions")
+    public ApiResponse<Map<String, Object>> myPermissions() {
+        CurrentUser user = CurrentUserContext.require();
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("permissions", adminPermissionService.effectiveOf(user.id(), user.role()));
+        out.put("role", user.role());
+        return ApiResponse.ok(out);
+    }
+
+    /** 某账号被显式授予的权限。 */
+    @GetMapping("/users/{id}/permissions")
+    public ApiResponse<Map<String, Object>> userPermissions(@PathVariable Long id) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("userId", id);
+        out.put("permissions", adminPermissionService.grantedOf(id));
+        out.put("catalog", adminPermissionService.catalog());
+        return ApiResponse.ok(out);
+    }
+
+    /** 覆盖式分发权限。 */
+    @PutMapping("/users/{id}/permissions")
+    public ApiResponse<Map<String, Object>> grantPermissions(@PathVariable Long id,
+                                                            @RequestBody Map<String, Object> payload) {
+        Object raw = payload == null ? null : payload.get("permissions");
+        List<String> codes = new java.util.ArrayList<>();
+        if (raw instanceof List<?> list) {
+            for (Object item : list) {
+                if (item != null) {
+                    codes.add(String.valueOf(item));
+                }
+            }
+        }
+        return ApiResponse.ok(adminPermissionService.grant(id, codes));
     }
 
     @GetMapping("/roles")
