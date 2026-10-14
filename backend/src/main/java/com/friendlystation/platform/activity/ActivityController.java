@@ -7,6 +7,7 @@ import com.friendlystation.platform.common.BusinessException;
 import com.friendlystation.platform.common.FormatUtils;
 import com.friendlystation.platform.common.PageResult;
 import com.friendlystation.platform.content.ActivityService;
+import com.friendlystation.platform.workflow.ActivityOrganizer;
 import com.friendlystation.platform.workflow.WorkflowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,22 @@ public class ActivityController {
         long activityId = FormatUtils.number(payload.get("activityId"));
         if (activityId <= 0) {
             throw new BusinessException("请选择要报名的活动");
+        }
+        // 先判断这个活动到底接不接受站内报名，再判断名额。
+        // 第三方活动的 maxCount 是 0（本站不放号），若先查名额会返回「活动名额已满」，
+        // 用户以为是自己手慢，实际该活动从来就不接受站内报名——原因说错了比不说更糟。
+        String organizerType = "";
+        try {
+            Map<String, Object> activity = activityService.detail(activityId);
+            if (activity != null && activity.get("organizerType") != null) {
+                organizerType = String.valueOf(activity.get("organizerType"));
+            }
+        } catch (RuntimeException exception) {
+            // 活动不存在等情况交给后续流程按既有语义报错
+            organizerType = "";
+        }
+        if (!ActivityOrganizer.acceptsSignup(organizerType)) {
+            throw new BusinessException("该活动由第三方机构举办，请前往活动来源页面报名");
         }
         if (activityService.remainingSlots(activityId) <= 0) {
             throw new BusinessException("活动名额已满");

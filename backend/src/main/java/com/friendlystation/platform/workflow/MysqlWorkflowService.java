@@ -415,7 +415,9 @@ public class MysqlWorkflowService implements WorkflowService {
         }
         // 第三方活动只做展示与跳转，不接受站内报名：
         // 报名与审核都在对方平台进行，我们既不掌握名单、也无法替对方联系报名人。
-        if (ActivityOrganizer.TYPE_EXTERNAL.equals(ActivityOrganizer.normalize(activity.getOrganizerType()))) {
+        // 判断统一走 ActivityOrganizer.acceptsSignup()——这里原本内联了它的反义写法，
+        // 等于同一条规则有两份实现，改一处必然漏另一处。
+        if (!ActivityOrganizer.acceptsSignup(activity.getOrganizerType())) {
             throw new BusinessException("该活动由第三方机构举办，请前往活动来源页面报名");
         }
         // 报名信息要交给承办方去联系报名人，因此姓名必填、电话必填。

@@ -43,6 +43,14 @@ public class DemoWorkflowStore implements WorkflowService {
 
     private StationService stationLookup;
 
+    /**
+     * 用于在报名前确认活动的承办方类型。
+     *
+     * <p>本类用「可选注入」而非构造器注入：单元测试直接 new，
+     * 那时为 null，跳过校验，与本类既有的 stationLookup 完全一致。</p>
+     */
+    private com.friendlystation.platform.content.ActivityService activityLookup;
+
     public DemoWorkflowStore() {
     }
 
@@ -50,6 +58,11 @@ public class DemoWorkflowStore implements WorkflowService {
     @Autowired(required = false)
     public void setStationLookup(StationService stationLookup) {
         this.stationLookup = stationLookup;
+    }
+
+    @Autowired(required = false)
+    public void setActivityLookup(com.friendlystation.platform.content.ActivityService activityLookup) {
+        this.activityLookup = activityLookup;
     }
 
     // ------------------------------------------------------------------ 预约
@@ -354,6 +367,23 @@ public class DemoWorkflowStore implements WorkflowService {
     @Override
     public synchronized Map<String, Object> addSignup(Map<String, Object> request, long userId) {
         long activityId = FormatUtils.number(request.get("activityId"));
+        // 与 mysql 实现同口径：第三方活动不接受站内报名，报名与审核都在对方平台。
+        // 判断同样走 ActivityOrganizer.acceptsSignup()，保证两套实现行为一致。
+        if (activityLookup != null) {
+            String organizerType = "";
+            try {
+                Map<String, Object> activity = activityLookup.detail(activityId);
+                if (activity != null && activity.get("organizerType") != null) {
+                    organizerType = String.valueOf(activity.get("organizerType"));
+                }
+            } catch (RuntimeException exception) {
+                // 活动不存在交给后续流程报错，这里不改变异常语义
+                organizerType = "";
+            }
+            if (!ActivityOrganizer.acceptsSignup(organizerType)) {
+                throw new IllegalArgumentException("该活动由第三方机构举办，请前往活动来源页面报名");
+            }
+        }
         // 与 mysql 实现同口径：姓名与电话必填，承办方要靠这些联系报名人。
         String contactName = ActivityOrganizer.requireContactName(request.get("contactName"));
         String phone = ActivityOrganizer.requirePhone(request.get("phone"));

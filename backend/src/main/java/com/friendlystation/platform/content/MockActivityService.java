@@ -4,6 +4,7 @@ import com.friendlystation.platform.common.BusinessException;
 import com.friendlystation.platform.common.PageResult;
 import com.friendlystation.platform.station.StationDto;
 import com.friendlystation.platform.station.StationService;
+import com.friendlystation.platform.workflow.ActivityOrganizer;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,23 @@ public class MockActivityService implements ActivityService {
                 LocalDateTime.of(2026, 6, 28, 9, 30, 0),
                 "古荡街道服务中心一楼", 30,
                 "邀请社区卫生服务中心为骑手、快递员提供基础健康检查。", "PUBLISHED", now.minusDays(8)));
+
+        // 一条采集来的第三方活动。演示库若只有站内活动，
+        // 「第三方只提供跳转、不接受站内报名」这条规则在演示模式下就看不到，
+        // 用户也无法判断报名按钮消失是设计如此还是坏了。
+        Map<String, Object> external = record(4L, "杭州市总工会新就业形态劳动者免费健康体检", null, "",
+                LocalDateTime.of(2026, 5, 20, 9, 0, 0),
+                "杭州市工人文化宫", 0,
+                "杭州市总工会为网约配送员、快递员等新就业形态劳动者提供免费健康体检，"
+                        + "含血常规、肝功、心电图等项目。", "PUBLISHED", now.minusDays(20));
+        external.put("organizerType", "EXTERNAL");
+        external.put("externalUrl", "https://www.hzgh.org/newsview107120.htm");
+        external.put("publisher", "杭州市总工会");
+        external.put("category", "健康关爱");
+        external.put("summary", "杭州市总工会为网约配送员、快递员等新就业形态劳动者提供免费健康体检。");
+        external.put("cityCode", "330100");
+        external.put("sourceLevel", "GOV");
+        store.add(external);
     }
 
     @Override
@@ -178,7 +196,17 @@ public class MockActivityService implements ActivityService {
      * <p>内存实现里字段存在 Map 上，缺键即为"未填写"。</p>
      */
     private static void applySourceFields(Map<String, Object> record, Map<String, Object> data) {
-        putIfPresent(record, data, "externalUrl", 500, "原文链接");
+        // 与 mysql 同口径：只有不接受站内报名的活动才需要外链，
+        // 驿站/平台自办活动留跳转链接会让人以为要去别处报名。
+        if (data.containsKey("externalUrl")) {
+            String organizerType = String.valueOf(record.get("organizerType") == null
+                    ? "STATION" : record.get("organizerType"));
+            if (ActivityOrganizer.acceptsSignup(organizerType)) {
+                record.put("externalUrl", "");
+            } else {
+                putIfPresent(record, data, "externalUrl", 500, "原文链接");
+            }
+        }
         putIfPresent(record, data, "publisher", 120, "主办方");
         putIfPresent(record, data, "category", 30, "活动分类");
         putIfPresent(record, data, "summary", 500, "摘要");
@@ -297,6 +325,9 @@ public class MockActivityService implements ActivityService {
                 ? "STATION" : String.valueOf(record.get("organizerType"));
         out.put("organizerType", organizerType);
         out.put("organizerLabel", organizerTypeLabel(organizerType));
+        // 与 mysql 实现对齐：此前这里没输出 acceptsSignup，
+        // 前端若依赖该字段会拿到 undefined，在演示 profile 下静默降级。
+        out.put("acceptsSignup", ActivityOrganizer.acceptsSignup(organizerType));
         out.put("externalUrl", record.get("externalUrl") == null ? "" : String.valueOf(record.get("externalUrl")));
 
         // 采集来的真实活动：来源必须可核对，字段缺失时返回空串而不是省略

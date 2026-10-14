@@ -458,14 +458,14 @@
             <!-- 摘要优先：采集活动的正文是新闻正文，摘要是为列表读一屏写的 -->
             <p class="activity-summary">{{ activity.summary || activity.content || "主办方暂未提供活动说明" }}</p>
             <div class="activity-footer">
-              <span v-if="isExternalActivity(activity)" class="activity-hint">{{ activitySignupHint(activity) }}</span>
+              <span v-if="!canSignupInSite(activity)" class="activity-hint">{{ activitySignupHint(activity) }}</span>
               <span v-else>已报名 {{ activity.signedCount }} / {{ activity.maxCount }}</span>
               <div class="activity-actions">
                 <el-button plain @click="openActivityDetail(activity)">查看详情</el-button>
                 <!-- 采集活动不接受站内报名：后端报名接口会直接 400，报名与审核都在主办方，
                      所以这里只保留「前往原文」跳转，不出现站内报名按钮。 -->
                 <el-button
-                  v-if="isExternalActivity(activity)"
+                  v-if="!canSignupInSite(activity)"
                   type="primary"
                   :disabled="!externalUrlText(activity)"
                   @click="openExternalActivity(activity)"
@@ -583,7 +583,7 @@
               <dd>{{ activityPlaceText(activeActivity) }}</dd>
             </div>
             <!-- 名额只对站内报名有意义：采集活动本站不放号 -->
-            <div v-if="!isExternalActivity(activeActivity)">
+            <div v-if="canSignupInSite(activeActivity)">
               <dt>报名情况</dt>
               <dd>已报名 {{ activeActivity.signedCount }} / {{ activeActivity.maxCount }}，剩余 {{ activeActivity.remaining }}</dd>
             </div>
@@ -594,7 +594,7 @@
           </p>
           <!-- 采集活动：说清报名与审核不在本站，避免用户以为站内能报上 -->
           <el-alert
-            v-if="isExternalActivity(activeActivity)"
+            v-if="!canSignupInSite(activeActivity)"
             class="activity-detail-note"
             type="info"
             :closable="false"
@@ -609,7 +609,7 @@
         <template #footer>
           <el-button @click="activityDetailVisible = false">关闭</el-button>
           <el-button
-            v-if="isExternalActivity(activeActivity)"
+            v-if="!canSignupInSite(activeActivity)"
             type="primary"
             :disabled="!externalUrlText(activeActivity)"
             @click="openExternalActivity(activeActivity)"
@@ -947,7 +947,8 @@ import {
   activitySignupHint,
   activitySourceLabel,
   externalUrlText,
-  isExternalActivity
+  isExternalActivity,
+  canSignupInSite
 } from "../utils/activity-source";
 import AccountSecurityPanel from "./AccountSecurityPanel.vue";
 import { JOB_TYPES } from "../utils/profile-options";

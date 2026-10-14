@@ -3,7 +3,8 @@ import {
   activitySignupHint,
   activitySourceLabel,
   externalUrlText,
-  isExternalActivity
+  isExternalActivity,
+  canSignupInSite
 } from "./activity-source";
 
 /** 采集来的第三方活动：有原文链接、不接受站内报名。 */
@@ -53,5 +54,34 @@ describe("activity-source 活动来源口径", () => {
     );
     // 站内活动不需要这句提示：报名就在本站完成
     expect(activitySignupHint(station)).toBe("");
+  });
+});
+
+describe("canSignupInSite", () => {
+  it("后端给出 acceptsSignup=false 时不允许站内报名", () => {
+    expect(canSignupInSite({ acceptsSignup: false, organizerType: "EXTERNAL" })).toBe(false);
+  });
+
+  it("后端给出 acceptsSignup=true 时允许站内报名", () => {
+    expect(canSignupInSite({ acceptsSignup: true, organizerType: "STATION" })).toBe(true);
+  });
+
+  it("字段缺失时回退到 organizerType：第三方活动不允许报名", () => {
+    // 这个兜底不是多余的——该字段曾经只有 mysql 实现输出、内存实现漏了，
+    // 前端若直接依赖它，会在演示 profile 下静默藏掉所有报名按钮。
+    expect(canSignupInSite({ organizerType: "EXTERNAL" })).toBe(false);
+    expect(canSignupInSite({ organizerType: "STATION" })).toBe(true);
+  });
+
+  it("以后端字段为准，即使它与 organizerType 不一致", () => {
+    // 将来若出现「平台自办但不收报名」或「第三方但允许站内报名」，
+    // 应以服务端强制校验所依据的 acceptsSignup 为准，而不是分类标签。
+    expect(canSignupInSite({ acceptsSignup: false, organizerType: "STATION" })).toBe(false);
+    expect(canSignupInSite({ acceptsSignup: true, organizerType: "EXTERNAL" })).toBe(true);
+  });
+
+  it("空值不抛异常", () => {
+    expect(canSignupInSite(null)).toBe(true);
+    expect(canSignupInSite(undefined)).toBe(true);
   });
 });

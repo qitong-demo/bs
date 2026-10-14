@@ -184,7 +184,14 @@ public class MysqlActivityService implements ActivityService {
      */
     private static void applySourceFields(Activity activity, Map<String, Object> data) {
         if (data.containsKey("externalUrl")) {
-            activity.setExternalUrl(limit(ContentSupport.trimText(data.get("externalUrl")), 500, "原文链接"));
+            // 只有不接受站内报名的活动才需要外链。驿站/平台自办活动报名在站内进行，
+            // 留一个跳转链接会让人以为要去别处报名——这条规则原本由 applyOrganizer 保证，
+            // 这里若无条件写入就会把它覆盖掉（回归断言「驿站活动忽略外部链接」正是抓这个）。
+            if (ActivityOrganizer.acceptsSignup(activity.getOrganizerType())) {
+                activity.setExternalUrl("");
+            } else {
+                activity.setExternalUrl(limit(ContentSupport.trimText(data.get("externalUrl")), 500, "原文链接"));
+            }
         }
         if (data.containsKey("publisher")) {
             activity.setPublisher(limit(ContentSupport.trimText(data.get("publisher")), 120, "主办方"));
