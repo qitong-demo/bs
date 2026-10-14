@@ -1056,7 +1056,11 @@ const signupTarget = ref(null);
 const signupForm = reactive({ contactName: "", phone: "", remark: "" });
 const accentTones = ["green", "blue", "orange", "purple"];
 
-const newsFilter = ref("全部");
+// 分类筛选初始为空：下拉是 clearable 的，选项只有真实分类（权益保障/职业伤害/…），
+// 没有「全部」这一项。原先初始值写 "全部"，它是真值，会被当成分类名发给后端，
+// 后端按 category='全部' 过滤 → 一条都返回不了（政策资讯页空白）。
+// 来源筛选是单选组、确有「全部」选项，故那边保留 "全部" 并在请求前转换。
+const newsFilter = ref("");
 const newsItems = ref([]);
 /** 来源筛选：全部 / 官方 / 平台。 */
 const newsSourceFilter = ref("全部");
