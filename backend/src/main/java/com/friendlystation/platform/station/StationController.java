@@ -1,5 +1,6 @@
 package com.friendlystation.platform.station;
 
+import com.friendlystation.platform.auth.CurrentUserContext;
 import com.friendlystation.platform.auth.RequireRole;
 import com.friendlystation.platform.common.ApiResponse;
 import com.friendlystation.platform.common.PageResult;
@@ -22,9 +23,12 @@ import java.util.Map;
 @RequestMapping("/api/station")
 public class StationController {
     private final StationService stationService;
+    private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
 
-    public StationController(StationService stationService) {
+    public StationController(StationService stationService,
+                                com.friendlystation.platform.auth.DataScopeService dataScopeService) {
         this.stationService = stationService;
+        this.dataScopeService = dataScopeService;
     }
 
     /**
@@ -77,6 +81,20 @@ public class StationController {
             @RequestParam(required = false) String status
     ) {
         return ApiResponse.ok(stationService.adminPage(current, size, cityCode, area, keyword, status));
+    }
+
+    /**
+     * 我的驿站：当前账号负责的驿站。
+     *
+     * <p>驿站端此前**看不到自己的驿站信息**——只能通过公开的驿站查询按名字找，
+     * 既不知道自己负责哪几家，也看不到营业时间、联系电话这些需要维护的字段。</p>
+     *
+     * <p>平台级账号按定义不负责具体驿站，返回空列表；前端应据此隐藏该入口。</p>
+     */
+    @GetMapping("/mine")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    public ApiResponse<List<StationDto>> mine() {
+        return ApiResponse.ok(dataScopeService.managedStations(CurrentUserContext.require()));
     }
 
     @GetMapping("/{id}")
