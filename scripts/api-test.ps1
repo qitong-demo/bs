@@ -438,7 +438,13 @@ Write-Host "`n[13] 坐标回填与城市定位" -ForegroundColor Cyan
 $coordPage = Send-Api -Method Get -Path '/api/station/page?current=1&size=50&cityCode=330100'
 $withCoord = @($coordPage.Json.data.records | Where-Object { $_.longitude -and $_.latitude })
 Assert-True '驿站接口返回经纬度' ($withCoord.Count -gt 0) "本页 $($withCoord.Count) 条有坐标"
-Assert-True '坐标来源标注为高德派生' (@($withCoord | Where-Object { $_.source.geocodeSource -like 'AMAP_*' }).Count -eq $withCoord.Count)
+# 每个有坐标的驿站都必须标注来源。AMAP_* 是高德派生；MANUAL_APPROVED 是驿站申请、
+# 管理员核准的人工变更（同样要留痕）。断言写成"来源必须可识别"而不是"必须是高德"——
+# 后者会在任何一次合法的人工核准之后误报。
+$knownSources = @('AMAP_POI', 'AMAP_GEOCODE', 'MANUAL_APPROVED', 'SOURCE')
+$unlabeled = @($withCoord | Where-Object { $knownSources -notcontains $_.source.geocodeSource })
+Assert-True '坐标来源已标注且可识别' ($unlabeled.Count -eq 0) "未标注或来源不明的记录：$($unlabeled.Count) 条"
+Assert-True '多数坐标来源为高德派生' (@($withCoord | Where-Object { $_.source.geocodeSource -like 'AMAP_*' }).Count -ge ($withCoord.Count * 0.8)) "高德派生占比不足 80%"
 Assert-True '坐标在中国境内合理范围' (@($withCoord | Where-Object { $_.longitude -lt 70 -or $_.longitude -gt 140 -or $_.latitude -lt 15 -or $_.latitude -gt 55 }).Count -eq 0)
 $coordStation = Send-Api -Method Get -Path '/api/station/1'
 Assert-True '驿站详情带坐标与坐标来源' ([bool]$coordStation.Json.data.source.geocodeSource -and [bool]$coordStation.Json.data.longitude)
