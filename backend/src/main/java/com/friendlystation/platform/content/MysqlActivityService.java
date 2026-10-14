@@ -138,6 +138,17 @@ public class MysqlActivityService implements ActivityService {
     @Transactional
     public void delete(Long id) {
         require(id);
+        long signed = signupMapper.selectCount(new LambdaQueryWrapper<ActivitySignup>()
+                .eq(ActivitySignup::getActivityId, id));
+        // 已有人报名的活动不能删：activity_signup 有外键指向 activity，
+        // 原先直接 deleteById 会撞外键、抛出 500「服务器内部错误」，
+        // 管理员只看到一句无意义的报错。
+        // 这里也不做级联删除——删掉报名记录会让骑手已提交的报名凭空消失，
+        // 他们那边只会看到活动不见了、自己的报名也没了。
+        if (signed > 0) {
+            throw new BusinessException("该活动已有 " + signed + " 人报名，不能直接删除。"
+                    + "请改为取消活动，已报名的骑手仍能看到记录与取消说明。");
+        }
         activityMapper.deleteById(id);
     }
 

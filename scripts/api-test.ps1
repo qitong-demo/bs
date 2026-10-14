@@ -495,6 +495,35 @@ if ($allDayPage.Json.data.records.Count -gt 0) {
     Assert-True '24 小时开放的驿站不受时段限制' ($allDayBooking.Status -eq 200) "实际 $($allDayBooking.Status)"
 }
 
+# ---------------------------------------------------------------- 清理
+# 本脚本为了断言会创建演示数据，跑完必须删干净——否则每次回归都在演示库里留下
+#「接口回归测试报名活动」这类记录，用户在活动报名页看到会当成真实活动。
+#
+# 后端已改为「已有报名的活动不允许删除」（原先直接删会撞 activity_signup 外键、抛 500），
+# 所以要先撤回这些活动下的报名，再删活动，顺序不能颠倒。
+#
+# 报名端点是 /api/activity/admin/signups（无参数，返回全部）与
+# /api/activity/signup/review（按 id 改状态）。
+# 两处坑：review 只接受 CONTACTED / APPROVED / REJECTED（CANCELLED 是用户侧动作，会被 400 拒），
+# 且驳回原因的字段名是 reviewNote（不是 feedback）。
+$leftoverActivityIds = @(
+    $signupActivityId,
+    $externalActivity.Json.data.id,
+    $stationWithUrl.Json.data.id
+) | Where-Object { $_ }
+
+$allSignups = @(Send-Api -Method Get -Path '/api/activity/admin/signups' -Token $adminToken | ForEach-Object { $_.Json.data })
+$cleanedCount = 0
+foreach ($leftoverId in $leftoverActivityIds) {
+    foreach ($signup in @($allSignups | Where-Object { $_.activityId -eq $leftoverId })) {
+        Send-Api -Method Put -Path '/api/activity/signup/review' -Token $adminToken `
+            -Body @{ id = $signup.id; status = 'REJECTED'; reviewNote = '接口回归测试清理' } | Out-Null
+    }
+    $removed = Send-Api -Method Delete -Path "/api/activity/admin/$leftoverId" -Token $adminToken
+    if ($removed.Json.data.deleted -eq $true) { $cleanedCount++ }
+}
+Write-Host ("`n已清理回归创建的测试活动 " + $cleanedCount + " / " + $leftoverActivityIds.Count + " 个") -ForegroundColor DarkGray
+
 # ---------------------------------------------------------------- 结果
 Write-Host "`n==================== 回归测试结果 ====================" -ForegroundColor Cyan
 Write-Host ("通过：" + $script:Passed + "  失败：" + $script:Failed)
