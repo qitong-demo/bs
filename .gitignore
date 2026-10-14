@@ -39,3 +39,36 @@ frontend/.env.*.local
 .DS_Store
 Thumbs.db
 ~$*
+# 非程序文件：仅保留在本地，不提交到仓库
+# 仓库只保留程序（backend / frontend / scripts / data / .agents）。
+# 下面这些用 git rm --cached 取消跟踪后，靠这里防止再次被 git add 进来。
+论文/
+论文资料底稿/
+任务书/
+开题报告/
+中期/
+output/
+outputs/
+docs/
+任务书.zip
+开题报告.zip
+*.docx
+*.vsdx
+系统总用例图*
+功能结构图*
+打开系统总用例图_drawio.cmd
+README.md
+AUDIT_AND_EVIDENCE.md
+DEVELOPMENT_PROGRESS.md
+design-qa.md
+# 临时产物
+*.bin
+*.part
+extract*.txt
+refs.txt
+template.json
+frontend-qa-*.png
+download_drawio_chunks.ps1
+inspect_drawio_range.ps1
+draw_usecase.py
+create_visio_usecase.py
