@@ -57,4 +57,13 @@ public interface WorkflowService {
     List<Map<String, Object>> allSignups();
 
     Map<String, Object> overview();
+
+    /**
+     * 按数据范围统计概览。
+     *
+     * @param stationIds 可见的驿站编号；**null 表示不限制**（平台级角色），
+     *                   空列表表示该账号没有负责的驿站（结果应为 0）
+     * @param areas      可见的区域；null 表示不限制。诉求表没有驿站编号，只能按区域近似限定
+     */
+    Map<String, Object> overview(List<Long> stationIds, List<String> areas);
 }

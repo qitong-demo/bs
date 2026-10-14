@@ -1,6 +1,8 @@
 package com.friendlystation.platform.admin;
 
+import com.friendlystation.platform.auth.CurrentUser;
 import com.friendlystation.platform.auth.CurrentUserContext;
+import com.friendlystation.platform.auth.DataScopeService;
 import com.friendlystation.platform.auth.RequireRole;
 import com.friendlystation.platform.common.ApiResponse;
 import com.friendlystation.platform.common.FormatUtils;
@@ -26,17 +28,25 @@ import java.util.Map;
 public class AdminController {
     private final WorkflowService workflowService;
     private final AdminUserService adminUserService;
+    private final DataScopeService dataScopeService;
 
-    public AdminController(WorkflowService workflowService, AdminUserService adminUserService) {
+    public AdminController(WorkflowService workflowService, AdminUserService adminUserService,
+                           DataScopeService dataScopeService) {
         this.workflowService = workflowService;
         this.adminUserService = adminUserService;
+        this.dataScopeService = dataScopeService;
     }
 
     @GetMapping("/overview")
     public ApiResponse<Map<String, Object>> overview() {
-        Map<String, Object> out = new LinkedHashMap<>(workflowService.overview());
-        out.put("operatorId", CurrentUserContext.require().id());
-        out.put("operatorRole", CurrentUserContext.require().role());
+        CurrentUser user = CurrentUserContext.require();
+        // 与预约/诉求列表用同一套数据范围：此前这里统计的是全平台，
+        // 驿站管理员在首页看到的待办数字会与管理工作台里按范围过滤的列表对不上。
+        // stationIds/areas 为 null 时表示平台级角色、不加限制。
+        Map<String, Object> out = new LinkedHashMap<>(
+                workflowService.overview(dataScopeService.stationIds(user), dataScopeService.areas(user)));
+        out.put("operatorId", user.id());
+        out.put("operatorRole", user.role());
         out.put("generatedAt", FormatUtils.dateTime(LocalDateTime.now()));
         return ApiResponse.ok(out);
     }

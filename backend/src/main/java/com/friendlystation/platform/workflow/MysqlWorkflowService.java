@@ -472,21 +472,56 @@ public class MysqlWorkflowService implements WorkflowService {
 
     @Override
     public Map<String, Object> overview() {
+        return overview(null, null);
+    }
+
+    /**
+     * 按数据范围统计概览。
+     *
+     * <p>此前这个方法用 {@code selectCount(null)} 统计，**完全没有按角色过滤**，
+     * 导致驿站管理员在首页看到的待办数字是全平台的，与管理工作台里按范围过滤的列表对不上。
+     * 现在与列表接口用同一套范围（{@code DataScopeService}）。</p>
+     *
+     * @param stationIds null 表示不限制；空列表表示没有负责的驿站，结果应为 0
+     * @param areas      null 表示不限制；诉求表没有驿站编号，只能按区域近似
+     */
+    @Override
+    public Map<String, Object> overview(List<Long> stationIds, List<String> areas) {
+        // null = 平台级，不加限制；空列表 = 该账号没有负责的驿站，必须返回 0 而不是全量。
+        boolean restrictStations = stationIds != null;
+        boolean emptyScope = restrictStations && stationIds.isEmpty();
+        boolean restrictAreas = areas != null;
+
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("appointments", appointmentMapper.selectCount(null));
-        out.put("pendingAppointments", appointmentMapper.selectCount(new LambdaQueryWrapper<ServiceAppointment>()
-                .eq(ServiceAppointment::getStatus, WorkflowStatus.APPOINTMENT_PENDING)));
-        out.put("appeals", appealMapper.selectCount(null));
-        out.put("pendingAppeals", appealMapper.selectCount(new LambdaQueryWrapper<Appeal>()
-                .ne(Appeal::getStatus, WorkflowStatus.APPEAL_RESOLVED)
-                .ne(Appeal::getStatus, WorkflowStatus.APPEAL_CLOSED)));
-        out.put("resolvedAppeals", appealMapper.selectCount(new LambdaQueryWrapper<Appeal>()
-                .eq(Appeal::getStatus, WorkflowStatus.APPEAL_RESOLVED)));
+        out.put("appointments", emptyScope ? 0L : appointmentMapper.selectCount(
+                new LambdaQueryWrapper<ServiceAppointment>()
+                        .in(restrictStations && !emptyScope, ServiceAppointment::getStationId, stationIds)));
+        out.put("pendingAppointments", emptyScope ? 0L : appointmentMapper.selectCount(
+                new LambdaQueryWrapper<ServiceAppointment>()
+                        .eq(ServiceAppointment::getStatus, WorkflowStatus.APPOINTMENT_PENDING)
+                        .in(restrictStations && !emptyScope, ServiceAppointment::getStationId, stationIds)));
+        out.put("appeals", emptyScope ? 0L : appealMapper.selectCount(
+                new LambdaQueryWrapper<Appeal>()
+                        .in(restrictAreas, Appeal::getArea, areas)));
+        out.put("pendingAppeals", emptyScope ? 0L : appealMapper.selectCount(
+                new LambdaQueryWrapper<Appeal>()
+                        .ne(Appeal::getStatus, WorkflowStatus.APPEAL_RESOLVED)
+                        .ne(Appeal::getStatus, WorkflowStatus.APPEAL_CLOSED)
+                        .in(restrictAreas, Appeal::getArea, areas)));
+        out.put("resolvedAppeals", emptyScope ? 0L : appealMapper.selectCount(
+                new LambdaQueryWrapper<Appeal>()
+                        .eq(Appeal::getStatus, WorkflowStatus.APPEAL_RESOLVED)
+                        .in(restrictAreas, Appeal::getArea, areas)));
         out.put("signups", signupMapper.selectCount(null));
         // 诉求评价数：与工作流概览中的诉求数据同源，避免与驿站服务评价混淆。
         out.put("appealEvaluations", appealEvaluationMapper.selectCount(null));
         out.put("dataStatus", "系统计算结果");
         out.put("status", "READY");
+        // 让前端能如实标注口径，而不是自己猜
+        out.put("scoped", restrictStations || restrictAreas);
+        out.put("scopeNote", restrictStations || restrictAreas
+                ? "已按当前账号负责的驿站与区域限定"
+                : "全平台汇总");
         return out;
     }
 

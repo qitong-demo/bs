@@ -409,23 +409,55 @@ public class DemoWorkflowStore implements WorkflowService {
 
     @Override
     public Map<String, Object> overview() {
+        return overview(null, null);
+    }
+
+    /**
+     * 按数据范围统计概览，与 mysql 实现同口径。
+     *
+     * @param stationIds null 表示不限制；空列表表示没有负责的驿站，结果应为 0
+     * @param areas      null 表示不限制
+     */
+    @Override
+    public Map<String, Object> overview(List<Long> stationIds, List<String> areas) {
+        boolean restrictStations = stationIds != null;
+        boolean emptyScope = restrictStations && stationIds.isEmpty();
+        boolean restrictAreas = areas != null;
+
+        java.util.function.Predicate<Map<String, Object>> inScope = item -> {
+            if (emptyScope) {
+                return false;
+            }
+            if (restrictStations
+                    && !stationIds.contains(FormatUtils.number(item.get("stationId")))) {
+                return false;
+            }
+            return !restrictAreas || areas.contains(String.valueOf(item.get("area")));
+        };
+
         long pendingAppointments = appointments.stream()
+                .filter(inScope)
                 .filter(item -> WorkflowStatus.APPOINTMENT_PENDING.equals(item.get("status"))).count();
         long pendingAppeals = appeals.stream()
+                .filter(inScope)
                 .filter(item -> !WorkflowStatus.APPEAL_RESOLVED.equals(item.get("status"))
                         && !WorkflowStatus.APPEAL_CLOSED.equals(item.get("status"))).count();
         long resolvedAppeals = appeals.stream()
+                .filter(inScope)
                 .filter(item -> WorkflowStatus.APPEAL_RESOLVED.equals(item.get("status"))).count();
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("appointments", appointments.size());
+        out.put("appointments", appointments.stream().filter(inScope).count());
         out.put("pendingAppointments", pendingAppointments);
-        out.put("appeals", appeals.size());
+        out.put("appeals", appeals.stream().filter(inScope).count());
         out.put("pendingAppeals", pendingAppeals);
         out.put("resolvedAppeals", resolvedAppeals);
         out.put("signups", signups.size());
         // 诉求评价数：与 mysql 实现的 appealEvaluations 口径一致。
         out.put("appealEvaluations", evaluations.size());
         out.put("dataStatus", "系统计算结果");
+        // 让前端能如实标注口径
+        out.put("scoped", restrictStations || restrictAreas);
+        out.put("scopeNote", restrictStations || restrictAreas ? "已按当前账号负责的驿站与区域限定" : "全平台汇总");
         out.put("status", "READY");
         return out;
     }

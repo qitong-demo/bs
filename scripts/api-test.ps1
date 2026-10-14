@@ -378,6 +378,15 @@ $outOfScopeAppeals = @($stationAppeals.Json.data.records | Where-Object { $manag
 Assert-True '驿站管理员只看到负责区域内的诉求' ($outOfScopeAppeals.Count -eq 0) "越界记录 $($outOfScopeAppeals.Count) 条"
 
 $adminAppointments = Send-Api -Method Get -Path '/api/appointment/admin/page?current=1&size=100' -Token $adminToken
+# 概览也必须按范围过滤：否则首页待办数字是全平台，与列表对不上
+$stationOverview = Send-Api -Method Get -Path '/api/admin/overview' -Token $stationToken
+$platformOverview = Send-Api -Method Get -Path '/api/admin/overview' -Token $adminToken
+Assert-True '驿站管理员概览已按范围限定' ($stationOverview.Json.data.scoped -eq $true) $stationOverview.Raw
+Assert-True '平台管理员概览为全平台口径' ($platformOverview.Json.data.scoped -eq $false) $platformOverview.Raw
+Assert-True '驿站管理员预约数不超过平台总量' `
+    ([int]$stationOverview.Json.data.appointments -le [int]$platformOverview.Json.data.appointments) $stationOverview.Raw
+Assert-True '驿站管理员诉求数不超过平台总量' `
+    ([int]$stationOverview.Json.data.appeals -le [int]$platformOverview.Json.data.appeals) $stationOverview.Raw
 Assert-True '平台管理员可见范围覆盖驿站管理员' ($adminAppointments.Json.data.total -ge $stationAppointments.Json.data.total)
 
 $userAppointments = Send-Api -Method Get -Path '/api/appointment/my' -Token $userToken
