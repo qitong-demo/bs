@@ -152,6 +152,7 @@ const pendingSignups = ref(0);
 const focusSignupId = ref(Number(route.query.signupId) || 0);
 const loading = ref(false);
 const stat = ref({});
+let pendingSignupTimer = null;
 const workflow = ref({});
 
 const isPlatformAdmin = computed(() => PLATFORM_ROLES.includes(userStore.roleCode));
@@ -251,6 +252,7 @@ onMounted(() => {
   loadMyPermissions();
   loadSummary();
   loadPendingSignups();
+  pendingSignupTimer = setInterval(loadPendingSignups, 60000);
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
   const tab = String(route.query.tab || "");
   if (tab && canSee(tab)) {
@@ -263,6 +265,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   messageStore.stopPolling();
+  if (pendingSignupTimer) {
+    clearInterval(pendingSignupTimer);
+    pendingSignupTimer = null;
+  }
 });
 </script>
 
