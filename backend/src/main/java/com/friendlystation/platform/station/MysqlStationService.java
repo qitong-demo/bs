@@ -136,6 +136,20 @@ public class MysqlStationService implements StationService {
 
     @Override
     @Transactional
+    public StationDto assignManager(Long id, Long managerId) {
+        if (!existsActive(id)) {
+            throw new BusinessException("驿站不存在");
+        }
+        Station station = new Station();
+        station.setId(id);
+        station.setManagerId(managerId);
+        station.setUpdateTime(java.time.LocalDateTime.now());
+        stationMapper.updateById(station);
+        return toDto(stationMapper.selectById(id));
+    }
+
+    @Override
+    @Transactional
     public StationDto update(Long id, StationUpdateRequest request) {
         if (!existsActive(id)) {
             throw new BusinessException("驿站不存在");

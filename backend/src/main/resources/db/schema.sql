@@ -379,6 +379,30 @@ CREATE TABLE IF NOT EXISTS notification (
     CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES sys_user (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 驿站入驻申请：普通用户提交，平台管理员审核通过后创建驿站并升级为驿站管理员。
+CREATE TABLE IF NOT EXISTS station_application (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    applicant_id BIGINT NOT NULL,
+    station_name VARCHAR(100) NOT NULL,
+    area VARCHAR(50) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    contact_name VARCHAR(50),
+    contact_phone VARCHAR(20),
+    open_time VARCHAR(100),
+    station_type VARCHAR(50),
+    city_code VARCHAR(20),
+    description VARCHAR(1000),
+    -- PENDING / APPROVED / REJECTED / CANCELLED
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    review_note VARCHAR(500),
+    reviewer_id BIGINT,
+    created_station_id BIGINT,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_station_application_status (status, create_time),
+    KEY idx_station_application_applicant (applicant_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- 驿站信息变更申请与审批。
 -- 驿站最清楚自己门口在哪，但坐标是权威数据（现有 1247/1344 条由高德 POI 派生并经三重校验），
 -- 不能自改，因此位置变更走审批；营业时间与联系电话按需求可直接改（需邮箱验证）。

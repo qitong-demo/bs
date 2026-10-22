@@ -433,6 +433,7 @@ const chartRange = ref("6");
 const USER_NAV = [
   { label: "首页", icon: "HomeFilled" },
   { label: "驿站查询", icon: "Location" },
+  { label: "驿站入驻", icon: "OfficeBuilding" },
   { label: "服务预约", icon: "Calendar" },
   { label: "诉求与反馈", icon: "MessageBox" },
   { label: "我的诉求", icon: "Document" },
@@ -456,7 +457,7 @@ const ADMIN_NAV = [
 ];
 
 /** 用户专属视图：管理员不应进入（后端也会按其数据范围过滤，进错页面只会看到空列表）。 */
-const USER_ONLY_VIEWS = ["服务预约", "我的诉求", "活动报名", "服务评价", "我的收藏"];
+const USER_ONLY_VIEWS = ["服务预约", "我的诉求", "活动报名", "服务评价", "我的收藏", "驿站入驻"];
 
 const navItems = computed(() => (isAdmin.value ? ADMIN_NAV : USER_NAV));
 

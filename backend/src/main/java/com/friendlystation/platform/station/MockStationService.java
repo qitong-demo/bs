@@ -125,6 +125,14 @@ public class MockStationService implements StationService {
     }
 
     @Override
+    public StationDto assignManager(Long id, Long managerId) {
+        int index = indexOfActive(id);
+        StationDto updated = stations.get(index).withManagerId(managerId);
+        stations.set(index, updated);
+        return updated;
+    }
+
+    @Override
     public StationDto update(Long id, StationUpdateRequest request) {
         int index = indexOfActive(id);
         StationDto exists = stations.get(index);

@@ -42,6 +42,18 @@
       <el-tab-pane v-if="canSee('stationOps')" label="我的驿站" name="stationOps">
         <AdminStationOps />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('stationApplications')" name="stationApplications">
+        <template #label>
+          <span class="signup-tab-label">
+            入驻审核
+            <el-badge v-if="pendingStationApplications" :value="pendingStationApplications" :max="99" class="signup-tab-badge" />
+          </span>
+        </template>
+        <AdminStationApplications
+          :focus-application-id="focusApplicationId"
+          @reviewed="loadPendingStationApplications"
+        />
+      </el-tab-pane>
       <el-tab-pane v-if="canSee('stations')" label="驿站管理" name="stations">
         <AdminStations />
       </el-tab-pane>
@@ -92,11 +104,13 @@ import { useMessageStore } from "../stores/message";
 import { PLATFORM_ROLES, numberText } from "./admin/admin-shared";
 import { getMyPermissions } from "../api/admin";
 import { getSignupPendingCount } from "../api/workflow";
+import { getStationApplicationPendingCount } from "../api/station-apply";
 import AdminOverview from "./admin/AdminOverview.vue";
 import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
 import AdminChangeRequests from "./admin/AdminChangeRequests.vue";
 import AdminStations from "./admin/AdminStations.vue";
+import AdminStationApplications from "./admin/AdminStationApplications.vue";
 import AdminStationOps from "./admin/AdminStationOps.vue";
 import AdminServices from "./admin/AdminServices.vue";
 import AdminContents from "./admin/AdminContents.vue";
@@ -119,6 +133,7 @@ const tabs = [
   { name: "appointments", label: "预约审核", permission: "APPOINTMENT_AUDIT" },
   { name: "appeals", label: "诉求处理", permission: "APPEAL_HANDLE" },
   { name: "changeRequests", label: "变更审批", permission: "CHANGE_APPROVE" },
+  { name: "stationApplications", label: "入驻审核", roles: ["PLATFORM_ADMIN"], permission: "STATION_MANAGE" },
   { name: "stations", label: "驿站管理", permission: "STATION_MANAGE" },
   { name: "services", label: "服务项目管理", permission: "SERVICE_MANAGE" },
   { name: "contents", label: "资讯公告管理", permission: "NEWS_MANAGE" },
@@ -149,7 +164,9 @@ const router = useRouter();
 const route = useRoute();
 const activeTab = ref("overview");
 const pendingSignups = ref(0);
+const pendingStationApplications = ref(0);
 const focusSignupId = ref(Number(route.query.signupId) || 0);
+const focusApplicationId = ref(Number(route.query.applicationId) || 0);
 const loading = ref(false);
 const stat = ref({});
 let pendingSignupTimer = null;
@@ -236,13 +253,26 @@ async function loadPendingSignups() {
   }
 }
 
+async function loadPendingStationApplications() {
+  try {
+    const data = await getStationApplicationPendingCount();
+    pendingStationApplications.value = Number(data?.count) || 0;
+  } catch {
+    pendingStationApplications.value = 0;
+  }
+}
+
 watch(
-  () => [route.query.tab, route.query.signupId],
-  ([tab, signupId]) => {
+  () => [route.query.tab, route.query.signupId, route.query.applicationId],
+  ([tab, signupId, applicationId]) => {
     if (tab === "signups" || signupId) {
       activeTab.value = "signups";
     }
+    if (tab === "stationApplications" || applicationId) {
+      activeTab.value = "stationApplications";
+    }
     focusSignupId.value = Number(signupId) || 0;
+    focusApplicationId.value = Number(applicationId) || 0;
   }
 );
 
@@ -252,7 +282,11 @@ onMounted(() => {
   loadMyPermissions();
   loadSummary();
   loadPendingSignups();
-  pendingSignupTimer = setInterval(loadPendingSignups, 60000);
+  loadPendingStationApplications();
+  pendingSignupTimer = setInterval(() => {
+    loadPendingSignups();
+    loadPendingStationApplications();
+  }, 60000);
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
   const tab = String(route.query.tab || "");
   if (tab && canSee(tab)) {
@@ -260,6 +294,9 @@ onMounted(() => {
   }
   if (route.query.signupId) {
     activeTab.value = "signups";
+  }
+  if (route.query.applicationId) {
+    activeTab.value = "stationApplications";
   }
 });
 

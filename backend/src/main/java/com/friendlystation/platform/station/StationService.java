@@ -32,6 +32,9 @@ public interface StationService {
 
     StationDto create(StationCreateRequest request);
 
+    /** 设置驿站负责人；入驻审核通过时把申请人设为自己驿站的负责人。 */
+    StationDto assignManager(Long id, Long managerId);
+
     StationDto update(Long id, StationUpdateRequest request);
 
     /**

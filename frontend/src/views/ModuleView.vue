@@ -851,6 +851,93 @@
       </section>
     </template>
 
+    <!-- ------------------------------------------------------ 驿站入驻 -->
+    <template v-else-if="view === '驿站入驻'">
+      <section class="panel">
+        <div class="sub-heading">
+          <h2>驿站入驻申请</h2>
+          <span>提交资料后由平台管理员审核</span>
+        </div>
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+          title="审核通过后系统会创建驿站，并把你的账号升级为驿站管理员；请重新登录后进入管理端。"
+          class="ops-alert"
+        />
+        <el-form label-position="top" :model="stationApplyForm">
+          <div class="station-apply-grid">
+            <el-form-item label="驿站名称" required>
+              <el-input v-model="stationApplyForm.stationName" maxlength="100" placeholder="例如：钱江苑小哥驿站" />
+            </el-form-item>
+            <el-form-item label="所属区域" required>
+              <el-select v-model="stationApplyForm.area" class="full" filterable allow-create placeholder="选择或填写区域">
+                <el-option v-for="area in areaOptions" :key="area" :label="area" :value="area" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="详细地址" required class="station-apply-wide">
+              <el-input v-model="stationApplyForm.address" maxlength="255" placeholder="街道、门牌号或具体点位" />
+            </el-form-item>
+            <el-form-item label="联系人">
+              <el-input v-model="stationApplyForm.contactName" maxlength="50" placeholder="负责人姓名" />
+            </el-form-item>
+            <el-form-item label="联系电话">
+              <el-input v-model="stationApplyForm.contactPhone" maxlength="30" placeholder="便于平台核实" />
+            </el-form-item>
+            <el-form-item label="开放时间">
+              <el-input v-model="stationApplyForm.openTime" maxlength="100" placeholder="例如：08:00-20:00" />
+            </el-form-item>
+            <el-form-item label="驿站类型">
+              <el-select v-model="stationApplyForm.stationType" class="full" filterable allow-create>
+                <el-option label="小哥驿站" value="小哥驿站" />
+                <el-option label="城管驿站" value="城管驿站" />
+                <el-option label="工会驿站" value="工会驿站" />
+                <el-option label="司机之家" value="司机之家" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="补充说明" class="station-apply-wide">
+              <el-input
+                v-model="stationApplyForm.description"
+                type="textarea"
+                :rows="4"
+                maxlength="1000"
+                show-word-limit
+                placeholder="可填写场地条件、可提供的服务、运营单位等"
+              />
+            </el-form-item>
+          </div>
+          <el-button type="primary" :loading="stationApplySubmitting" @click="submitStationApply">提交入驻申请</el-button>
+        </el-form>
+      </section>
+
+      <section class="panel">
+        <div class="sub-heading">
+          <h2>我的入驻申请</h2>
+          <span>平台审核结果会同步到消息中心</span>
+        </div>
+        <el-table :data="myStationApplications" v-loading="stationApplyLoading" class="clean-table" empty-text="还没有提交过入驻申请">
+          <el-table-column prop="stationName" label="驿站名称" min-width="180" />
+          <el-table-column label="区域/地址" min-width="220">
+            <template #default="{ row }">{{ row.area }} · {{ row.address }}</template>
+          </el-table-column>
+          <el-table-column label="状态" width="110">
+            <template #default="{ row }">
+              <el-tag :type="stationApplyTagType(row.status)" effect="plain">{{ row.statusLabel }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="审核说明" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">{{ row.reviewNote || "—" }}</template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="提交时间" width="170" />
+          <el-table-column label="操作" width="100">
+            <template #default="{ row }">
+              <el-button v-if="row.status === 'PENDING'" link type="danger" @click="cancelMyStationApplication(row)">撤回</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </section>
+    </template>
+
     <!-- ------------------------------------------------------ 个人中心 -->
     <template v-else>
       <section class="panel profile-panel">
@@ -968,6 +1055,11 @@ import {
   getStationEvaluationSummary
 } from "../api/evaluation";
 import { getMonthlyTrend, getServiceRanking, getStatOverview } from "../api/stat";
+import {
+  cancelStationApplication,
+  getMyStationApplications,
+  submitStationApplication
+} from "../api/station-apply";
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
@@ -1281,6 +1373,21 @@ const profileForm = reactive({
   roleName: ""
 });
 
+const stationApplyForm = reactive({
+  stationName: "",
+  area: "",
+  address: "",
+  contactName: "",
+  contactPhone: "",
+  openTime: "",
+  stationType: "小哥驿站",
+  cityCode: "330100",
+  description: ""
+});
+const myStationApplications = ref([]);
+const stationApplyLoading = ref(false);
+const stationApplySubmitting = ref(false);
+
 const viewConfigs = {
   驿站查询: { title: "附近友好驿站", description: "按区域和服务类型快速找到适合你的服务点。", action: "刷新列表" },
   服务预约: { title: "服务预约", description: "提前预约充电、热饭、咨询和检修服务，减少现场等待。", action: "查看我的预约" },
@@ -1292,6 +1399,7 @@ const viewConfigs = {
   消息中心: { title: "消息中心", description: "预约、诉求、活动和平台通知都会在这里提醒你。", action: "全部已读" },
   数据统计: { title: "数据统计", description: "了解平台服务使用情况和驿站服务热度。", action: "导出报表" },
   我的收藏: { title: "我的收藏", description: "集中管理你常用的驿站。", action: "管理收藏" },
+  驿站入驻: { title: "驿站入驻", description: "提交驿站入驻申请，平台管理员审核通过后即可开通驿站管理权限。", action: "刷新申请" },
   个人中心: { title: "个人中心", description: "完善个人信息，让平台推荐更适合你的服务。", action: "刷新资料" }
 };
 
@@ -2087,6 +2195,65 @@ async function exportMyData() {
 
 // ------------------------------------------------------------------ 个人中心
 
+async function loadMyStationApplications() {
+  stationApplyLoading.value = true;
+  try {
+    myStationApplications.value = await getMyStationApplications();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "入驻申请加载失败"));
+  } finally {
+    stationApplyLoading.value = false;
+  }
+}
+
+async function submitStationApply() {
+  if (!stationApplyForm.stationName.trim() || !stationApplyForm.area.trim() || !stationApplyForm.address.trim()) {
+    ElMessage.warning("请填写驿站名称、所属区域和详细地址");
+    return;
+  }
+  stationApplySubmitting.value = true;
+  try {
+    await submitStationApplication({
+      ...stationApplyForm,
+      stationName: stationApplyForm.stationName.trim(),
+      area: stationApplyForm.area.trim(),
+      address: stationApplyForm.address.trim()
+    });
+    ElMessage.success("入驻申请已提交，平台管理员审核后会通知你");
+    Object.assign(stationApplyForm, {
+      stationName: "", area: stationApplyForm.area, address: "", contactName: "",
+      contactPhone: "", openTime: "", stationType: "小哥驿站", cityCode: "330100", description: ""
+    });
+    await loadMyStationApplications();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "提交失败"));
+  } finally {
+    stationApplySubmitting.value = false;
+  }
+}
+
+async function cancelMyStationApplication(row) {
+  try {
+    await ElMessageBox.confirm(`确认撤回「${row.stationName}」的入驻申请吗？`, "撤回申请", { type: "warning" });
+  } catch {
+    return;
+  }
+  try {
+    await cancelStationApplication(row.id);
+    ElMessage.success("入驻申请已撤回");
+    await loadMyStationApplications();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "撤回失败"));
+  }
+}
+
+function stationApplyTagType(status) {
+  if (status === "APPROVED") return "success";
+  if (status === "REJECTED") return "danger";
+  if (status === "CANCELLED") return "info";
+  return "warning";
+}
+
 async function loadProfile() {
   loading.profile = true;
   try {
@@ -2168,6 +2335,10 @@ async function handlePrimary() {
     case "我的收藏":
       ElMessage.info(`已收藏 ${favorites.value.length} 个驿站`);
       break;
+    case "驿站入驻":
+      await loadMyStationApplications();
+      ElMessage.success("入驻申请已刷新");
+      break;
     default:
       await loadProfile();
       ElMessage.success("资料已刷新");
@@ -2183,7 +2354,7 @@ async function loadView() {
     await loadStationOptions();
   }
   // 区域候选来自 /api/station/areas（按当前城市统计），驿站查询、诉求反馈与个人中心共同使用
-  if (["驿站查询", "诉求与反馈", "个人中心"].includes(view) && stationAreaOptions.value.length === 0) {
+  if (["驿站查询", "诉求与反馈", "个人中心", "驿站入驻"].includes(view) && stationAreaOptions.value.length === 0) {
     await loadStationAreas();
   }
   switch (view) {
@@ -2239,6 +2410,13 @@ async function loadView() {
       break;
     case "我的收藏":
       dataNote.value = "收藏保存在本机浏览器，可随时取消。";
+      break;
+    case "驿站入驻":
+      dataNote.value = "入驻申请提交后由平台管理员审核；审核通过后系统会创建驿站，并把你的账号升级为驿站管理员，需要重新登录。";
+      if (!stationApplyForm.area) {
+        stationApplyForm.area = areaOptions.value[0] || "";
+      }
+      await loadMyStationApplications();
       break;
     default:
       dataNote.value = "";

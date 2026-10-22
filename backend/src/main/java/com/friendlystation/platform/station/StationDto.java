@@ -35,4 +35,10 @@ public record StationDto(
         String suspendReason,
         String createTime
 ) {
+    /** 复制并替换负责人；用于入驻审核通过后把申请人设为驿站管理员。 */
+    public StationDto withManagerId(Long managerId) {
+        return new StationDto(id, cityCode, stationName, stationType, area, address, longitude, latitude,
+                contactPhone, openTime, distance, services, status, managerId, source,
+                suspendedFrom, suspendedTo, suspendReason, createTime);
+    }
 }

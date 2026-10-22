@@ -949,6 +949,63 @@ class ApiIntegrationTest {
         return page.path("records").get(0).path("id").asInt();
     }
 
+    @Test
+    void stationOnboardingRequiresPlatformApproval() throws Exception {
+        String suffix = String.valueOf(System.nanoTime());
+        suffix = suffix.substring(suffix.length() - 8);
+        String username = "apply" + suffix;
+        String phone = "139" + suffix;
+        String password = "applyA123";
+        String stationName = "入驻审核测试-" + suffix;
+
+        assertEquals(200, httpStatus(call("post", "/api/auth/register", null, Map.of(
+                "username", username, "phone", phone, "password", password))));
+        JsonNode login = call("post", "/api/auth/login", null, Map.of("username", username, "password", password));
+        String userToken = dataOf(login).path("token").asText();
+        assertEquals("USER", dataOf(login).path("role").asText());
+
+        JsonNode application = call("post", "/api/station/apply", userToken, Map.of(
+                "stationName", stationName, "area", "上城区", "address", "测试路 1 号",
+                "contactName", "测试申请人", "contactPhone", phone, "openTime", "08:00-20:00",
+                "stationType", "小哥驿站", "cityCode", "330100", "description", "入驻审核联调"));
+        assertEquals(200, httpStatus(application));
+        long applicationId = dataOf(application).path("id").asLong();
+
+        String adminToken = login("platform_admin");
+        JsonNode pending = dataOf(call("get", "/api/station/apply/admin/page?current=1&size=10&status=PENDING",
+                adminToken, null));
+        assertTrue(pending.path("total").asInt() >= 1, "平台端应能看到待审核入驻申请");
+        assertEquals(200, httpStatus(call("put", "/api/station/apply/" + applicationId + "/approve",
+                adminToken, Map.of("reviewNote", "资料齐全"))));
+
+        // 审批会递增凭据版本，旧令牌失效；入驻人必须重新登录后才能看到新角色。
+        JsonNode relogin = call("post", "/api/auth/login", null, Map.of("username", username, "password", password));
+        assertEquals(200, httpStatus(relogin));
+        assertEquals("STATION_ADMIN", dataOf(relogin).path("role").asText(), "入驻通过后账号应升级为驿站管理员");
+        String newToken = dataOf(relogin).path("token").asText();
+
+        JsonNode mine = dataOf(call("get", "/api/station/apply/mine", newToken, null));
+        boolean approved = false;
+        long createdStationId = 0;
+        for (JsonNode row : mine) {
+            if (row.path("id").asLong() == applicationId) {
+                approved = "APPROVED".equals(row.path("status").asText());
+                createdStationId = row.path("createdStationId").asLong();
+            }
+        }
+        assertTrue(approved, "审核通过后申请状态应为 APPROVED");
+        assertTrue(createdStationId > 0, "审核通过后应创建驿站");
+
+        JsonNode managed = dataOf(call("get", "/api/station/mine", newToken, null));
+        boolean ownsStation = false;
+        for (JsonNode row : managed) {
+            if (row.path("id").asLong() == createdStationId) {
+                ownsStation = true;
+            }
+        }
+        assertTrue(ownsStation, "新驿站应归申请人负责");
+    }
+
     private int firstActivityId() throws Exception {
         JsonNode page = dataOf(call("get", "/api/activity/page?current=1&size=1", null, null));
         assertTrue(page.path("total").asInt() > 0, "演示数据应至少包含一个活动");
