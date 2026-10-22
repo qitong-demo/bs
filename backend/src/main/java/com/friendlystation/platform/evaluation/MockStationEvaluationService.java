@@ -60,6 +60,12 @@ public class MockStationEvaluationService implements StationEvaluationService {
         String content = text(safePayload.get("content"));
         // 驿站必须存在
         stationService.detail(stationId);
+        boolean evaluated = evaluations.stream().anyMatch(item ->
+                Long.valueOf(stationId).equals(item.stationId())
+                        && item.userId() != null && item.userId() == userId);
+        if (evaluated) {
+            throw new BusinessException("你已评价过该驿站，不能重复评价");
+        }
 
         Evaluation evaluation = new Evaluation(
                 idGenerator.incrementAndGet(),

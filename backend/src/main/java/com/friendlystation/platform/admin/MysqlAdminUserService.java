@@ -31,11 +31,14 @@ public class MysqlAdminUserService implements AdminUserService {
     private final SysUserMapper userMapper;
     private final SysRoleMapper roleMapper;
     private final SysUserRoleMapper userRoleMapper;
+    private final com.friendlystation.platform.auth.CredentialVersionService credentialVersionService;
 
-    public MysqlAdminUserService(SysUserMapper userMapper, SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper) {
+    public MysqlAdminUserService(SysUserMapper userMapper, SysRoleMapper roleMapper, SysUserRoleMapper userRoleMapper,
+                                 com.friendlystation.platform.auth.CredentialVersionService credentialVersionService) {
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
         this.userRoleMapper = userRoleMapper;
+        this.credentialVersionService = credentialVersionService;
     }
 
     @Override
@@ -122,6 +125,8 @@ public class MysqlAdminUserService implements AdminUserService {
         user.setStatus("停用".equals(normalizeStatus(status)) ? 0 : 1);
         user.setUpdateTime(LocalDateTime.now());
         userMapper.updateById(user);
+        // 停用/启用都会改变账号可用性：递增凭据版本，让已签发令牌立即失效。
+        credentialVersionService.bump(userId);
         return views(List.of(user)).get(0);
     }
 
@@ -151,6 +156,8 @@ public class MysqlAdminUserService implements AdminUserService {
         user.setUserType(codes.get(0));
         user.setUpdateTime(LocalDateTime.now());
         userMapper.updateById(user);
+        // 角色变了，旧令牌里的 role 就是过期信息；不递增版本会让降权在令牌过期前形同虚设。
+        credentialVersionService.bump(userId);
         return views(List.of(user)).get(0);
     }
 

@@ -87,6 +87,9 @@ public class MockStationData {
                                 node.path("geocodeAt").asText(""),
                                 node.path("businessSource").asText(""),
                                 node.path("businessSyncedAt").asText("")),
+                        null,
+                        null,
+                        "",
                         ""));
             }
         } catch (Exception exception) {

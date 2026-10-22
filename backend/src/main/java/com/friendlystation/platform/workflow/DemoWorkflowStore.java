@@ -50,6 +50,7 @@ public class DemoWorkflowStore implements WorkflowService {
      * 那时为 null，跳过校验，与本类既有的 stationLookup 完全一致。</p>
      */
     private com.friendlystation.platform.content.ActivityService activityLookup;
+    private com.friendlystation.platform.notification.NotificationService notificationService;
 
     public DemoWorkflowStore() {
     }
@@ -65,23 +66,71 @@ public class DemoWorkflowStore implements WorkflowService {
         this.activityLookup = activityLookup;
     }
 
+    @Autowired(required = false)
+    public void setNotificationService(
+            com.friendlystation.platform.notification.NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
+    /** 统一写通知；单元测试未注入时静默跳过。 */
+    private void push(Object userId, String type, String title, String content, String bizType, long bizId) {
+        if (notificationService == null) {
+            return;
+        }
+        notificationService.push(FormatUtils.number(userId), type, title, content, "", bizType, bizId);
+    }
+
     // ------------------------------------------------------------------ 预约
 
     @Override
     public synchronized Map<String, Object> addAppointment(Map<String, Object> request, long userId) {
         long stationId = FormatUtils.number(request.get("stationId"));
+        if (stationId <= 0) {
+            throw new BusinessException("请选择服务驿站");
+        }
+        StationDto station = null;
+        if (stationLookup != null) {
+            try {
+                station = stationLookup.detail(stationId);
+            } catch (BusinessException exception) {
+                throw new BusinessException("驿站不存在");
+            }
+            if (station == null || !"OPEN".equalsIgnoreCase(station.status())) {
+                throw new BusinessException("该驿站当前未开放预约");
+            }
+        }
         String stationName = resolveStationName(stationId, request);
         // 与 mysql 实现共用同一套规则：事项自填必填、电话可选但需合格式。
         String serviceName = AppointmentSubject.require(
                 request.get("serviceName") == null ? request.get("subject") : request.get("serviceName"));
         String contactPhone = AppointmentSubject.optionalPhone(request.get("contactPhone"));
         Object rawDate = request.get("date") == null ? request.get("appointDate") : request.get("date");
+        java.time.LocalDate appointDate = FormatUtils.parseDateOrNull(rawDate);
+        if (appointDate == null) {
+            throw new BusinessException("请选择预约日期，格式为 yyyy-MM-dd");
+        }
+        if (appointDate.isBefore(java.time.LocalDate.now())) {
+            throw new BusinessException("预约日期不能早于今天");
+        }
         String appointTime = FormatUtils.text(request.get("slot"),
-                FormatUtils.text(request.get("appointTime"), "待确认"));
+                FormatUtils.text(request.get("appointTime"), ""));
+        if (appointTime.isBlank()) {
+            throw new BusinessException("请选择预约时段");
+        }
+        if (!BusinessHours.isValidSlot(appointTime)) {
+            throw new BusinessException("预约时段格式应为 HH:mm-HH:mm");
+        }
+        if (station != null && com.friendlystation.platform.common.SuspensionWindow.overlaps(
+                FormatUtils.parseDateTimeOrNull(station.suspendedFrom()),
+                FormatUtils.parseDateTimeOrNull(station.suspendedTo()),
+                appointDate, appointTime)) {
+            String reason = station.suspendReason() == null || station.suspendReason().isBlank()
+                    ? "该驿站暂停服务" : station.suspendReason();
+            throw new BusinessException("该驿站在所选时段暂停服务：" + reason);
+        }
 
         // 与 mysql 实现保持一致：预约时段必须落在驿站营业时间内；
-        // 营业时间缺失或无法解析时不拦截。stationLookup 为空（脱离容器单测）时跳过校验。
-        StationDto station = resolveStation(stationId);
+        // 营业时间缺失或无法解析时不拦截。
         if (station != null && !BusinessHours.contains(station.openTime(), appointTime)) {
             throw new BusinessException("所选时段 " + appointTime + " 不在该驿站的营业时间内（"
                     + BusinessHours.describe(station.openTime()) + "）");
@@ -96,7 +145,7 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("serviceId", FormatUtils.number(request.get("serviceId")));
         item.put("serviceName", serviceName);
         item.put("contactPhone", contactPhone);
-        item.put("appointDate", FormatUtils.date(rawDate).toString());
+        item.put("appointDate", appointDate.toString());
         item.put("appointTime", appointTime);
         item.put("status", WorkflowStatus.APPOINTMENT_PENDING);
         item.put("auditReason", "");
@@ -106,6 +155,11 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("dataStatus", "系统计算结果");
         item.put("createTime", FormatUtils.dateTime(LocalDateTime.now()));
         appointments.add(item);
+        if (station != null && station.managerId() != null) {
+            push(station.managerId(), "APPOINTMENT", "新的预约待确认",
+                    serviceName + " · " + appointDate + " " + appointTime,
+                    "APPOINTMENT", FormatUtils.number(item.get("id")));
+        }
         return view(item);
     }
 
@@ -137,7 +191,8 @@ public class DemoWorkflowStore implements WorkflowService {
     }
 
     @Override
-    public synchronized Map<String, Object> auditAppointment(Map<String, Object> request, long operatorId) {
+    public synchronized Map<String, Object> auditAppointment(Map<String, Object> request, long operatorId,
+                                                             java.util.List<Long> stationIds) {
         String status = FormatUtils.text(request.get("status"), WorkflowStatus.APPOINTMENT_CONFIRMED);
         if (!WorkflowStatus.isAuditTarget(status)) {
             throw new BusinessException("预约审核结果只能是 CONFIRMED 或 REJECTED");
@@ -146,6 +201,12 @@ public class DemoWorkflowStore implements WorkflowService {
         if (item == null) {
             throw new BusinessException("预约不存在");
         }
+        if (stationIds != null && stationIds.isEmpty()) {
+            throw new com.friendlystation.platform.common.ForbiddenException("当前账号没有负责的驿站");
+        }
+        if (stationIds != null && !stationIds.contains(FormatUtils.number(item.get("stationId")))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权审核该驿站的预约");
+        }
         if (!WorkflowStatus.canAuditAppointment((String) item.get("status"))) {
             throw new BusinessException("该预约已处理，不能重复审核");
         }
@@ -153,6 +214,11 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("operatorId", operatorId);
         item.put("auditReason", FormatUtils.text(request.get("reason"), ""));
         item.put("auditTime", FormatUtils.dateTime(LocalDateTime.now()));
+        push(item.get("userId"), "APPOINTMENT",
+                WorkflowStatus.APPOINTMENT_CONFIRMED.equals(status) ? "预约已确认" : "预约已拒绝",
+                item.get("stationName") + " · " + item.get("appointDate") + " " + item.get("appointTime")
+                        + (("" + item.get("auditReason")).isBlank() ? "" : "；说明：" + item.get("auditReason")),
+                "APPOINTMENT", FormatUtils.number(item.get("id")));
         return view(item);
     }
 
@@ -171,6 +237,19 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("status", WorkflowStatus.APPOINTMENT_CANCELLED);
         item.put("operatorId", userId);
         item.put("cancelTime", FormatUtils.dateTime(LocalDateTime.now()));
+        if (stationLookup != null) {
+            try {
+                StationDto station = stationLookup.detail(FormatUtils.number(item.get("stationId")));
+                if (station != null && station.managerId() != null) {
+                    push(station.managerId(), "APPOINTMENT", "预约已取消",
+                            userName(userId) + " · " + item.get("serviceName") + " · "
+                                    + item.get("appointDate") + " " + item.get("appointTime"),
+                            "APPOINTMENT", FormatUtils.number(item.get("id")));
+                }
+            } catch (BusinessException ignored) {
+                // 驿站已删除：取消本身仍然有效
+            }
+        }
         return view(item);
     }
 
@@ -184,10 +263,33 @@ public class DemoWorkflowStore implements WorkflowService {
         String receiverTarget = AppealCategory.resolveTarget(request.get("receiverTarget"), category, type);
         boolean anonymous = FormatUtils.flag(request.get("anonymous"));
         String title = FormatUtils.text(request.get("title"), "未填写标题");
+        String area = FormatUtils.text(request.get("area"), "未填写区域");
+        Long stationId = null;
+        if (AppealCategory.TARGET_STATION.equals(receiverTarget)) {
+            long rawStationId = FormatUtils.number(request.get("stationId"));
+            if (rawStationId > 0) {
+                if (stationLookup != null) {
+                    StationDto station;
+                    try {
+                        station = stationLookup.detail(rawStationId);
+                    } catch (BusinessException exception) {
+                        throw new BusinessException("驿站不存在");
+                    }
+                    if (station == null) {
+                        throw new BusinessException("驿站不存在");
+                    }
+                    if (station.area() != null && !station.area().isBlank()) {
+                        area = station.area();
+                    }
+                }
+                stationId = rawStationId;
+            }
+        }
 
         Map<String, Object> item = new HashMap<>();
         item.put("id", appealIds.incrementAndGet());
         item.put("userId", userId);
+        item.put("stationId", stationId == null ? 0L : stationId);
         item.put("userName", userName(userId));
         item.put("title", title);
         item.put("category", category);
@@ -196,9 +298,10 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("receiverTarget", receiverTarget);
         item.put("receiverTargetLabel", AppealCategory.targetLabel(receiverTarget));
         item.put("type", type);
-        item.put("area", FormatUtils.text(request.get("area"), "未填写区域"));
+        item.put("area", area);
         item.put("content", FormatUtils.text(request.get("content"), ""));
         item.put("anonymous", anonymous);
+        item.put("evaluated", false);
         item.put("status", WorkflowStatus.APPEAL_PENDING);
         item.put("handlerId", 0L);
         item.put("handlerName", "");
@@ -212,6 +315,14 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("records", new ArrayList<>(List.of(
                 record("SUBMIT", AppealCategory.label(category) + "已提交", userId, AppealCategory.label(category) + "已提交"))));
         appeals.add(item);
+        if (stationId != null && stationId > 0 && stationLookup != null) {
+            StationDto station = stationLookup.detail(stationId);
+            if (station != null && station.managerId() != null) {
+                push(station.managerId(), "APPEAL", "新的诉求待受理",
+                        item.get("title") + " · " + AppealCategory.label(category) + " · " + area,
+                        "APPEAL", FormatUtils.number(item.get("id")));
+            }
+        }
         return view(item);
     }
 
@@ -226,13 +337,13 @@ public class DemoWorkflowStore implements WorkflowService {
 
     @Override
     public PageResult<Map<String, Object>> appealPage(long current, long size, String status, String keyword,
-                                                      List<String> areas) {
-        if (areas != null && areas.isEmpty()) {
+                                                      List<Long> stationIds, List<String> areas) {
+        if (stationIds != null && stationIds.isEmpty()) {
             return new PageResult<>(Math.max(current, 1), Math.min(Math.max(size, 1), 200), 0, List.of());
         }
         String word = keyword == null ? "" : keyword.trim();
         List<Map<String, Object>> filtered = appeals.stream()
-                .filter(item -> areas == null || areas.contains(String.valueOf(item.get("area"))))
+                .filter(item -> inAppealScope(item, stationIds, areas))
                 .filter(item -> status == null || status.isBlank() || status.equals(item.get("status")))
                 .filter(item -> word.isEmpty() || matches(word, item.get("title"), item.get("type"), item.get("area"), item.get("userName")))
                 .sorted(Comparator.comparing(item -> String.valueOf(item.get("createTime")), Comparator.reverseOrder()))
@@ -242,21 +353,49 @@ public class DemoWorkflowStore implements WorkflowService {
     }
 
     @Override
-    public Map<String, Object> appealDetail(long id) {
+    public Map<String, Object> appealDetail(long id, long viewerId) {
         Map<String, Object> item = byId(appeals, id);
         if (item == null) {
             throw new BusinessException("诉求不存在");
         }
-        return view(item, false);
+        return view(item, shouldMask(item, viewerId));
     }
 
     @Override
-    public List<Map<String, Object>> appealRecords(long appealId) {
+    public List<Map<String, Object>> appealRecords(long appealId, long viewerId) {
         Map<String, Object> item = byId(appeals, appealId);
         if (item == null) {
             throw new BusinessException("诉求不存在");
         }
-        return recordsOf(item);
+        return shouldMask(item, viewerId) ? maskedRecords(item) : recordsOf(item);
+    }
+
+    @Override
+    public boolean canAccessAppeal(long id, long viewerId, boolean platformLevel,
+                                   List<Long> stationIds, List<String> areas) {
+        Map<String, Object> item = byId(appeals, id);
+        if (item == null) {
+            throw new BusinessException("诉求不存在");
+        }
+        if (platformLevel) {
+            return true;
+        }
+        if (FormatUtils.number(item.get("userId")) == viewerId) {
+            return true;
+        }
+        return inAppealScope(item, stationIds, areas);
+    }
+
+    /** 定向驿站按编号，历史数据按区域兜底。 */
+    private static boolean inAppealScope(Map<String, Object> item, List<Long> stationIds, List<String> areas) {
+        if (stationIds == null) {
+            return true;
+        }
+        long stationId = FormatUtils.number(item.get("stationId"));
+        if (stationId > 0) {
+            return stationIds.contains(stationId);
+        }
+        return areas != null && areas.contains(String.valueOf(item.get("area")));
     }
 
     @Override
@@ -265,8 +404,10 @@ public class DemoWorkflowStore implements WorkflowService {
         if (item == null) {
             throw new BusinessException("诉求不存在");
         }
-        if (!WorkflowStatus.canHandleAppeal((String) item.get("status"))) {
-            throw new BusinessException("该诉求已办结或关闭，不能再次分派");
+        String current = String.valueOf(item.get("status"));
+        // 与 mysql 实现同口径：处理中不能回退到已分派；已办结/已关闭也不能再分派。
+        if (!WorkflowStatus.APPEAL_PENDING.equals(current) && !WorkflowStatus.APPEAL_ASSIGNED.equals(current)) {
+            throw new BusinessException("该诉求已办结、已关闭或正在处理中，不能再次分派");
         }
         item.put("status", WorkflowStatus.APPEAL_ASSIGNED);
         item.put("handlerId", operatorId);
@@ -305,6 +446,10 @@ public class DemoWorkflowStore implements WorkflowService {
         String content = FormatUtils.text(request.get("content"), WorkflowStatus.label(status));
         recordsOf(item).add(record(WorkflowStatus.APPEAL_RESOLVED.equals(status) ? "RESOLVE" : "HANDLE", content,
                 operatorId, content));
+        push(item.get("userId"), "APPEAL",
+                WorkflowStatus.APPEAL_RESOLVED.equals(status) ? "诉求已办结"
+                        : WorkflowStatus.APPEAL_CLOSED.equals(status) ? "诉求已关闭" : "诉求处理中",
+                content, "APPEAL", FormatUtils.number(item.get("id")));
         return view(item);
     }
 
@@ -324,6 +469,12 @@ public class DemoWorkflowStore implements WorkflowService {
         if (score < 1 || score > 5) {
             throw new BusinessException("评价分数必须在 1 到 5 之间");
         }
+        boolean evaluated = evaluations.stream().anyMatch(row ->
+                FormatUtils.number(row.get("appealId")) == FormatUtils.number(request.get("appealId"))
+                        && FormatUtils.number(row.get("userId")) == userId);
+        if (evaluated) {
+            throw new BusinessException("该诉求已评价，不能重复评价");
+        }
         String content = FormatUtils.text(request.get("content"), "");
         Map<String, Object> evaluation = new LinkedHashMap<>();
         evaluation.put("id", evaluationIds.incrementAndGet());
@@ -336,6 +487,7 @@ public class DemoWorkflowStore implements WorkflowService {
         evaluations.add(evaluation);
         recordsOf(item).add(record("EVALUATE", content.isBlank() ? "用户已评价" : content, userId, content));
         item.put("evaluationScore", score);
+        item.put("evaluated", true);
         return evaluation;
     }
 
@@ -343,11 +495,15 @@ public class DemoWorkflowStore implements WorkflowService {
      * 标记预约爽约，与 mysql 实现同口径：只允许标记已确认的预约。
      */
     @Override
-    public synchronized Map<String, Object> markNoShow(long id, long operatorId, String remark) {
+    public synchronized Map<String, Object> markNoShow(long id, long operatorId, String remark,
+                                                       java.util.List<Long> stationIds) {
         Map<String, Object> item = appointments.stream()
                 .filter(row -> FormatUtils.number(row.get("id")) == id)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("预约不存在"));
+        if (stationIds != null && !stationIds.contains(FormatUtils.number(item.get("stationId")))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权处理该驿站的预约");
+        }
         if (Integer.valueOf(1).equals(item.get("noShow"))) {
             throw new IllegalArgumentException("该预约已标记为爽约");
         }
@@ -362,41 +518,115 @@ public class DemoWorkflowStore implements WorkflowService {
         return view(item);
     }
 
+    @Override
+    public synchronized Map<String, Object> completeAppointment(long id, long operatorId,
+                                                                java.util.List<Long> stationIds) {
+        Map<String, Object> item = byId(appointments, id);
+        if (item == null) {
+            throw new BusinessException("预约不存在");
+        }
+        if (stationIds != null && !stationIds.contains(FormatUtils.number(item.get("stationId")))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权处理该驿站的预约");
+        }
+        if (!WorkflowStatus.APPOINTMENT_CONFIRMED.equals(item.get("status"))) {
+            throw new BusinessException("只有已确认的预约可以标记为已完成");
+        }
+        item.put("status", WorkflowStatus.APPOINTMENT_FINISHED);
+        item.put("operatorId", operatorId);
+        item.put("finishTime", FormatUtils.dateTime(LocalDateTime.now()));
+        push(item.get("userId"), "APPOINTMENT", "预约已完成",
+                item.get("stationName") + " · " + item.get("appointDate") + " " + item.get("appointTime") + " 已完成",
+                "APPOINTMENT", FormatUtils.number(item.get("id")));
+        return view(item);
+    }
+
+    @Override
+    public int notifySuspension(long stationId, LocalDateTime from, LocalDateTime to, String reason) {
+        if (from == null || to == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Map<String, Object> item : appointments) {
+            if (FormatUtils.number(item.get("stationId")) != stationId) {
+                continue;
+            }
+            String status = String.valueOf(item.get("status"));
+            if (!WorkflowStatus.APPOINTMENT_PENDING.equals(status)
+                    && !WorkflowStatus.APPOINTMENT_CONFIRMED.equals(status)) {
+                continue;
+            }
+            if (!com.friendlystation.platform.common.SuspensionWindow.overlaps(
+                    from, to, FormatUtils.parseDateOrNull(item.get("appointDate")),
+                    String.valueOf(item.get("appointTime")))) {
+                continue;
+            }
+            push(item.get("userId"), "APPOINTMENT", "驿站暂停服务提醒",
+                    item.get("stationName") + " 于 " + FormatUtils.dateTime(from) + " 至 " + FormatUtils.dateTime(to)
+                            + " 暂停服务（原因：" + (reason == null ? "" : reason) + "）。你预约的 "
+                            + item.get("appointDate") + " " + item.get("appointTime") + " 可能受影响，请与驿站联系。",
+                    "STATION", stationId);
+            count++;
+        }
+        return count;
+    }
+
     // -------------------------------------------------------------- 活动报名
 
     @Override
     public synchronized Map<String, Object> addSignup(Map<String, Object> request, long userId) {
         long activityId = FormatUtils.number(request.get("activityId"));
-        // 与 mysql 实现同口径：第三方活动不接受站内报名，报名与审核都在对方平台。
-        // 判断同样走 ActivityOrganizer.acceptsSignup()，保证两套实现行为一致。
+        Map<String, Object> activity = null;
+        // 与 mysql 实现同口径：第三方活动不接受站内报名，取消/未发布活动也不收报名。
         if (activityLookup != null) {
-            String organizerType = "";
             try {
-                Map<String, Object> activity = activityLookup.detail(activityId);
-                if (activity != null && activity.get("organizerType") != null) {
-                    organizerType = String.valueOf(activity.get("organizerType"));
-                }
+                activity = activityLookup.detail(activityId);
             } catch (RuntimeException exception) {
-                // 活动不存在交给后续流程报错，这里不改变异常语义
-                organizerType = "";
+                throw new IllegalArgumentException("活动不存在");
             }
+            String organizerType = activity == null ? "" : String.valueOf(activity.get("organizerType"));
             if (!ActivityOrganizer.acceptsSignup(organizerType)) {
                 throw new IllegalArgumentException("该活动由第三方机构举办，请前往活动来源页面报名");
+            }
+            if (activity != null && !"PUBLISHED".equalsIgnoreCase(String.valueOf(activity.get("status")))) {
+                throw new IllegalArgumentException("活动已取消或尚未发布，不能报名");
             }
         }
         // 与 mysql 实现同口径：姓名与电话必填，承办方要靠这些联系报名人。
         String contactName = ActivityOrganizer.requireContactName(request.get("contactName"));
         String phone = ActivityOrganizer.requirePhone(request.get("phone"));
-        boolean duplicated = signups.stream()
-                .anyMatch(item -> FormatUtils.number(item.get("activityId")) == activityId
-                        && FormatUtils.number(item.get("userId")) == userId);
-        if (duplicated) {
-            throw new IllegalArgumentException("该活动已报名");
+        // 已取消的记录可以重新激活；已报名/已联系直接拒绝。
+        Map<String, Object> existing = signups.stream()
+                .filter(item -> FormatUtils.number(item.get("activityId")) == activityId
+                        && FormatUtils.number(item.get("userId")) == userId)
+                .findFirst()
+                .orElse(null);
+        if (existing != null) {
+            String current = ActivityOrganizer.normalizeSignupStatus(existing.get("status"));
+            if (!ActivityOrganizer.SIGNUP_CANCELLED.equals(current)) {
+                throw new IllegalArgumentException("该活动已报名");
+            }
+            existing.put("contactName", contactName);
+            existing.put("phone", phone);
+            existing.put("remark", FormatUtils.text(request.get("remark"), ""));
+            existing.put("status", ActivityOrganizer.SIGNUP_SIGNED_UP);
+            existing.put("statusLabel", ActivityOrganizer.signupLabel(ActivityOrganizer.SIGNUP_SIGNED_UP));
+            existing.put("reviewNote", "");
+            existing.put("reviewerName", "");
+            existing.put("reviewTime", "");
+            existing.put("createTime", FormatUtils.dateTime(LocalDateTime.now()));
+            if (activityLookup != null) {
+                activityLookup.onSignup(activityId);
+            }
+            notifySignupManager(activity, contactName, FormatUtils.number(existing.get("id")));
+            return view(existing);
         }
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", signupIds.incrementAndGet());
         item.put("activityId", activityId);
-        item.put("activityTitle", FormatUtils.text(request.get("activityTitle"), FormatUtils.text(request.get("title"), "")));
+        item.put("activityTitle", activity != null
+                ? String.valueOf(activity.get("title"))
+                : FormatUtils.text(request.get("activityTitle"), FormatUtils.text(request.get("title"), "")));
+        item.put("stationId", activity == null ? 0L : FormatUtils.number(activity.get("stationId")));
         item.put("userId", userId);
         item.put("userName", userName(userId));
         item.put("contactName", contactName);
@@ -410,12 +640,37 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("dataStatus", "系统计算结果");
         item.put("createTime", FormatUtils.dateTime(LocalDateTime.now()));
         signups.add(item);
+        if (activityLookup != null) {
+            activityLookup.onSignup(activityId);
+        }
+        notifySignupManager(activity, contactName, FormatUtils.number(item.get("id")));
         return view(item);
+    }
+
+    /** 报名成功后提醒活动所属驿站的负责人联系报名人。 */
+    private void notifySignupManager(Map<String, Object> activity, String contactName, long signupId) {
+        if (activity == null || stationLookup == null) {
+            return;
+        }
+        long stationId = FormatUtils.number(activity.get("stationId"));
+        if (stationId <= 0) {
+            return;
+        }
+        try {
+            StationDto station = stationLookup.detail(stationId);
+            if (station != null && station.managerId() != null) {
+                push(station.managerId(), "SIGNUP", "新的活动报名",
+                        activity.get("title") + " · " + contactName, "SIGNUP", signupId);
+            }
+        } catch (BusinessException ignored) {
+            // 活动所属驿站已删除：报名本身仍有效，不阻断。
+        }
     }
 
     /** 承办方处理报名：联系 / 审核通过 / 审核未通过，并给出反馈。 */
     @Override
-    public synchronized Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId) {
+    public synchronized Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId,
+                                                         java.util.List<Long> stationIds) {
         long id = FormatUtils.number(request.get("id"));
         String status = FormatUtils.text(request.get("status"), ActivityOrganizer.SIGNUP_APPROVED).toUpperCase();
         if (!ActivityOrganizer.isReviewTarget(status)) {
@@ -425,8 +680,27 @@ public class DemoWorkflowStore implements WorkflowService {
                 .filter(row -> FormatUtils.number(row.get("id")) == id)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("报名记录不存在"));
-        if (ActivityOrganizer.SIGNUP_CANCELLED.equals(String.valueOf(item.get("status")))) {
+        if (activityLookup != null) {
+            Map<String, Object> activity;
+            try {
+                activity = activityLookup.detail(FormatUtils.number(item.get("activityId")));
+            } catch (RuntimeException exception) {
+                throw new IllegalArgumentException("活动不存在");
+            }
+            if (activity == null) {
+                throw new IllegalArgumentException("活动不存在");
+            }
+            if (stationIds != null && !stationIds.contains(FormatUtils.number(activity.get("stationId")))) {
+                throw new com.friendlystation.platform.common.ForbiddenException("无权处理该活动的报名");
+            }
+        }
+        String currentStatus = ActivityOrganizer.normalizeSignupStatus(item.get("status"));
+        if (ActivityOrganizer.SIGNUP_CANCELLED.equals(currentStatus)) {
             throw new IllegalArgumentException("该报名已取消，不能处理");
+        }
+        if (ActivityOrganizer.SIGNUP_APPROVED.equals(currentStatus)
+                || ActivityOrganizer.SIGNUP_REJECTED.equals(currentStatus)) {
+            throw new IllegalArgumentException("该报名已审核，不能重复处理");
         }
         String note = FormatUtils.text(request.get("reviewNote"), "");
         // 未通过必须说明原因，报名人有权知道为什么
@@ -438,6 +712,45 @@ public class DemoWorkflowStore implements WorkflowService {
         item.put("reviewNote", note);
         item.put("reviewerName", userName(operatorId));
         item.put("reviewTime", FormatUtils.dateTime(LocalDateTime.now()));
+        push(item.get("userId"), "SIGNUP",
+                ActivityOrganizer.SIGNUP_APPROVED.equals(status) ? "报名审核通过"
+                        : ActivityOrganizer.SIGNUP_REJECTED.equals(status) ? "报名未通过" : "承办方已联系你",
+                item.get("activityTitle") + (note.isBlank() ? "" : "；" + note),
+                "SIGNUP", FormatUtils.number(item.get("id")));
+        return view(item);
+    }
+
+    @Override
+    public synchronized Map<String, Object> cancelSignup(long id, long userId) {
+        Map<String, Object> item = signups.stream()
+                .filter(row -> FormatUtils.number(row.get("id")) == id)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("报名记录不存在"));
+        if (FormatUtils.number(item.get("userId")) != userId) {
+            throw new BusinessException("只能取消本人提交的报名");
+        }
+        String current = ActivityOrganizer.normalizeSignupStatus(item.get("status"));
+        if (!ActivityOrganizer.SIGNUP_SIGNED_UP.equals(current)
+                && !ActivityOrganizer.SIGNUP_CONTACTED.equals(current)) {
+            throw new BusinessException("报名已审核或已取消，不能取消");
+        }
+        item.put("status", ActivityOrganizer.SIGNUP_CANCELLED);
+        item.put("statusLabel", ActivityOrganizer.signupLabel(ActivityOrganizer.SIGNUP_CANCELLED));
+        if (activityLookup != null) {
+            activityLookup.onSignupCancel(FormatUtils.number(item.get("activityId")));
+        }
+        if (stationLookup != null) {
+            try {
+                StationDto station = stationLookup.detail(FormatUtils.number(item.get("stationId")));
+                if (station != null && station.managerId() != null) {
+                    push(station.managerId(), "SIGNUP", "报名已取消",
+                            item.get("activityTitle") + " · " + item.get("contactName"),
+                            "SIGNUP", FormatUtils.number(item.get("id")));
+                }
+            } catch (BusinessException ignored) {
+                // 驿站已删除：取消本身仍然有效
+            }
+        }
         return view(item);
     }
 
@@ -451,8 +764,10 @@ public class DemoWorkflowStore implements WorkflowService {
     }
 
     @Override
-    public List<Map<String, Object>> allSignups() {
+    public List<Map<String, Object>> allSignups(java.util.List<Long> stationIds) {
         return signups.stream()
+                .filter(item -> stationIds == null
+                        || stationIds.contains(FormatUtils.number(item.get("stationId"))))
                 .sorted(Comparator.comparing(item -> String.valueOf(item.get("createTime")), Comparator.reverseOrder()))
                 .map(DemoWorkflowStore::view)
                 .toList();
@@ -477,36 +792,50 @@ public class DemoWorkflowStore implements WorkflowService {
         boolean emptyScope = restrictStations && stationIds.isEmpty();
         boolean restrictAreas = areas != null;
 
-        java.util.function.Predicate<Map<String, Object>> inScope = item -> {
+        // 预约按驿站范围、诉求按区域范围：两者字段不同，不能共用一个 predicate。
+        java.util.function.Predicate<Map<String, Object>> appointmentScope = item -> {
             if (emptyScope) {
                 return false;
             }
-            if (restrictStations
-                    && !stationIds.contains(FormatUtils.number(item.get("stationId")))) {
+            return !restrictStations || stationIds.contains(FormatUtils.number(item.get("stationId")));
+        };
+        java.util.function.Predicate<Map<String, Object>> appealScope = item -> {
+            if (emptyScope) {
                 return false;
             }
             return !restrictAreas || areas.contains(String.valueOf(item.get("area")));
         };
 
         long pendingAppointments = appointments.stream()
-                .filter(inScope)
+                .filter(appointmentScope)
                 .filter(item -> WorkflowStatus.APPOINTMENT_PENDING.equals(item.get("status"))).count();
         long pendingAppeals = appeals.stream()
-                .filter(inScope)
+                .filter(appealScope)
                 .filter(item -> !WorkflowStatus.APPEAL_RESOLVED.equals(item.get("status"))
                         && !WorkflowStatus.APPEAL_CLOSED.equals(item.get("status"))).count();
         long resolvedAppeals = appeals.stream()
-                .filter(inScope)
+                .filter(appealScope)
                 .filter(item -> WorkflowStatus.APPEAL_RESOLVED.equals(item.get("status"))).count();
+        long signupCount = signups.stream().filter(appointmentScope).count();
+        long evaluationCount = evaluations.stream().filter(evaluation -> {
+            if (emptyScope) {
+                return false;
+            }
+            if (!restrictAreas) {
+                return true;
+            }
+            Map<String, Object> appeal = byId(appeals, FormatUtils.number(evaluation.get("appealId")));
+            return appeal != null && areas.contains(String.valueOf(appeal.get("area")));
+        }).count();
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("appointments", appointments.stream().filter(inScope).count());
+        out.put("appointments", appointments.stream().filter(appointmentScope).count());
         out.put("pendingAppointments", pendingAppointments);
-        out.put("appeals", appeals.stream().filter(inScope).count());
+        out.put("appeals", appeals.stream().filter(appealScope).count());
         out.put("pendingAppeals", pendingAppeals);
         out.put("resolvedAppeals", resolvedAppeals);
-        out.put("signups", signups.size());
+        out.put("signups", signupCount);
         // 诉求评价数：与 mysql 实现的 appealEvaluations 口径一致。
-        out.put("appealEvaluations", evaluations.size());
+        out.put("appealEvaluations", evaluationCount);
         out.put("dataStatus", "系统计算结果");
         // 让前端能如实标注口径
         out.put("scoped", restrictStations || restrictAreas);
@@ -593,8 +922,32 @@ public class DemoWorkflowStore implements WorkflowService {
         }
         if (maskAnonymous && Boolean.TRUE.equals(item.get("anonymous"))) {
             out.put("userName", "匿名用户");
+            out.put("userId", 0L);
+            List<Map<String, Object>> masked = maskedRecords(item);
+            out.put("records", masked);
+            out.put("recordCount", masked.size());
         }
         return out;
+    }
+
+    /** 匿名诉求只对提交人本人展示身份；管理员列表/详情一律打码。 */
+    private static boolean shouldMask(Map<String, Object> item, long viewerId) {
+        return Boolean.TRUE.equals(item.get("anonymous"))
+                && FormatUtils.number(item.get("userId")) != viewerId;
+    }
+
+    /** 返回副本，避免打码时改到内存里的原始记录。 */
+    private static List<Map<String, Object>> maskedRecords(Map<String, Object> item) {
+        List<Map<String, Object>> masked = new ArrayList<>();
+        for (Map<String, Object> record : recordsOf(item)) {
+            Map<String, Object> copy = new LinkedHashMap<>(record);
+            if ("SUBMIT".equals(copy.get("action"))) {
+                copy.put("handlerId", 0L);
+                copy.put("handlerName", "匿名用户");
+            }
+            masked.add(copy);
+        }
+        return masked;
     }
 
     private static Map<String, Object> byId(List<Map<String, Object>> items, long id) {

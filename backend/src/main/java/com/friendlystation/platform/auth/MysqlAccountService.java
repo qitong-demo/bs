@@ -131,6 +131,12 @@ public class MysqlAccountService implements AccountService {
     }
 
     @Override
+    public boolean enabled(long userId) {
+        SysUser user = userMapper.selectById(userId);
+        return user != null && user.getStatus() != null && user.getStatus() == 1;
+    }
+
+    @Override
     public String usernameOf(long userId) {
         SysUser user = userMapper.selectById(userId);
         return user == null ? null : user.getUsername();

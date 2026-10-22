@@ -47,10 +47,11 @@
       <el-table-column label="提交时间" width="170">
         <template #default="{ row }">{{ textOf(row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="230" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button size="small" type="success" :disabled="row.status !== 'PENDING_STATION_CONFIRMATION'" @click="confirm(row)">确认</el-button>
           <el-button size="small" type="danger" :disabled="row.status !== 'PENDING_STATION_CONFIRMATION'" @click="reject(row)">拒绝</el-button>
+          <el-button size="small" type="primary" :disabled="row.status !== 'CONFIRMED'" @click="finish(row)">完成</el-button>
           <el-button size="small" @click="openDetail(row)">详情</el-button>
         </template>
       </el-table-column>
@@ -91,7 +92,7 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { auditAppointment, getAdminAppointments } from "../../api/workflow";
+import { auditAppointment, finishAppointment, getAdminAppointments } from "../../api/workflow";
 import { errorMessage } from "../../api/http";
 import { appointmentStatusLabel, appointmentStatusTag, textOf } from "./admin-shared";
 
@@ -180,6 +181,29 @@ async function audit(row, status, reason) {
     await load();
   } catch (error) {
     ElMessage.error(errorMessage(error));
+  } finally {
+    loading.value = false;
+  }
+}
+
+/** 服务结束后把已确认的预约标记为完成，状态才真正进入终态。 */
+async function finish(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确认「${textOf(row.userName)}」的预约（${textOf(row.appointDate)} ${textOf(row.appointTime)}）已完成吗？`,
+      "完成预约",
+      { type: "warning", confirmButtonText: "标记完成", cancelButtonText: "取消" }
+    );
+  } catch {
+    return;
+  }
+  loading.value = true;
+  try {
+    await finishAppointment(row.id);
+    ElMessage.success("预约已标记为已完成");
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "操作失败"));
   } finally {
     loading.value = false;
   }

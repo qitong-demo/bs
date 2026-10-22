@@ -2,6 +2,7 @@ package com.friendlystation.platform.workflow;
 
 import com.friendlystation.platform.common.PageResult;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,12 @@ public interface WorkflowService {
     PageResult<Map<String, Object>> appointmentPage(long current, long size, String status, String keyword,
                                                     List<Long> stationIds);
 
-    Map<String, Object> auditAppointment(Map<String, Object> request, long operatorId);
+    /**
+     * 审核预约。
+     *
+     * @param stationIds 当前操作者可管理的驿站；null 表示平台级不限制，空集合表示没有任何可见数据
+     */
+    Map<String, Object> auditAppointment(Map<String, Object> request, long operatorId, List<Long> stationIds);
 
     Map<String, Object> cancelAppointment(long id, long userId);
 
@@ -29,23 +35,41 @@ public interface WorkflowService {
      * 供驿站与管理员判断是否值得继续接受该用户的预约。</p>
      *
      * @param remark 备注，可选
+     * @param stationIds 当前操作者可管理的驿站；null 表示平台级不限制
      */
-    Map<String, Object> markNoShow(long id, long operatorId, String remark);
+    Map<String, Object> markNoShow(long id, long operatorId, String remark, List<Long> stationIds);
+
+    /** 完成预约：只有已确认的预约可以标记为已完成。 */
+    Map<String, Object> completeAppointment(long id, long operatorId, List<Long> stationIds);
+
+    /**
+     * 驿站设置暂停服务后，通知该时段内已提交预约的用户。
+     *
+     * @return 实际写入的通知条数
+     */
+    int notifySuspension(long stationId, LocalDateTime from, LocalDateTime to, String reason);
 
     Map<String, Object> addAppeal(Map<String, Object> request, long userId);
 
     List<Map<String, Object>> appeals(long userId);
 
     /**
-     * 管理端诉求分页。{@code areas} 为 null 表示不限制数据范围（平台级角色），
-     * 空集合表示当前账号范围内没有可见数据。
+     * 管理端诉求分页。
+     *
+     * @param stationIds 定向到驿站的诉求按编号过滤；null 表示平台级不限制
+     * @param areas      未定向驿站的历史诉求按区域兜底；null 表示不限
      */
     PageResult<Map<String, Object>> appealPage(long current, long size, String status, String keyword,
-                                               List<String> areas);
+                                               List<Long> stationIds, List<String> areas);
 
-    Map<String, Object> appealDetail(long id);
+    /** 诉求详情。viewerId 用于判断是否本人；匿名诉求对非本人隐藏提交人。 */
+    Map<String, Object> appealDetail(long id, long viewerId);
 
-    List<Map<String, Object>> appealRecords(long appealId);
+    /** 诉求处理记录。匿名诉求的 SUBMIT 记录对非本人隐藏提交人。 */
+    List<Map<String, Object>> appealRecords(long appealId, long viewerId);
+
+    /** 当前账号能否查看该诉求：本人、平台级、定向驿站，或未定向时负责区域一致。 */
+    boolean canAccessAppeal(long id, long viewerId, boolean platformLevel, List<Long> stationIds, List<String> areas);
 
     Map<String, Object> assignAppeal(Map<String, Object> request, long operatorId);
 
@@ -59,12 +83,17 @@ public interface WorkflowService {
      * 承办方处理报名：联系 / 审核通过 / 审核未通过，并填写给报名人的反馈。
      *
      * @param request 含 id 与 status（CONTACTED / APPROVED / REJECTED）与 reviewNote
+     * @param stationIds 当前操作者可管理的驿站；null 表示平台级不限制
      */
-    Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId);
+    Map<String, Object> reviewSignup(Map<String, Object> request, long operatorId, List<Long> stationIds);
+
+    /** 报名人取消自己的报名：只允许已报名/已联系状态。 */
+    Map<String, Object> cancelSignup(long id, long userId);
 
     List<Map<String, Object>> mySignups(long userId);
 
-    List<Map<String, Object>> allSignups();
+    /** 管理端报名列表；stationIds 为 null 表示平台级不限制，空集合表示没有可见数据。 */
+    List<Map<String, Object>> allSignups(List<Long> stationIds);
 
     Map<String, Object> overview();
 

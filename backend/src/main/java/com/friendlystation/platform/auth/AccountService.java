@@ -17,6 +17,9 @@ public interface AccountService {
     /** 是否存在该账号。 */
     boolean exists(long userId);
 
+    /** 账号是否处于启用状态；停用后不仅不能登录，已签发令牌也应失效。 */
+    boolean enabled(long userId);
+
     /** 读取账号 ID；不存在返回 null。 */
     String usernameOf(long userId);
 

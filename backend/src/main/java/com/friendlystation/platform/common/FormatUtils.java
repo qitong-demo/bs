@@ -89,4 +89,48 @@ public final class FormatUtils {
             return LocalDate.now();
         }
     }
+
+    /**
+     * 严格解析日期时间，无法解析返回 null。
+     *
+     * <p>支持 `yyyy-MM-dd HH:mm`、`yyyy-MM-dd HH:mm:ss` 与 ISO 的 `T` 分隔写法；
+     * 与 {@link #dateTime(Object)} 不同，不做“解析失败就给现在”的兜底。</p>
+     */
+    public static LocalDateTime parseDateTimeOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String raw = value.toString().trim().replace('T', ' ');
+        if (raw.length() < 16) {
+            return null;
+        }
+        try {
+            if (raw.length() == 16) {
+                return LocalDateTime.parse(raw, MINUTE);
+            }
+            return LocalDateTime.parse(raw.substring(0, 19), DATE_TIME);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    /** 严格解析日期，无法解析返回 null。
+     *
+     * <p>与 {@link #date(Object)} 的区别：后者是展示用的兜底（解析失败给今天），
+     * 写入业务表前必须用这个，否则「没填日期」会被静默记成今天。</p>
+     */
+    public static LocalDate parseDateOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String raw = value.toString().trim();
+        if (raw.length() < 10) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(raw.substring(0, 10), DATE);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.friendlystation.platform.station;
 
+import com.friendlystation.platform.auth.CurrentUser;
 import com.friendlystation.platform.common.BusinessException;
 
 import java.util.List;
@@ -25,19 +26,25 @@ public interface StationChangeService {
     List<String> DIRECT_TYPES = List.of("BUSINESS_HOURS", "PHONE", "ADDRESS");
 
     /** 驿站提交变更申请。 */
-    Map<String, Object> submit(long applicantId, Map<String, Object> payload);
+    Map<String, Object> submit(CurrentUser applicant, Map<String, Object> payload);
 
     /** 某驿站的全部申请（驿站侧查看自己的）。 */
-    List<Map<String, Object>> listByStation(long stationId);
+    List<Map<String, Object>> listByStation(CurrentUser viewer, long stationId);
 
-    /** 待审批列表（管理员侧）。 */
-    List<Map<String, Object>> pendingList();
+    /** 当前账号负责驿站的全部申请；平台级返回全部。 */
+    List<Map<String, Object>> mine(CurrentUser viewer);
+
+    /** 待审批列表（管理员侧）；驿站管理员只看到自己负责驿站的申请。 */
+    List<Map<String, Object>> pendingList(CurrentUser viewer);
 
     /** 审批通过：写入驿站对应字段并留痕。 */
-    Map<String, Object> approve(long reviewerId, long requestId, String reviewNote);
+    Map<String, Object> approve(CurrentUser reviewer, long requestId, String reviewNote);
 
     /** 审批驳回：需要写明原因。 */
-    Map<String, Object> reject(long reviewerId, long requestId, String reviewNote);
+    Map<String, Object> reject(CurrentUser reviewer, long requestId, String reviewNote);
+
+    /** 申请人撤回仍待审批的申请。 */
+    Map<String, Object> cancel(CurrentUser applicant, long requestId);
 
     /** 校验变更类型是否合法。 */
     static String requireType(String type) {

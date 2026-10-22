@@ -23,10 +23,13 @@ import java.util.Map;
 public class DashboardController {
     private final StatisticsService statisticsService;
     private final CsvExportBuilder csvExportBuilder;
+    private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
 
-    public DashboardController(StatisticsService statisticsService, CsvExportBuilder csvExportBuilder) {
+    public DashboardController(StatisticsService statisticsService, CsvExportBuilder csvExportBuilder,
+                               com.friendlystation.platform.auth.DataScopeService dataScopeService) {
         this.statisticsService = statisticsService;
         this.csvExportBuilder = csvExportBuilder;
+        this.dataScopeService = dataScopeService;
     }
 
     @GetMapping("/overview")
@@ -47,8 +50,11 @@ public class DashboardController {
     /** 报表导出：appeals、appointments、stations、signups、evaluations。 */
     @GetMapping("/export/{type}")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"REPORT_EXPORT"})
     public ResponseEntity<byte[]> export(@PathVariable String type) {
-        CsvExport export = csvExportBuilder.build(type);
+        var user = com.friendlystation.platform.auth.CurrentUserContext.require();
+        CsvExport export = csvExportBuilder.build(type,
+                dataScopeService.stationIds(user), dataScopeService.areas(user));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + export.fileName() + "\"")

@@ -37,10 +37,17 @@ public class MysqlStationServiceItemService implements StationServiceItemService
     }
 
     @Override
-    public PageResult<StationServiceItemDto> page(long current, long size, Long stationId, String keyword) {
+    public PageResult<StationServiceItemDto> page(long current, long size, Long stationId, String keyword,
+                                                  java.util.List<Long> stationIds) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 50);
+        if (stationIds != null && stationIds.isEmpty()) {
+            return new PageResult<>(safeCurrent, safeSize, 0, java.util.List.of());
+        }
         LambdaQueryWrapper<StationServiceItem> query = new LambdaQueryWrapper<>();
+        if (stationIds != null) {
+            query.in(StationServiceItem::getStationId, stationIds);
+        }
         if (stationId != null) {
             query.eq(StationServiceItem::getStationId, stationId);
         }
@@ -61,6 +68,11 @@ public class MysqlStationServiceItemService implements StationServiceItemService
                 .eq(StationServiceItem::getStationId, stationId)
                 .orderByAsc(StationServiceItem::getId));
         return toDtoList(items);
+    }
+
+    @Override
+    public StationServiceItemDto detail(Long id) {
+        return toDto(requireItem(id), null);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.friendlystation.platform.station;
 
 import com.friendlystation.platform.common.PageResult;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +43,12 @@ public interface StationService {
      * 逻辑删除：把 status 置为 DELETED。
      */
     void delete(Long id);
+
+    /** 设置暂停服务窗口；期间的新预约会被拒绝。 */
+    StationDto suspend(Long id, LocalDateTime from, LocalDateTime to, String reason);
+
+    /** 取消暂停服务。 */
+    StationDto resume(Long id);
 
     /**
      * 查询某个账号负责的驿站，用于驿站管理员的数据范围判定；未分配时返回空列表。

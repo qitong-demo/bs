@@ -39,6 +39,9 @@
       <el-tab-pane v-if="canSee('changeRequests')" label="变更审批" name="changeRequests">
         <AdminChangeRequests />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('stationOps')" label="我的驿站" name="stationOps">
+        <AdminStationOps />
+      </el-tab-pane>
       <el-tab-pane v-if="canSee('stations')" label="驿站管理" name="stations">
         <AdminStations />
       </el-tab-pane>
@@ -68,13 +71,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { getAdminOverview } from "../api/admin";
 import { getStatOverview } from "../api/stat";
 import { errorMessage } from "../api/http";
 import { useUserStore } from "../stores/user";
+import { useMessageStore } from "../stores/message";
 import { PLATFORM_ROLES, numberText } from "./admin/admin-shared";
 import { getMyPermissions } from "../api/admin";
 import AdminOverview from "./admin/AdminOverview.vue";
@@ -82,6 +86,7 @@ import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
 import AdminChangeRequests from "./admin/AdminChangeRequests.vue";
 import AdminStations from "./admin/AdminStations.vue";
+import AdminStationOps from "./admin/AdminStationOps.vue";
 import AdminServices from "./admin/AdminServices.vue";
 import AdminContents from "./admin/AdminContents.vue";
 import AdminActivities from "./admin/AdminActivities.vue";
@@ -99,6 +104,7 @@ import AdminReports from "./admin/AdminReports.vue";
  */
 const tabs = [
   { name: "overview", label: "运营概览" },
+  { name: "stationOps", label: "我的驿站", roles: ["STATION_ADMIN"] },
   { name: "appointments", label: "预约审核", permission: "APPOINTMENT_AUDIT" },
   { name: "appeals", label: "诉求处理", permission: "APPEAL_HANDLE" },
   { name: "changeRequests", label: "变更审批", permission: "CHANGE_APPROVE" },
@@ -127,6 +133,7 @@ async function loadMyPermissions() {
 }
 
 const userStore = useUserStore();
+const messageStore = useMessageStore();
 const router = useRouter();
 const route = useRoute();
 const activeTab = ref("overview");
@@ -137,6 +144,10 @@ const workflow = ref({});
 const isPlatformAdmin = computed(() => PLATFORM_ROLES.includes(userStore.roleCode));
 const roleLabel = computed(() => userStore.role || "未知角色");
 const visibleTabs = computed(() => tabs.filter((tab) => {
+  // 角色限定标签（例如“我的驿站”只给驿站管理员）
+  if (tab.roles && !tab.roles.includes(userStore.roleCode)) {
+    return false;
+  }
   if (!tab.permission) {
     return true;
   }
@@ -203,6 +214,8 @@ async function loadSummary() {
 }
 
 onMounted(() => {
+  messageStore.startPolling();
+  messageStore.refreshQuietly();
   loadMyPermissions();
   loadSummary();
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
@@ -210,6 +223,10 @@ onMounted(() => {
   if (tab && canSee(tab)) {
     activeTab.value = tab;
   }
+});
+
+onBeforeUnmount(() => {
+  messageStore.stopPolling();
 });
 </script>
 
@@ -227,6 +244,13 @@ h1 { margin: 0; font-size: 28px; }
 .admin-metric strong { font-size: 26px; color: #14836d; line-height: 1.1; }
 .admin-metric small { color: #87909f; font-size: 12px; }
 .admin-tabs { padding: 0 20px 20px; background: #fff; border: 1px solid #e5eaf0; border-radius: 6px; }
+.admin-tabs :deep(.el-tabs__header) { margin-bottom: 10px; }
+/* 平台管理员有 12 个标签，窄屏时给左右滚动箭头留出空间，避免标签被裁切 */
+.admin-tabs :deep(.el-tabs__nav-wrap.is-scrollable) { padding: 0 30px; }
+.admin-tabs :deep(.el-tabs__item) { padding: 0 14px; }
+@media (max-width: 1280px) {
+  .admin-tabs :deep(.el-tabs__item) { padding: 0 10px; font-size: 13px; }
+}
 @media (max-width: 1280px) { .admin-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 680px) { .admin-header { align-items: flex-start; flex-direction: column; } .admin-header-actions { flex-wrap: wrap; } .admin-metrics { grid-template-columns: 1fr; } }
 </style>

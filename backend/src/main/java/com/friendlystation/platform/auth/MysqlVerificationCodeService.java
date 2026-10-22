@@ -104,9 +104,14 @@ public class MysqlVerificationCodeService implements VerificationCodeService {
                     .setSql("attempt_count = attempt_count + 1"));
             throw new BusinessException("验证码不正确");
         }
-        codeMapper.update(null, new LambdaUpdateWrapper<VerificationCode>()
+        int consumed = codeMapper.update(null, new LambdaUpdateWrapper<VerificationCode>()
                 .eq(VerificationCode::getId, record.getId())
+                .eq(VerificationCode::getUsed, 0)
                 .set(VerificationCode::getUsed, 1));
+        // 条件更新：并发下只有一个请求能把 used 从 0 改成 1，避免同一验证码被消费两次。
+        if (consumed == 0) {
+            throw new BusinessException("验证码已使用，请重新获取");
+        }
     }
 
     @Override

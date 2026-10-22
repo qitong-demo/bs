@@ -88,6 +88,9 @@ public class AdminCredentialService {
         if (current == null) {
             throw new BusinessException("账号不存在");
         }
+        if (com.friendlystation.platform.admin.PermissionCatalog.PRIMARY_ADMIN_USERNAME.equalsIgnoreCase(current)) {
+            throw new BusinessException("内置主管理员账号不允许修改账号 ID");
+        }
         if (current.equalsIgnoreCase(target)) {
             throw new BusinessException("新账号 ID 与当前账号相同");
         }
@@ -171,13 +174,6 @@ public class AdminCredentialService {
     }
 
     private static String requirePhone(String phone) {
-        String text = phone == null ? "" : phone.trim();
-        if (text.isEmpty()) {
-            throw new BusinessException("请填写手机号");
-        }
-        if (!text.matches("[0-9+\\-()\\s]{5,30}")) {
-            throw new BusinessException("手机号格式不正确");
-        }
-        return text;
+        return CredentialRules.requirePhone(phone);
     }
 }

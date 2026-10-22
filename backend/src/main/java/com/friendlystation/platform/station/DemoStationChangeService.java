@@ -1,5 +1,6 @@
 package com.friendlystation.platform.station;
 
+import com.friendlystation.platform.auth.CurrentUser;
 import com.friendlystation.platform.common.BusinessException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,25 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DemoStationChangeService implements StationChangeService {
 
     private final StationService stationService;
+    private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
+    private final com.friendlystation.platform.notification.NotificationService notificationService;
+    private final com.friendlystation.platform.auth.MockAccountService accountService;
     private final List<Map<String, Object>> requests = new ArrayList<>();
     private final AtomicLong idGenerator = new AtomicLong(0);
 
-    public DemoStationChangeService(StationService stationService) {
+    public DemoStationChangeService(StationService stationService,
+                                    com.friendlystation.platform.auth.DataScopeService dataScopeService,
+                                    com.friendlystation.platform.notification.NotificationService notificationService,
+                                    com.friendlystation.platform.auth.MockAccountService accountService) {
         this.stationService = stationService;
+        this.dataScopeService = dataScopeService;
+        this.notificationService = notificationService;
+        this.accountService = accountService;
     }
 
     @Override
-    public synchronized Map<String, Object> submit(long applicantId, Map<String, Object> payload) {
+    public synchronized Map<String, Object> submit(CurrentUser applicant, Map<String, Object> payload) {
+        long applicantId = applicant.id();
         Map<String, Object> data = payload == null ? Map.of() : payload;
         long stationId = number(data.get("stationId"));
         String type = StationChangeService.requireType(String.valueOf(data.getOrDefault("type", "")));
@@ -50,6 +61,12 @@ public class DemoStationChangeService implements StationChangeService {
             stationName = stationService.detail(stationId).stationName();
         } catch (Exception exception) {
             throw new BusinessException("驿站不存在");
+        }
+        if (!dataScopeService.isPlatformLevel(applicant)) {
+            List<Long> scoped = dataScopeService.stationIds(applicant);
+            if (scoped == null || !scoped.contains(stationId)) {
+                throw new BusinessException("只能为自己负责的驿站提交变更申请");
+            }
         }
 
         Map<String, Object> row = new LinkedHashMap<>();
@@ -69,11 +86,18 @@ public class DemoStationChangeService implements StationChangeService {
         row.put("dataStatus", "系统计算结果");
         row.put("applicantId", applicantId);
         requests.add(row);
+        notifyReviewers(row, stationName);
         return copyOf(row);
     }
 
     @Override
-    public synchronized List<Map<String, Object>> listByStation(long stationId) {
+    public synchronized List<Map<String, Object>> listByStation(CurrentUser viewer, long stationId) {
+        if (!dataScopeService.isPlatformLevel(viewer)) {
+            List<Long> scoped = dataScopeService.stationIds(viewer);
+            if (scoped == null || !scoped.contains(stationId)) {
+                throw new com.friendlystation.platform.common.ForbiddenException("无权查看该驿站的变更申请");
+            }
+        }
         return requests.stream()
                 .filter(item -> number(item.get("stationId")) == stationId)
                 .map(DemoStationChangeService::copyOf)
@@ -81,16 +105,35 @@ public class DemoStationChangeService implements StationChangeService {
     }
 
     @Override
-    public synchronized List<Map<String, Object>> pendingList() {
+    public synchronized List<Map<String, Object>> mine(CurrentUser viewer) {
+        List<Long> scoped = dataScopeService.stationIds(viewer);
         return requests.stream()
-                .filter(item -> "PENDING".equals(item.get("status")))
+                .filter(item -> scoped == null || scoped.contains(number(item.get("stationId"))))
                 .map(DemoStationChangeService::copyOf)
                 .toList();
     }
 
     @Override
-    public synchronized Map<String, Object> approve(long reviewerId, long requestId, String reviewNote) {
+    public synchronized List<Map<String, Object>> pendingList(CurrentUser viewer) {
+        List<Long> scoped = dataScopeService.stationIds(viewer);
+        return requests.stream()
+                .filter(item -> "PENDING".equals(item.get("status")))
+                .filter(item -> scoped == null || scoped.contains(number(item.get("stationId"))))
+                .map(DemoStationChangeService::copyOf)
+                .toList();
+    }
+
+    @Override
+    public synchronized Map<String, Object> approve(CurrentUser reviewer, long requestId, String reviewNote) {
+        long reviewerId = reviewer.id();
         Map<String, Object> row = require(requestId);
+        if (reviewerId == number(row.get("applicantId"))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("不能审批自己提交的申请");
+        }
+        // 与 mysql 实现同口径：只有待审批的申请能通过，否则会出现「已通过 → 再通过/再驳回」。
+        if (!"PENDING".equals(row.get("status"))) {
+            throw new BusinessException("该申请已处理，不能重复审批");
+        }
         // 位置变更在演示模式下无法生效：StationUpdateRequest 不支持经纬度。
         // 明确报错而不是假装成功——静默成功会让人以为坐标真的改了。
         if ("LOCATION".equals(row.get("type"))) {
@@ -103,12 +146,22 @@ public class DemoStationChangeService implements StationChangeService {
         row.put("reviewNote", text(reviewNote));
         row.put("reviewTime", LocalDateTime.now().toString());
         row.put("reviewerId", reviewerId);
+        notifyApplicant(row, "变更申请已通过",
+                MysqlStationChangeService.labelOf(String.valueOf(row.get("type"))) + "："
+                        + row.get("newValue") + " 已核准");
         return copyOf(row);
     }
 
     @Override
-    public synchronized Map<String, Object> reject(long reviewerId, long requestId, String reviewNote) {
+    public synchronized Map<String, Object> reject(CurrentUser reviewer, long requestId, String reviewNote) {
+        long reviewerId = reviewer.id();
         Map<String, Object> row = require(requestId);
+        if (reviewerId == number(row.get("applicantId"))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("不能审批自己提交的申请");
+        }
+        if (!"PENDING".equals(row.get("status"))) {
+            throw new BusinessException("该申请已处理，不能重复审批");
+        }
         String note = text(reviewNote);
         if (note.isEmpty()) {
             throw new BusinessException("驳回时请填写原因，驿站会看到这段说明");
@@ -118,10 +171,50 @@ public class DemoStationChangeService implements StationChangeService {
         row.put("reviewNote", note);
         row.put("reviewTime", LocalDateTime.now().toString());
         row.put("reviewerId", reviewerId);
+        notifyApplicant(row, "变更申请已驳回",
+                MysqlStationChangeService.labelOf(String.valueOf(row.get("type"))) + "：" + note);
         return copyOf(row);
     }
 
     // ------------------------------------------------------------ 内部
+
+    private void notifyApplicant(Map<String, Object> row, String title, String content) {
+        long applicantId = number(row.get("applicantId"));
+        if (applicantId <= 0) {
+            return;
+        }
+        notificationService.push(applicantId, "SYSTEM", title, content,
+                "", "STATION_CHANGE", number(row.get("id")));
+    }
+
+    /** 新申请提醒平台管理员处理；申请人本人不重复收通知。 */
+    private void notifyReviewers(Map<String, Object> row, String stationName) {
+        long applicantId = number(row.get("applicantId"));
+        String content = stationName + " · "
+                + MysqlStationChangeService.labelOf(String.valueOf(row.get("type"))) + " · " + row.get("newValue");
+        for (var user : accountService.list()) {
+            if (!"PLATFORM_ADMIN".equals(user.role()) || user.id() == applicantId) {
+                continue;
+            }
+            notificationService.push(user.id(), "SYSTEM", "新的驿站变更申请", content,
+                    "", "STATION_CHANGE", number(row.get("id")));
+        }
+    }
+
+    @Override
+    public synchronized Map<String, Object> cancel(CurrentUser applicant, long requestId) {
+        Map<String, Object> row = require(requestId);
+        if (number(row.get("applicantId")) != applicant.id()) {
+            throw new com.friendlystation.platform.common.ForbiddenException("只能撤回自己提交的申请");
+        }
+        if (!"PENDING".equals(row.get("status"))) {
+            throw new BusinessException("该申请已处理，不能撤回");
+        }
+        row.put("status", "CANCELLED");
+        row.put("statusLabel", MysqlStationChangeService.statusLabelOf("CANCELLED"));
+        row.put("reviewTime", LocalDateTime.now().toString());
+        return copyOf(row);
+    }
 
     private void applyChange(Map<String, Object> row) {
         long stationId = number(row.get("stationId"));
@@ -167,7 +260,6 @@ public class DemoStationChangeService implements StationChangeService {
     /** 对外返回副本，避免调用方改到内部状态。 */
     private static Map<String, Object> copyOf(Map<String, Object> row) {
         Map<String, Object> out = new LinkedHashMap<>(row);
-        out.remove("applicantId");
         out.remove("reviewerId");
         return out;
     }

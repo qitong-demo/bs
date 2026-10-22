@@ -41,6 +41,10 @@ public class Station {
     /** 营业信息（营业时间/联系电话）来源：SOURCE（公开来源文本）/ AMAP_POI（高德地图）。 */
     private String businessSource;
     private LocalDate businessSyncedAt;
+    /** 暂停服务窗口：期间不接受新预约。 */
+    private LocalDateTime suspendedFrom;
+    private LocalDateTime suspendedTo;
+    private String suspendReason;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

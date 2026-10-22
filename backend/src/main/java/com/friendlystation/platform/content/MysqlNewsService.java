@@ -48,6 +48,17 @@ public class MysqlNewsService implements NewsService {
 
     @Override
     @Transactional
+    public Map<String, Object> view(Long id) {
+        require(id);
+        // 原子自增，避免并发读-改-写丢计数。
+        newsMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<News>()
+                .eq(News::getId, id)
+                .setSql("view_count = view_count + 1"));
+        return toMap(require(id));
+    }
+
+    @Override
+    @Transactional
     public Map<String, Object> create(Map<String, Object> payload) {
         Map<String, Object> data = payload == null ? Map.of() : payload;
         String title = requireTitle(data.get("title"));
@@ -142,7 +153,12 @@ public class MysqlNewsService implements NewsService {
         // 紧接着按来源发布日期倒序，最后用 id 兜底保证顺序稳定。
         if (!ContentSupport.isBlank(cityCode)) {
             String code = cityCode.trim();
-            query.last("ORDER BY (city_code IS NULL OR city_code <> '" + code.replace("'", "") + "') ASC, "
+            // 下面排序要把它拼进 SQL（ORDER BY 不能用参数绑定），因此必须先做白名单校验：
+            // 只去单引号挡不住反斜杠转义，活动页对同一参数已有 \d{6} 校验，这里保持同口径。
+            if (!code.matches("\\d{6}")) {
+                throw new BusinessException("城市编码不合法");
+            }
+            query.last("ORDER BY (city_code IS NULL OR city_code <> '" + code + "') ASC, "
                     + "published_at IS NULL ASC, published_at DESC, id DESC");
         } else {
             query.orderByDesc(News::getPublishedAt).orderByDesc(News::getId);

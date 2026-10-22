@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS service_appointment (
     contact_phone VARCHAR(30),
     appoint_date DATE NOT NULL,
     appoint_time VARCHAR(30) NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_STATION_CONFIRMATION',
     audit_reason VARCHAR(255),
     -- 爽约标记：用户预约了但未按时到场。驿站可标记；同一用户累计爽约达到阈值后，
     -- 后续预约需要管理员确认（避免有人反复占时段又不来）。
@@ -143,6 +143,8 @@ CREATE TABLE IF NOT EXISTS service_appointment (
 CREATE TABLE IF NOT EXISTS appeal (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT,
+    -- 定向反馈给某个驿站时的驿站编号；为空表示未指定（历史数据/平台诉求）。
+    station_id BIGINT,
     title VARCHAR(150) NOT NULL,
     -- 分类：REQUEST 反映问题 / PRAISE 表扬感谢 / SUGGESTION 提出建议。
     -- 模块不止承载「诉求」，也承载骑手与驿站之间的正向互助（如补充雨衣、致谢包扎）。
@@ -155,13 +157,14 @@ CREATE TABLE IF NOT EXISTS appeal (
     area VARCHAR(50),
     image_url VARCHAR(500),
     anonymous TINYINT NOT NULL DEFAULT 0,
-    status VARCHAR(30) NOT NULL DEFAULT 'SUBMITTED',
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_ACCEPTANCE',
     handler_id BIGINT,
     finish_time DATETIME,
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_appeal_status (status),
     KEY idx_appeal_area (area),
+    KEY idx_appeal_station (station_id),
     KEY idx_appeal_category (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -182,6 +185,8 @@ CREATE TABLE IF NOT EXISTS appeal_evaluation (
     score TINYINT NOT NULL,
     content VARCHAR(500),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- 一个用户对一条诉求只能评价一次；服务层已先查，唯一索引是并发下的最后防线。
+    UNIQUE KEY uk_appeal_evaluation_user (appeal_id, user_id),
     CONSTRAINT fk_appeal_evaluation_appeal FOREIGN KEY (appeal_id) REFERENCES appeal (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -295,6 +300,8 @@ CREATE TABLE IF NOT EXISTS station_evaluation (
     facility_score TINYINT,
     content VARCHAR(500),
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- 一个用户对同一驿站只能评价一次；服务层已先查，唯一索引是并发下的最后防线。
+    UNIQUE KEY uk_station_evaluation_user (station_id, user_id),
     CONSTRAINT fk_station_evaluation_station FOREIGN KEY (station_id) REFERENCES station (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -351,6 +358,25 @@ CREATE TABLE IF NOT EXISTS verification_code (
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_code_target_purpose (target, purpose),
     KEY idx_code_expire (expire_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 站内通知：预约审核、报名审核、诉求处理与暂停服务的统一消息出口。
+-- 业务表只负责状态，用户看到的“发生了什么”由这里送达，避免用户必须反复刷新列表。
+CREATE TABLE IF NOT EXISTS notification (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    -- APPOINTMENT / SIGNUP / APPEAL / SYSTEM
+    type VARCHAR(30) NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    content VARCHAR(500),
+    -- 前端可跳转的路径；为空表示只展示不跳转
+    link VARCHAR(255),
+    read_flag TINYINT NOT NULL DEFAULT 0,
+    biz_type VARCHAR(30),
+    biz_id BIGINT,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_notification_user (user_id, read_flag, create_time),
+    CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES sys_user (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 驿站信息变更申请与审批。

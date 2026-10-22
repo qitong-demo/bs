@@ -17,6 +17,16 @@ export function listChanges(stationId) {
   return request({ url: "/station/change/list", params: { stationId } });
 }
 
+/** 当前账号负责驿站的申请记录（驿站端「我的申请」）。 */
+export function getMyChanges() {
+  return request({ url: "/station/change/mine" });
+}
+
+/** 撤回仍待审批的申请。 */
+export function cancelChange(id) {
+  return request({ url: `/station/change/${id}/cancel`, method: "put" });
+}
+
 /** 提交变更申请（驿站侧）。 */
 export function submitChange(data) {
   return request({ url: "/station/change", method: "post", data });

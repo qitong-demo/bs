@@ -93,6 +93,14 @@ public class MockNewsService implements NewsService {
         return view(require(id));
     }
 
+    @Override
+    public Map<String, Object> view(Long id) {
+        Map<String, Object> record = require(id);
+        int count = record.get("viewCount") instanceof Number number ? number.intValue() : 0;
+        record.put("viewCount", count + 1);
+        return view(record);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> create(Map<String, Object> payload) {

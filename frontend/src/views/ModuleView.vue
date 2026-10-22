@@ -245,7 +245,7 @@
                 >取消</el-button>
               </div>
             </div>
-            <el-empty v-if="!loading.appointments && myAppointments.length === 0" description="暂无预约记录" />
+          <el-empty v-if="!loading.appointments && myAppointments.length === 0" :image-size="64" description="暂无预约记录" />
           </div>
         </section>
       </div>
@@ -292,6 +292,19 @@
               </el-radio-group>
               <p class="field-hint">{{ receiverTargetHint }}</p>
             </el-form-item>
+            <el-form-item v-if="appealForm.receiverTarget === 'STATION'" label="反馈给哪个驿站">
+              <el-select
+                v-model="appealForm.stationId"
+                class="full"
+                filterable
+                clearable
+                placeholder="选择驿站，诉求会直达该驿站"
+                @change="onAppealStationChange"
+              >
+                <el-option v-for="station in appealStationOptions" :key="station.id" :label="station.name" :value="station.id" />
+              </el-select>
+              <p class="field-hint">选择后区域会以驿站档案为准，避免区域填错导致驿站端看不到。</p>
+            </el-form-item>
             <el-form-item label="所属区域">
               <el-select v-model="appealForm.area" class="full">
                 <el-option v-for="area in areaOptions" :key="area" :label="area" :value="area" />
@@ -329,7 +342,7 @@
                 </p>
               </div>
             </div>
-            <el-empty v-if="!loading.appeals && myAppeals.length === 0" description="还没有提交过诉求或反馈" />
+            <el-empty v-if="!loading.appeals && myAppeals.length === 0" :image-size="64" description="还没有提交过诉求或反馈" />
           </div>
           <div class="help-callout">
             <el-icon><InfoFilled /></el-icon>
@@ -365,7 +378,8 @@
           <el-table-column label="操作" width="170" fixed="right">
             <template #default="{ row }">
               <el-button link type="primary" @click="openAppealDetail(row)">查看进度</el-button>
-              <el-button v-if="row.status === 'RESOLVED'" link type="success" @click="openEvaluationDialog(row)">评价</el-button>
+              <el-tag v-if="row.evaluated" size="small" type="info" effect="plain">已评价</el-tag>
+              <el-button v-else-if="row.status === 'RESOLVED'" link type="success" @click="openEvaluationDialog(row)">评价</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -483,7 +497,7 @@
             </div>
           </div>
         </article>
-        <el-empty v-if="!loading.activities && activityItems.length === 0" description="暂无可报名活动" />
+        <el-empty v-if="!loading.activities && activityItems.length === 0" :image-size="64" description="暂无可报名活动" />
       </div>
       <!-- 活动一共 40 条（38 条采集 + 2 条驿站自办），一页 12 条翻不完就看不到后面，
            所以列表补一个分页，控件与「政策资讯」保持同一套。 -->
@@ -541,6 +555,13 @@
                 <span>{{ item.reviewerName || "承办方" }}的回复：</span>{{ item.reviewNote }}
               </p>
               <p v-else class="my-signup-muted">承办方还没有回复，可留意电话或消息</p>
+              <el-button
+                v-if="['SIGNED_UP', 'CONTACTED'].includes(item.status)"
+                size="small"
+                type="danger"
+                plain
+                @click="cancelMySignup(item)"
+              >取消报名</el-button>
             </div>
           </div>
           <el-empty v-else-if="!mySignupsLoading" :image-size="64" description="还没有报名记录" />
@@ -680,7 +701,7 @@
             <span>{{ item.publishedAt || item.date }}</span>
             <el-icon><ArrowRight /></el-icon>
           </button>
-          <el-empty v-if="!loading.news && newsItems.length === 0" description="暂无资讯" />
+          <el-empty v-if="!loading.news && newsItems.length === 0" :image-size="64" description="暂无资讯" />
         </div>
         <div class="pagination-row">
           <el-pagination
@@ -731,7 +752,7 @@
               <el-rate :model-value="item.score" disabled />
               <p>{{ item.content || "未填写评价内容" }}</p>
             </div>
-            <el-empty v-if="!loading.evaluations && stationEvaluations.length === 0" description="该驿站还没有评价" />
+            <el-empty v-if="!loading.evaluations && stationEvaluations.length === 0" :image-size="64" description="该驿站还没有评价" />
           </div>
         </section>
       </div>
@@ -742,7 +763,7 @@
       <section class="panel">
         <div class="sub-heading">
           <h2>
-            消息中心
+            全部消息
             <span v-if="messageStore.unreadCount" class="heading-badge">{{ messageStore.unreadCount }} 条未读</span>
           </h2>
           <el-button link type="primary" :disabled="!messageStore.unreadCount" @click="markMessagesRead">
@@ -762,7 +783,12 @@
             <time>{{ item.time }}</time>
             <span v-if="!messageStore.isRead(item.key)" class="unread-dot"></span>
           </button>
-          <el-empty v-if="messageStore.items.length === 0" description="暂无消息" />
+          <el-empty v-if="messageStore.items.length === 0" :image-size="64" description="暂无消息" />
+          <div v-if="messageStore.hasMore" class="message-load-more">
+            <el-button link type="primary" :loading="messageStore.loadingMore" @click="messageStore.loadMore()">
+              加载更多
+            </el-button>
+          </div>
         </div>
       </section>
     </template>
@@ -788,7 +814,7 @@
           <el-progress :percentage="item.percent" :show-text="false" />
           <strong>{{ item.count }} 次</strong>
         </div>
-        <el-empty v-if="rankingRows.length === 0" description="还没有预约数据" />
+        <el-empty v-if="rankingRows.length === 0" :image-size="64" description="还没有预约数据" />
       </section>
       <section class="panel">
         <div class="sub-heading">
@@ -820,7 +846,7 @@
             </div>
             <el-icon><ArrowRight /></el-icon>
           </button>
-          <el-empty v-if="favoriteStations.length === 0" description="还没有收藏驿站，可在驿站查询页收藏" />
+          <el-empty v-if="favoriteStations.length === 0" :image-size="64" description="还没有收藏驿站，可在驿站查询页收藏" />
         </div>
       </section>
     </template>
@@ -923,6 +949,7 @@ import { currentUser, updateProfile } from "../api/auth";
 import { getStationAreas, getStationPage, listStationServices } from "../api/station";
 import {
   cancelAppointment,
+  cancelSignup,
   createAppeal,
   createAppointment,
   evaluateAppeal,
@@ -1049,12 +1076,27 @@ const appealForm = reactive({
   category: "REQUEST",
   /** 反馈对象：STATION 驿站 / PLATFORM 平台管理员（开题报告要求两种都支持）。 */
   receiverTarget: "STATION",
+  /** 定向驿站：选择后诉求按 station_id 精准路由，不再依赖自由文本区域。 */
+  stationId: null,
   title: "",
   type: "驿站服务",
   area: "",
   content: "",
   anonymous: false
 });
+
+/** 选中区域后只列该区域的驿站；未选区域时列当前城市全部可选驿站。 */
+const appealStationOptions = computed(() => {
+  if (!appealForm.area) return stationOptions.value;
+  return stationOptions.value.filter((station) => station.area === appealForm.area);
+});
+
+function onAppealStationChange(stationId) {
+  const station = stationOptions.value.find((item) => item.id === stationId);
+  if (station?.area) {
+    appealForm.area = station.area;
+  }
+}
 
 /** 反馈对象的说明文字，随分类变化——表扬感谢给驿站最合适。 */
 const receiverTargetHint = computed(() => {
@@ -1600,6 +1642,7 @@ async function submitReservation() {
     reservationForm.subject = "";
     reservationForm.contactPhone = "";
     await loadMyAppointments();
+    messageStore.refreshQuietly();
   } catch (error) {
     ElMessage.error(errorMessage(error, "提交失败"));
   } finally {
@@ -1617,6 +1660,7 @@ async function cancelMyAppointment(item) {
     await cancelAppointment(item.id);
     ElMessage.success("预约已取消");
     await loadMyAppointments();
+    messageStore.refreshQuietly();
   } catch (error) {
     ElMessage.error(errorMessage(error, "取消失败"));
   }
@@ -1647,6 +1691,10 @@ async function submitAppeal() {
     ElMessage.warning("请先填写诉求标题和具体内容");
     return;
   }
+  if (appealForm.receiverTarget === "STATION" && !appealForm.stationId) {
+    ElMessage.warning("请选择要反馈的驿站，诉求才能直达该驿站");
+    return;
+  }
   loading.submit = true;
   try {
     // category 决定后端的状态文案（诉求「已办结」、表扬「已致谢」、建议「已回复」）
@@ -1654,7 +1702,9 @@ async function submitAppeal() {
     ElMessage.success(`${appealCategoryMeta.value.label}已提交，可在「我的诉求」查看处理进度`);
     appealForm.title = "";
     appealForm.content = "";
+    appealForm.stationId = null;
     await loadMyAppeals();
+    messageStore.refreshQuietly();
   } catch (error) {
     ElMessage.error(errorMessage(error, "提交失败"));
   } finally {
@@ -1684,6 +1734,7 @@ async function submitAppealEvaluation() {
     ElMessage.success("评价已提交，感谢你的反馈");
     appealEvaluationVisible.value = false;
     await loadMyAppeals();
+    messageStore.refreshQuietly();
   } catch (error) {
     ElMessage.error(errorMessage(error, "评价提交失败"));
   } finally {
@@ -1837,6 +1888,28 @@ async function openMySignups() {
   }
 }
 
+/** 报名人撤销自己的报名：只能撤「已报名/已联系」，审核通过或未通过后由承办方处理。 */
+async function cancelMySignup(item) {
+  try {
+    await ElMessageBox.confirm(`确认取消「${item.activityTitle || "该活动"}」的报名吗？`, "取消报名", {
+      type: "warning",
+      confirmButtonText: "取消报名",
+      cancelButtonText: "再想想"
+    });
+  } catch {
+    return;
+  }
+  try {
+    await cancelSignup(item.id);
+    ElMessage.success("报名已取消");
+    mySignupsList.value = await getMySignups().catch(() => []);
+    await loadActivities();
+    messageStore.refreshQuietly();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "取消失败"));
+  }
+}
+
 async function submitSignup() {
   const activity = signupTarget.value;
   if (!activity) return;
@@ -1861,6 +1934,7 @@ async function submitSignup() {
     signupVisible.value = false;
     ElMessage.success(`已提交「${activity.title}」的报名，承办方会联系你`);
     await loadActivities();
+    messageStore.refreshQuietly();
   } catch (error) {
     ElMessage.error(errorMessage(error, "报名失败"));
   } finally {
@@ -2146,7 +2220,7 @@ async function loadView() {
       await loadStationEvaluations();
       break;
     case "消息中心":
-      dataNote.value = "消息由你的预约、诉求与报名记录实时汇总，已读状态保存在本机浏览器。";
+      dataNote.value = "预约审核、报名审核、诉求处理、变更审批和暂停服务等状态变化会在这里提醒；已读状态保存在账号中。";
       await Promise.all([loadMyAppointments(), loadMyAppeals(), loadActivities()]);
       break;
     case "数据统计":

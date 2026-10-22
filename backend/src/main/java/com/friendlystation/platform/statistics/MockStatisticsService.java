@@ -46,7 +46,7 @@ public class MockStatisticsService implements StatisticsService {
         long closedStations = stationService.adminPage(1, 1, null, null, null, "CLOSED").total();
         List<Map<String, Object>> appointments = allAppointments();
         List<Map<String, Object>> appeals = allAppeals();
-        List<Map<String, Object>> signups = workflowService.allSignups();
+        List<Map<String, Object>> signups = workflowService.allSignups(null);
         Map<String, Object> evaluationSummary = evaluationService.summary(null);
 
         long monthlyAppointments = appointments.stream()
@@ -91,7 +91,7 @@ public class MockStatisticsService implements StatisticsService {
         List<YearMonth> months = StatisticsSupport.recentMonths(6);
         List<Map<String, Object>> appointments = allAppointments();
         List<Map<String, Object>> appeals = allAppeals();
-        List<Map<String, Object>> signups = workflowService.allSignups();
+        List<Map<String, Object>> signups = workflowService.allSignups(null);
 
         List<String> labels = new ArrayList<>();
         List<Long> appointmentCounts = new ArrayList<>();
@@ -161,7 +161,7 @@ public class MockStatisticsService implements StatisticsService {
     }
 
     private List<Map<String, Object>> allAppeals() {
-        return workflowService.appealPage(1, StatisticsSupport.AGGREGATE_LIMIT, null, null, null).records();
+        return workflowService.appealPage(1, StatisticsSupport.AGGREGATE_LIMIT, null, null, null, null).records();
     }
 
     private static boolean isAfter(Object createTime, LocalDateTime threshold) {

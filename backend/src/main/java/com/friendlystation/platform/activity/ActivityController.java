@@ -10,6 +10,7 @@ import com.friendlystation.platform.content.ActivityService;
 import com.friendlystation.platform.workflow.ActivityOrganizer;
 import com.friendlystation.platform.workflow.WorkflowService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,10 +27,13 @@ import java.util.Map;
 public class ActivityController {
     private final ActivityService activityService;
     private final WorkflowService workflowService;
+    private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
 
-    public ActivityController(ActivityService activityService, WorkflowService workflowService) {
+    public ActivityController(ActivityService activityService, WorkflowService workflowService,
+                              com.friendlystation.platform.auth.DataScopeService dataScopeService) {
         this.activityService = activityService;
         this.workflowService = workflowService;
+        this.dataScopeService = dataScopeService;
     }
 
     @GetMapping("/page")
@@ -87,13 +91,25 @@ public class ActivityController {
      */
     @PutMapping("/signup/review")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"SIGNUP_MANAGE"})
     public ApiResponse<Map<String, Object>> reviewSignup(@RequestBody Map<String, Object> payload) {
-        return ApiResponse.ok(workflowService.reviewSignup(payload, CurrentUserContext.require().id()));
+        return ApiResponse.ok(workflowService.reviewSignup(
+                payload, CurrentUserContext.require().id(),
+                dataScopeService.stationIds(CurrentUserContext.require())));
     }
 
     @GetMapping("/admin/signups")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"SIGNUP_MANAGE"})
     public ApiResponse<List<Map<String, Object>>> signups() {
-        return ApiResponse.ok(workflowService.allSignups());
+        return ApiResponse.ok(workflowService.allSignups(
+                dataScopeService.stationIds(CurrentUserContext.require())));
+    }
+
+    /** 报名人取消自己的报名：审核通过/未通过之后不可再取消。 */
+    @PutMapping("/signup/{id}/cancel")
+    @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> cancelSignup(@PathVariable Long id) {
+        return ApiResponse.ok(workflowService.cancelSignup(id, CurrentUserContext.require().id()));
     }
 }

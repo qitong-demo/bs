@@ -139,13 +139,17 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import {
   createStationService,
   deleteStationService,
+  getMyStations,
   getStationPage,
   getStationServicePage,
   updateStationService,
   updateStationServiceStatus
 } from "../../api/station";
 import { errorMessage } from "../../api/http";
+import { useUserStore } from "../../stores/user";
 import { textOf } from "./admin-shared";
+
+const userStore = useUserStore();
 
 const serviceTypes = ["充电", "热饭", "饮水", "休息", "法律咨询", "车辆检修", "医疗急救", "政策咨询"];
 
@@ -170,8 +174,11 @@ const rules = {
 
 async function loadStations() {
   try {
-    const page = await getStationPage({ current: 1, size: 100 });
-    stations.value = page?.records || [];
+    // 驿站管理员只看到自己负责的驿站，避免下拉里出现别家驿站后编辑时被后端拒绝
+    const list = userStore.roleCode === "STATION_ADMIN"
+      ? await getMyStations()
+      : (await getStationPage({ current: 1, size: 50 }))?.records;
+    stations.value = Array.isArray(list) ? list : [];
     if (!stationId.value && stations.value.length) {
       stationId.value = stations.value[0].id;
     }

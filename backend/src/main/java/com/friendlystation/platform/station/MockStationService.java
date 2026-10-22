@@ -1,11 +1,13 @@
 package com.friendlystation.platform.station;
 
 import com.friendlystation.platform.common.BusinessException;
+import com.friendlystation.platform.common.FormatUtils;
 import com.friendlystation.platform.common.PageResult;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -110,9 +112,12 @@ public class MockStationService implements StationService {
                 request.openTime(),
                 "—",
                 List.of(),
-                request.status() == null || request.status().isBlank() ? STATUS_OPEN : request.status().trim(),
+                request.status() == null || request.status().isBlank() ? STATUS_OPEN : requireOpenOrClosed(request.status()),
                 null,
                 new StationSource("", "", "", LocalDate.now().toString(), MANUAL_STATUS, MANUAL_NOTE, "", "", "", ""),
+                null,
+                null,
+                "",
                 ""
         );
         stations.add(station);
@@ -138,9 +143,12 @@ public class MockStationService implements StationService {
                 request.openTime() == null ? exists.openTime() : request.openTime(),
                 exists.distance(),
                 exists.services(),
-                request.status() == null || request.status().isBlank() ? exists.status() : request.status().trim(),
+                request.status() == null || request.status().isBlank() ? exists.status() : requireOpenOrClosed(request.status()),
                 exists.managerId(),
                 exists.source(),
+                exists.suspendedFrom(),
+                exists.suspendedTo(),
+                exists.suspendReason(),
                 exists.createTime()
         );
         stations.set(index, updated);
@@ -168,6 +176,67 @@ public class MockStationService implements StationService {
                 normalizedStatus,
                 exists.managerId(),
                 exists.source(),
+                exists.suspendedFrom(),
+                exists.suspendedTo(),
+                exists.suspendReason(),
+                exists.createTime()
+        );
+        stations.set(index, updated);
+        return updated;
+    }
+
+    @Override
+    public StationDto suspend(Long id, LocalDateTime from, LocalDateTime to, String reason) {
+        int index = indexOfActive(id);
+        StationDto exists = stations.get(index);
+        StationDto updated = new StationDto(
+                exists.id(),
+                exists.cityCode(),
+                exists.stationName(),
+                exists.stationType(),
+                exists.area(),
+                exists.address(),
+                exists.longitude(),
+                exists.latitude(),
+                exists.contactPhone(),
+                exists.openTime(),
+                exists.distance(),
+                exists.services(),
+                exists.status(),
+                exists.managerId(),
+                exists.source(),
+                FormatUtils.dateTime(from),
+                FormatUtils.dateTime(to),
+                reason == null ? "" : reason.trim(),
+                exists.createTime()
+        );
+        stations.set(index, updated);
+        return updated;
+    }
+
+    @Override
+    public StationDto resume(Long id) {
+        int index = indexOfActive(id);
+        StationDto exists = stations.get(index);
+        StationDto updated = new StationDto(
+                exists.id(),
+                exists.cityCode(),
+                exists.stationName(),
+                exists.stationType(),
+                exists.area(),
+                exists.address(),
+                exists.longitude(),
+                exists.latitude(),
+                exists.contactPhone(),
+                exists.openTime(),
+                exists.distance(),
+                exists.services(),
+                exists.status(),
+                exists.managerId(),
+                exists.source(),
+                null,
+                null,
+                "",
                 exists.createTime()
         );
         stations.set(index, updated);
@@ -194,6 +263,9 @@ public class MockStationService implements StationService {
                 STATUS_DELETED,
                 exists.managerId(),
                 exists.source(),
+                exists.suspendedFrom(),
+                exists.suspendedTo(),
+                exists.suspendReason(),
                 exists.createTime()
         ));
     }

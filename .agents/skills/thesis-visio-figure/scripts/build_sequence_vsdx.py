@@ -38,6 +38,10 @@ DEFAULT_STYLE = dict(
     msg_text_lift=0.02, text_pad=0.10,
     insert_width_cm=15.5, max_aspect=1.50,
     ascii_em=0.52,
+    # 参与者小人（SKILL.md §3.6）
+    actor_w=0.30, actor_head_d=0.17, actor_neck=0.02, actor_body_h=0.24,
+    actor_leg_h=0.22, actor_arm_drop=0.07, actor_name_gap=0.05,
+    bottom_margin=0.22,
     # 自检容差（英寸）
     tol_text=0.02, tol_bar=0.03, tol_border=0.01,
 )
@@ -90,15 +94,26 @@ def layout(spec, st):
     L = spec.LIFELINES
     X = {k: x for k, _, _, x in L}
     msgs, frames, bars = spec.MSGS, spec.FRAMES, spec.BARS
+    actors = set(getattr(spec, 'ACTORS', None) or [])
+    number_msgs = bool(getattr(spec, 'NUMBER_MSGS', False))
 
     frame_start = {f[2]: i for i, f in enumerate(frames)}
     frame_end = {f[3]: i for i, f in enumerate(frames)}
+
+    # 参与者小人占的表头高度：图形 + 名称 + 副名
+    actor_fig_h = (st['actor_head_d'] + st['actor_neck'] + st['actor_body_h']
+                   + st['actor_leg_h'])
+    actor_name_h = st['fs_life'] / 72.0 * 1.25
+    actor_sub_h = st['fs_sub'] / 72.0 * 1.25
+    actor_h = actor_fig_h + st['actor_name_gap'] + actor_name_h + actor_sub_h
+    hdr_h = max(st['box_h'], actor_h) if actors else st['box_h']
 
     box_top = st['page_h'] - st['box_top_margin']
     # 首条消息文字位于箭线上方，必须让开表头框，否则会压住表头
     if st.get('box_bottom_gap') is None:
         st['box_bottom_gap'] = st['fs_msg'] / 72.0 * 1.35 + 0.06
-    y = box_top - st['box_h'] - st['box_bottom_gap']
+    hdr_bottom = box_top - hdr_h
+    y = hdr_bottom - st['box_bottom_gap']
 
     y_of, span = {}, {}
     for idx, (s, d, txt, kind) in enumerate(msgs):
@@ -117,6 +132,13 @@ def layout(spec, st):
             span[fi][0] = span[fi - 1][1]
 
     life_bottom = y + st['life_bottom_pad']
+
+    # 页面高度自适应：内容总高固定，按上下边距反推页高（一次收敛）
+    if getattr(spec, 'AUTO_FIT_PAGE', False) and not st.get('_fitted'):
+        need = (box_top - life_bottom) + st['box_top_margin'] + st.get('bottom_margin', 0.22)
+        st['page_h'] = round(need, 4)
+        st['_fitted'] = True
+        return layout(spec, st)
 
     bar_span = [(k, y_of[i0] + st['bar_pad'], y_of[i1] - st['bar_pad']) for k, i0, i1 in bars]
     bar_at = {}
@@ -164,14 +186,16 @@ def layout(spec, st):
     P = []
 
     def rect(x1, y1, x2, y2, role, fill=None, line='#000000', text=None, size=None,
-             align='center', two=None):
+             align='center', two=None, **kw):
         gw = None
         if text:
             gw = max(text_w(text, size or st['fs_msg']),
                      text_w(two, size or st['fs_msg']) if two else 0.0)
-        P.append(dict(kind='rect', role=role, box=[x1, y1, x2, y2], fill=fill, line=line,
-                      text=text, two=two, size=size or st['fs_msg'], align=align,
-                      valign='middle', glyph_w=gw))
+        prim = dict(kind='rect', role=role, box=[x1, y1, x2, y2], fill=fill, line=line,
+                    text=text, two=two, size=size or st['fs_msg'], align=align,
+                    valign='middle', glyph_w=gw)
+        prim.update(kw)
+        P.append(prim)
 
     def line(x1, y1, x2, y2, role, dash=False, arrow=None):
         P.append(dict(kind='line', role=role, box=[x1, y1, x2, y2], dash=dash, arrow=arrow))
@@ -202,23 +226,24 @@ def layout(spec, st):
 
     # 2) 生命线
     for key, name, sub, x in L:
-        line(x, life_bottom, x, box_top - st['box_h'], 'lifeline', dash=True)
+        line(x, life_bottom, x, hdr_bottom, 'lifeline', dash=True)
 
     # 3) 激活条
     for key, t, b in bar_span:
         x = X[key]
         rect(x - st['bar_w'] / 2, b, x + st['bar_w'] / 2, t, 'bar', fill='#FFFFFF')
 
-    # 4) 消息
+    # 4) 消息（可带序号，序号按发送顺序从 1 开始）
     for idx, (s, d, txt, kind) in enumerate(msgs):
+        disp = f"{idx + 1}: {txt}" if number_msgs else txt
         yv = y_of[idx]
         if kind == 'self':
             x = X[s]
             line(x, yv, x + st['loop_w'], yv, 'msg')
             line(x + st['loop_w'], yv, x + st['loop_w'], yv - st['loop_h'], 'msg')
             line(x + st['loop_w'], yv - st['loop_h'], x, yv - st['loop_h'], 'msg', arrow='filled')
-            w = text_w(txt, st['fs_msg']) + st['text_pad']
-            text(x + st['txt_off'], yv - st['loop_h'], x + st['txt_off'] + w, yv, txt, 'msg_text',
+            w = text_w(disp, st['fs_msg']) + st['text_pad']
+            text(x + st['txt_off'], yv - st['loop_h'], x + st['txt_off'] + w, yv, disp, 'msg_text',
                  align='left')
         else:
             x1, x2 = X[s], X[d]
@@ -226,19 +251,40 @@ def layout(spec, st):
             ex = x2 - bar_edge(d, yv, direction) * direction
             line(x1, yv, ex, yv, 'msg', dash=(kind == 'ret'),
                  arrow=('open' if kind == 'ret' else 'filled'))
-            mid = place_x(x1, ex, yv, text_w(txt, st['fs_msg']))
-            w = max(text_w(txt, st['fs_msg']) + st['text_pad'], 1.0)
+            mid = place_x(x1, ex, yv, text_w(disp, st['fs_msg']))
+            w = max(text_w(disp, st['fs_msg']) + st['text_pad'], 1.0)
             h = st['fs_msg'] / 72.0 * 1.35
             text(mid - w / 2, yv + st['msg_text_lift'], mid + w / 2,
-                 yv + st['msg_text_lift'] + h, txt, 'msg_text')
+                 yv + st['msg_text_lift'] + h, disp, 'msg_text')
 
-    # 5) 生命线表头
+    # 5) 生命线表头：参与者画小人，其余画对象框（框底与小人名称底线对齐）
     for key, name, sub, x in L:
-        rect(x - st['box_w'] / 2, box_top - st['box_h'], x + st['box_w'] / 2, box_top, 'header',
-             fill='#FFFFFF', text=name, size=st['fs_life'], two=sub)
+        if key in actors:
+            fig_bot = hdr_bottom + actor_name_h + actor_sub_h + st['actor_name_gap']
+            fig_top = fig_bot + actor_fig_h
+            hd = st['actor_head_d']
+            body_top = fig_top - hd - st['actor_neck']
+            body_bot = body_top - st['actor_body_h']
+            arm_y = body_top - st['actor_arm_drop']
+            arm_dx = st['actor_w'] / 2.0
+            leg_dx = st['actor_w'] / 2.0 * 0.82
+            rect(x - hd / 2, fig_top - hd, x + hd / 2, fig_top, 'actor_head',
+                 fill='#FFFFFF', geom_kind='ellipse', shape='ellipse')
+            line(x, body_top, x, body_bot, 'actor_body')
+            line(x - arm_dx, arm_y, x + arm_dx, arm_y, 'actor_arm')
+            line(x, body_bot, x - leg_dx, fig_bot, 'actor_leg')
+            line(x, body_bot, x + leg_dx, fig_bot, 'actor_leg')
+            nh = actor_name_h
+            text(x - st['box_w'] / 2, hdr_bottom + actor_sub_h, x + st['box_w'] / 2,
+                 hdr_bottom + actor_sub_h + nh, name, 'actor_name', size=st['fs_life'])
+            text(x - st['box_w'] / 2, hdr_bottom, x + st['box_w'] / 2,
+                 hdr_bottom + actor_sub_h, sub, 'actor_sub', size=st['fs_sub'])
+        else:
+            rect(x - st['box_w'] / 2, hdr_bottom, x + st['box_w'] / 2, hdr_bottom + st['box_h'],
+                 'header', fill='#FFFFFF', text=name, size=st['fs_life'], two=sub)
 
     return dict(prims=P, life_bottom=life_bottom, y_of=y_of, frame_span=span, bar_span=bar_span,
-                box_top=box_top)
+                box_top=box_top, hdr_h=hdr_h, hdr_bottom=hdr_bottom)
 
 
 # ------------------------------------------------------------------- vsdx
@@ -299,8 +345,21 @@ def geom_parallelogram(w, h, skew=0.22):
             + _rows((dx, 0), (w, 0), (w - dx, h), (0, h), (dx, 0)) + "</Section>")
 
 
+def geom_ellipse(w, h):
+    """椭圆（用于参与者的头部）。
+
+    照抄 Visio 自带「用例图-用例」主控形状的 Ellipse 行写法：X/Y 为中心，
+    (A,B) 与 (C,D) 是椭圆上的两个点（右端点、上端点）；写成数值而非公式。
+    """
+    return ("<Section N='Geometry' IX='0'><Cell N='NoFill' V='0'/><Cell N='NoLine' V='0'/>"
+            f"<Row T='Ellipse' IX='1'>"
+            f"<Cell N='X' V='{w/2.0:.10f}'/><Cell N='Y' V='{h/2.0:.10f}'/>"
+            f"<Cell N='A' V='{w:.10f}'/><Cell N='B' V='{h/2.0:.10f}'/>"
+            f"<Cell N='C' V='{w/2.0:.10f}'/><Cell N='D' V='{h:.10f}'/></Row></Section>")
+
+
 GEOM_KINDS = {'rect': geom_rect, 'diamond': geom_diamond,
-              'parallelogram': geom_parallelogram}
+              'parallelogram': geom_parallelogram, 'ellipse': geom_ellipse}
 
 # Visio 自带 UML 时序图「消息」主控形状的包围盒高度 = 5 mm，直接照抄；
 # 连线包围盒高度必须为正，Height=0 的退化包围盒同样会让 Visio 丢弃连线。
@@ -500,7 +559,7 @@ def write_png(model, spec, st, out_path, scale=130):
     def ty(y):
         return (st['page_h'] - y) * scale
 
-    def draw_text(s, box, size, align, valign):
+    def draw_text(s, box, size, align, valign, underline=False):
         x1, y1, x2, y2 = box
         lines = s.split('\r\n') if '\r\n' in s else s.split('\n')
         widths = [rich_width(ln, size) for ln in lines]
@@ -519,7 +578,10 @@ def write_png(model, spec, st, out_path, scale=130):
                 cx = lx2 - widths[i] - 2
             else:
                 cx = (lx1 + lx2) / 2 - widths[i] / 2
-            rich_draw(cx, cy, ln, size)
+            end = rich_draw(cx, cy, ln, size)
+            if underline:
+                uy = cy + ascend + 1
+                dr.line([(cx, uy), (end, uy)], fill='black', width=1)
             cy += heights[i] + lh
 
     def arrowhead(x, y, direction, filled=True, size=9):
@@ -549,23 +611,28 @@ def write_png(model, spec, st, out_path, scale=130):
             shp = p.get('shape', 'rect')
             l, t, r, b = tx(x1), ty(y2), tx(x2), ty(y1)
             fill = 'white' if p.get('fill') else None
+            outline = 'black' if p.get('line') else None      # line=None → 无边线（纯文字框）
             if shp == 'diamond':
                 dr.polygon([((l + r) / 2, t), (r, (t + b) / 2), ((l + r) / 2, b), (l, (t + b) / 2)],
-                           fill=fill, outline='black', width=2)
+                           fill=fill, outline=outline, width=2)
             elif shp == 'parallelogram':
                 dx = (r - l) * 0.22
                 dr.polygon([(l + dx, t), (r, t), (r - dx, b), (l, b)],
-                           fill=fill, outline='black', width=2)
+                           fill=fill, outline=outline, width=2)
             elif shp == 'roundrect':
                 rad = int((b - t) * 0.45)
-                dr.rounded_rectangle([l, t, r, b], radius=rad, fill=fill, outline='black', width=2)
+                dr.rounded_rectangle([l, t, r, b], radius=rad, fill=fill, outline=outline, width=2)
+            elif shp == 'ellipse':
+                dr.ellipse([l, t, r, b], fill=fill, outline=outline, width=2)
             else:
-                dr.rectangle([l, t, r, b], fill=fill, outline='black', width=2)
+                dr.rectangle([l, t, r, b], fill=fill, outline=outline, width=2)
             if p.get('text'):
                 s = p['text'] + (('\r\n' + p['two']) if p.get('two') else '')
-                draw_text(s, p['box'], p['size'], p.get('align', 'center'), p.get('valign', 'middle'))
+                draw_text(s, p['box'], p['size'], p.get('align', 'center'), p.get('valign', 'middle'),
+                          underline=p.get('underline', False))
         elif p['kind'] == 'text':
-            draw_text(p['text'], p['box'], p['size'], p['align'], p.get('valign', 'middle'))
+            draw_text(p['text'], p['box'], p['size'], p['align'], p.get('valign', 'middle'),
+                      underline=p.get('underline', False))
         elif p['kind'] == 'line':
             if p['dash']:
                 dashed((tx(x1), ty(y1)), (tx(x2), ty(y2)))

@@ -51,6 +51,11 @@ public class UserCredentialService {
         if (current == null) {
             throw new BusinessException("账号不存在");
         }
+        // 主管理员是「拥有全部权限」的锚点，靠账号名识别；允许改名会让这个锚点消失，
+        // 结果是谁都拿不到 ACCOUNT_MANAGE，账号体系永久锁死。
+        if (com.friendlystation.platform.admin.PermissionCatalog.PRIMARY_ADMIN_USERNAME.equalsIgnoreCase(current)) {
+            throw new BusinessException("内置主管理员账号不允许修改账号 ID");
+        }
         if (current.equalsIgnoreCase(target)) {
             throw new BusinessException("新账号 ID 与当前账号相同");
         }

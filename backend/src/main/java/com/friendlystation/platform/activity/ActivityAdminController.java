@@ -24,14 +24,18 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/activity/admin")
 @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+@com.friendlystation.platform.auth.RequirePermission({"ACTIVITY_MANAGE"})
 public class ActivityAdminController {
     private final ActivityService activityService;
     private final com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher;
+    private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
 
     public ActivityAdminController(ActivityService activityService,
-                                   com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher) {
+                                   com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher,
+                                   com.friendlystation.platform.auth.DataScopeService dataScopeService) {
         this.activityService = activityService;
         this.sourceFetcher = sourceFetcher;
+        this.dataScopeService = dataScopeService;
     }
 
     /** 后台活动分页，返回全部状态。 */
@@ -48,12 +52,17 @@ public class ActivityAdminController {
     /** 新增活动。 */
     @PostMapping
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
+        requireStationInScope(payload == null ? null : payload.get("stationId"));
         return ApiResponse.ok(activityService.create(payload));
     }
 
     /** 修改活动。 */
     @PutMapping("/{id}")
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
+        requireActivityScope(id);
+        if (payload != null && payload.containsKey("stationId")) {
+            requireStationInScope(payload.get("stationId"));
+        }
         return ApiResponse.ok(activityService.update(id, payload));
     }
 
@@ -73,7 +82,35 @@ public class ActivityAdminController {
     /** 删除活动。 */
     @DeleteMapping("/{id}")
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
+        requireActivityScope(id);
         activityService.delete(id);
         return ApiResponse.ok(Map.of("id", id, "deleted", true));
+    }
+
+    /** 驿站管理员只能管理自己负责驿站的活动；平台级不受限。 */
+    private void requireActivityScope(Long id) {
+        var user = com.friendlystation.platform.auth.CurrentUserContext.require();
+        if (dataScopeService.isPlatformLevel(user)) {
+            return;
+        }
+        var detail = activityService.detail(id);
+        long stationId = com.friendlystation.platform.common.FormatUtils.number(detail.get("stationId"));
+        var scoped = dataScopeService.stationIds(user);
+        if (scoped == null || !scoped.contains(stationId)) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权管理该活动");
+        }
+    }
+
+    /** 新建/改挂活动时，活动所属驿站必须在当前账号范围内。 */
+    private void requireStationInScope(Object stationIdRaw) {
+        var user = com.friendlystation.platform.auth.CurrentUserContext.require();
+        if (dataScopeService.isPlatformLevel(user)) {
+            return;
+        }
+        long stationId = com.friendlystation.platform.common.FormatUtils.number(stationIdRaw);
+        var scoped = dataScopeService.stationIds(user);
+        if (stationId <= 0 || scoped == null || !scoped.contains(stationId)) {
+            throw new com.friendlystation.platform.common.ForbiddenException("只能为自己负责的驿站创建活动");
+        }
     }
 }

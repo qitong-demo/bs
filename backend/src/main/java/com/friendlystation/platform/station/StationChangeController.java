@@ -35,14 +35,21 @@ public class StationChangeController {
     @PostMapping
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> submit(@RequestBody Map<String, Object> payload) {
-        return ApiResponse.ok(stationChangeService.submit(CurrentUserContext.require().id(), payload));
+        return ApiResponse.ok(stationChangeService.submit(CurrentUserContext.require(), payload));
     }
 
     /** 某驿站的申请记录，含审批结果与驳回原因。 */
     @GetMapping("/list")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> list(@RequestParam long stationId) {
-        return ApiResponse.ok(stationChangeService.listByStation(stationId));
+        return ApiResponse.ok(stationChangeService.listByStation(CurrentUserContext.require(), stationId));
+    }
+
+    /** 当前账号负责驿站的申请记录（驿站端「我的申请」）。 */
+    @GetMapping("/mine")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    public ApiResponse<List<Map<String, Object>>> mine() {
+        return ApiResponse.ok(stationChangeService.mine(CurrentUserContext.require()));
     }
 
     /** 待审批列表。需要 CHANGE_APPROVE 权限——子账号没被授予时会 403。 */
@@ -50,7 +57,7 @@ public class StationChangeController {
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     @RequirePermission({"CHANGE_APPROVE"})
     public ApiResponse<List<Map<String, Object>>> pending() {
-        return ApiResponse.ok(stationChangeService.pendingList());
+        return ApiResponse.ok(stationChangeService.pendingList(CurrentUserContext.require()));
     }
 
     /** 审批通过：写入驿站字段并留痕。 */
@@ -60,7 +67,7 @@ public class StationChangeController {
     public ApiResponse<Map<String, Object>> approve(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         Map<String, Object> data = payload == null ? Map.of() : payload;
         return ApiResponse.ok(stationChangeService.approve(
-                CurrentUserContext.require().id(), id, text(data.get("reviewNote"))));
+                CurrentUserContext.require(), id, text(data.get("reviewNote"))));
     }
 
     /** 审批驳回：必须写明原因。 */
@@ -70,10 +77,17 @@ public class StationChangeController {
     public ApiResponse<Map<String, Object>> reject(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         Map<String, Object> data = payload == null ? Map.of() : payload;
         return ApiResponse.ok(stationChangeService.reject(
-                CurrentUserContext.require().id(), id, text(data.get("reviewNote"))));
+                CurrentUserContext.require(), id, text(data.get("reviewNote"))));
     }
 
     private static String text(Object value) {
         return value == null ? "" : String.valueOf(value);
+    }
+
+    /** 撤回自己提交、仍待审批的申请。 */
+    @PutMapping("/{id}/cancel")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> cancel(@PathVariable Long id) {
+        return ApiResponse.ok(stationChangeService.cancel(CurrentUserContext.require(), id));
     }
 }

@@ -51,11 +51,16 @@ public class MockStationServiceItemService implements StationServiceItemService 
     }
 
     @Override
-    public PageResult<StationServiceItemDto> page(long current, long size, Long stationId, String keyword) {
+    public PageResult<StationServiceItemDto> page(long current, long size, Long stationId, String keyword,
+                                                  java.util.List<Long> stationIds) {
         long safeCurrent = Math.max(current, 1);
         long safeSize = Math.min(Math.max(size, 1), 50);
+        if (stationIds != null && stationIds.isEmpty()) {
+            return new PageResult<>(safeCurrent, safeSize, 0, new ArrayList<>());
+        }
         String normalizedKeyword = keyword == null ? "" : keyword.trim();
         List<StationServiceItemDto> filtered = serviceItems.stream()
+                .filter(item -> stationIds == null || stationIds.contains(item.stationId()))
                 .filter(item -> stationId == null || item.stationId().equals(stationId))
                 .filter(item -> normalizedKeyword.isBlank() || item.serviceName().contains(normalizedKeyword))
                 .toList();
@@ -72,6 +77,11 @@ public class MockStationServiceItemService implements StationServiceItemService 
         return serviceItems.stream()
                 .filter(item -> item.stationId().equals(stationId))
                 .toList();
+    }
+
+    @Override
+    public StationServiceItemDto detail(Long id) {
+        return serviceItems.get(indexOf(id));
     }
 
     @Override

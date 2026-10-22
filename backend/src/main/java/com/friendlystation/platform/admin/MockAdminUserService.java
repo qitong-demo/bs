@@ -17,9 +17,12 @@ import java.util.Map;
 @Profile("!mysql")
 public class MockAdminUserService implements AdminUserService {
     private final MockAccountService accountService;
+    private final com.friendlystation.platform.auth.CredentialVersionService credentialVersionService;
 
-    public MockAdminUserService(MockAccountService accountService) {
+    public MockAdminUserService(MockAccountService accountService,
+                                com.friendlystation.platform.auth.CredentialVersionService credentialVersionService) {
         this.accountService = accountService;
+        this.credentialVersionService = credentialVersionService;
     }
 
     @Override
@@ -59,6 +62,7 @@ public class MockAdminUserService implements AdminUserService {
     public Map<String, Object> updateStatus(long userId, String status) {
         String normalized = normalizeStatus(status);
         accountService.updateStatus(userId, normalized);
+        credentialVersionService.bump(userId);
         return userDetail(userId);
     }
 
@@ -66,6 +70,7 @@ public class MockAdminUserService implements AdminUserService {
     public Map<String, Object> setRoles(long userId, List<String> roleCodes) {
         List<String> codes = sanitize(roleCodes);
         accountService.updateRole(userId, codes.get(0));
+        credentialVersionService.bump(userId);
         Map<String, Object> out = userDetail(userId);
         out.put("roles", codes);
         out.put("roleNote", "内存演示模式每个账号只保存一个角色，已使用列表中的第一个角色");

@@ -29,6 +29,10 @@ public record StationDto(
         String status,
         Long managerId,
         StationSource source,
+        /** 暂停服务开始/结束时间，格式 yyyy-MM-dd HH:mm:ss；未暂停时为空串。 */
+        String suspendedFrom,
+        String suspendedTo,
+        String suspendReason,
         String createTime
 ) {
 }

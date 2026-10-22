@@ -58,6 +58,12 @@ public class MysqlStationEvaluationService implements StationEvaluationService {
         if (stationMapper.selectById(stationId) == null) {
             throw new BusinessException("驿站不存在");
         }
+        Long evaluated = evaluationMapper.selectCount(new LambdaQueryWrapper<StationEvaluation>()
+                .eq(StationEvaluation::getStationId, stationId)
+                .eq(StationEvaluation::getUserId, userId));
+        if (evaluated != null && evaluated > 0) {
+            throw new BusinessException("你已评价过该驿站，不能重复评价");
+        }
 
         StationEvaluation entity = new StationEvaluation();
         entity.setStationId(stationId);

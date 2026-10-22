@@ -85,7 +85,7 @@
       <el-table-column label="创建时间" width="170">
         <template #default="{ row }">{{ textOf(row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column label="操作" width="380" fixed="right">
         <template #default="{ row }">
           <el-button size="small" :disabled="row.status === 'DELETED'" @click="openEdit(row)">编辑</el-button>
           <el-button
@@ -96,6 +96,15 @@
           >
             {{ row.status === "OPEN" ? "停用" : "恢复营业" }}
           </el-button>
+          <el-button
+            v-if="!row.suspendedFrom"
+            size="small"
+            type="warning"
+            plain
+            :disabled="row.status === 'DELETED'"
+            @click="openSuspend(row)"
+          >暂停服务</el-button>
+          <el-button v-else size="small" type="success" plain @click="resume(row)">恢复服务</el-button>
           <el-button size="small" type="danger" :disabled="row.status === 'DELETED'" @click="remove(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -192,6 +201,25 @@
         <el-button type="primary" :loading="submitting" @click="submit">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="suspendVisible" title="暂停服务" width="460px">
+      <el-form label-position="top">
+        <el-form-item label="开始时间">
+          <el-date-picker v-model="suspendForm.from" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" class="full" />
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker v-model="suspendForm.to" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" class="full" />
+        </el-form-item>
+        <el-form-item label="暂停原因">
+          <el-input v-model="suspendForm.reason" type="textarea" :rows="3" placeholder="例如：设备检修、场地装修" />
+        </el-form-item>
+      </el-form>
+      <p class="station-source-note">暂停期间的新预约会被拒绝；已提交的预约不会自动取消。</p>
+      <template #footer>
+        <el-button @click="suspendVisible = false">取消</el-button>
+        <el-button type="warning" :loading="submitting" @click="submitSuspend">确认暂停</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -202,6 +230,8 @@ import {
   createStation,
   deleteStation,
   getAdminStationPage,
+  resumeStation,
+  suspendStation,
   updateStation,
   updateStationStatus
 } from "../../api/station";
@@ -216,6 +246,9 @@ const query = reactive({ current: 1, size: 10, area: "", keyword: "", status: ""
 
 const dialogVisible = ref(false);
 const editingId = ref(null);
+const suspendVisible = ref(false);
+const suspendTarget = ref(null);
+const suspendForm = reactive({ from: "", to: "", reason: "" });
 const formRef = ref(null);
 const form = reactive({ stationName: "", area: "", stationType: "", address: "", contactPhone: "", openTime: "", status: "OPEN" });
 /** 编辑时展示的数据来源信息，新增时为空对象（后台录入，无公开来源）。 */
@@ -347,6 +380,66 @@ async function toggleStatus(row) {
     await load();
   } catch (error) {
     ElMessage.error(errorMessage(error));
+  } finally {
+    loading.value = false;
+  }
+}
+
+function formatDateTime(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} `
+    + `${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+}
+
+function openSuspend(row) {
+  suspendTarget.value = row;
+  const now = new Date();
+  suspendForm.from = formatDateTime(new Date(now.getTime() + 60 * 60 * 1000));
+  suspendForm.to = formatDateTime(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  suspendForm.reason = "";
+  suspendVisible.value = true;
+}
+
+async function submitSuspend() {
+  if (!suspendTarget.value) return;
+  if (!suspendForm.from || !suspendForm.to || suspendForm.from >= suspendForm.to) {
+    ElMessage.warning("请选择正确的暂停开始与结束时间");
+    return;
+  }
+  if (!suspendForm.reason.trim()) {
+    ElMessage.warning("请填写暂停原因");
+    return;
+  }
+  submitting.value = true;
+  try {
+    await suspendStation(suspendTarget.value.id, {
+      from: suspendForm.from,
+      to: suspendForm.to,
+      reason: suspendForm.reason.trim()
+    });
+    ElMessage.success("已设置暂停服务");
+    suspendVisible.value = false;
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "设置失败"));
+  } finally {
+    submitting.value = false;
+  }
+}
+
+async function resume(row) {
+  try {
+    await ElMessageBox.confirm(`确认恢复「${textOf(row.stationName)}」的服务？`, "恢复服务", { type: "warning" });
+  } catch {
+    return;
+  }
+  loading.value = true;
+  try {
+    await resumeStation(row.id);
+    ElMessage.success("已恢复服务");
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "操作失败"));
   } finally {
     loading.value = false;
   }

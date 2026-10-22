@@ -62,7 +62,8 @@ public class AppointmentController {
         Map<String, Object> data = payload == null ? Map.of() : payload;
         Object remark = data.get("remark");
         return ApiResponse.ok(workflowService.markNoShow(
-                id, CurrentUserContext.require().id(), remark == null ? "" : String.valueOf(remark)));
+                id, CurrentUserContext.require().id(), remark == null ? "" : String.valueOf(remark),
+                dataScopeService.stationIds(CurrentUserContext.require())));
     }
 
     @GetMapping("/admin/page")
@@ -79,7 +80,20 @@ public class AppointmentController {
 
     @PutMapping("/audit")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @RequirePermission({"APPOINTMENT_AUDIT"})
     public ApiResponse<Map<String, Object>> audit(@RequestBody Map<String, Object> payload) {
-        return ApiResponse.ok(workflowService.auditAppointment(payload, CurrentUserContext.require().id()));
+        return ApiResponse.ok(workflowService.auditAppointment(
+                payload, CurrentUserContext.require().id(),
+                dataScopeService.stationIds(CurrentUserContext.require())));
+    }
+
+    /** 完成预约：已确认的预约在服务结束后由驿站标记为已完成。 */
+    @PutMapping("/{id}/finish")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @RequirePermission({"APPOINTMENT_AUDIT"})
+    public ApiResponse<Map<String, Object>> finish(@PathVariable Long id) {
+        var user = CurrentUserContext.require();
+        return ApiResponse.ok(workflowService.completeAppointment(
+                id, user.id(), dataScopeService.stationIds(user)));
     }
 }

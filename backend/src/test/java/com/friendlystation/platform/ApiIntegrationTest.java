@@ -261,6 +261,13 @@ class ApiIntegrationTest {
         JsonNode invalidTarget = call("put", "/api/appointment/audit", adminToken,
                 Map.of("id", appointmentId, "status", "WHATEVER"));
         assertEquals(400, httpStatus(invalidTarget));
+
+        // 服务结束后进入真正的终态：CONFIRMED -> FINISHED
+        JsonNode finished = call("put", "/api/appointment/" + appointmentId + "/finish", adminToken, null);
+        assertEquals(200, httpStatus(finished), messageOf(finished));
+        assertEquals("FINISHED", dataOf(finished).path("status").asText());
+        JsonNode finishAgain = call("put", "/api/appointment/" + appointmentId + "/finish", adminToken, null);
+        assertEquals(400, httpStatus(finishAgain));
     }
 
     @Test
@@ -371,10 +378,17 @@ class ApiIntegrationTest {
     @Test
     void stationEvaluationValidatesScoreAndStation() throws Exception {
         String userToken = login("rider_xiaowang");
-        int stationId = firstStationId();
+        // 演示数据里 rider 已经评价过 1、3 号驿站；重复评价现在会被拒绝，
+        // 因此这里动态挑一个「当前用户还没评价过」的驿站。
+        long stationId = firstUnratedStationId(userToken);
 
         assertEquals(200, httpStatus(call("post", "/api/evaluation/station", userToken,
                 Map.of("stationId", stationId, "score", 5, "content", "集成测试评价"))));
+
+        JsonNode duplicate = call("post", "/api/evaluation/station", userToken,
+                Map.of("stationId", stationId, "score", 4, "content", "重复评价"));
+        assertEquals(400, httpStatus(duplicate));
+        assertTrue(messageOf(duplicate).contains("不能重复评价"));
 
         JsonNode badScore = call("post", "/api/evaluation/station", userToken,
                 Map.of("stationId", stationId, "score", 9, "content", "越界评分"));
@@ -455,6 +469,9 @@ class ApiIntegrationTest {
         assertEquals(200, httpStatus(call("put", "/api/news/" + newsId, adminToken,
                 Map.of("title", "集成测试资讯（改）", "category", "动态", "content", "新正文"))));
         assertEquals("集成测试资讯（改）", dataOf(call("get", "/api/news/" + newsId, null, null)).path("title").asText());
+        long firstView = dataOf(call("get", "/api/news/" + newsId, null, null)).path("viewCount").asLong();
+        long secondView = dataOf(call("get", "/api/news/" + newsId, null, null)).path("viewCount").asLong();
+        assertTrue(secondView > firstView, "资讯详情被打开后阅读数应增长");
         assertEquals(200, httpStatus(call("delete", "/api/news/" + newsId, adminToken, null)));
         assertEquals(400, httpStatus(call("get", "/api/news/" + newsId, null, null)));
 
@@ -566,6 +583,324 @@ class ApiIntegrationTest {
         assertEquals(403, httpStatus(call("get", "/api/stat/export/appeals", userToken, null)));
     }
 
+    @Test
+    void signupCanBeCancelledBeforeReview() throws Exception {
+        String userToken = login("rider_xiaowang");
+        String adminToken = login("platform_admin");
+
+        JsonNode activity = call("post", "/api/activity/admin", adminToken, Map.of(
+                "title", "报名取消测试", "stationId", firstStationId(),
+                "activityTime", "2026-12-10 09:00:00", "maxCount", 10));
+        long activityId = dataOf(activity).path("id").asLong();
+
+        JsonNode signup = call("post", "/api/activity/signup", userToken, Map.of(
+                "activityId", activityId, "contactName", "取消测试", "phone", "13800000009"));
+        assertEquals(200, httpStatus(signup), messageOf(signup));
+        long signupId = dataOf(signup).path("id").asLong();
+
+        JsonNode cancelled = call("put", "/api/activity/signup/" + signupId + "/cancel", userToken, null);
+        assertEquals(200, httpStatus(cancelled), messageOf(cancelled));
+        assertEquals("CANCELLED", dataOf(cancelled).path("status").asText());
+
+        assertEquals(400, httpStatus(call("put", "/api/activity/signup/" + signupId + "/cancel", userToken, null)));
+        assertEquals(400, httpStatus(call("put", "/api/activity/signup/review", adminToken,
+                Map.of("id", signupId, "status", "APPROVED", "reviewNote", "取消后不应再审核"))));
+
+        // 取消后可以重新报名（同一唯一索引记录被重新激活，不会撞 uk_activity_user）
+        JsonNode again = call("post", "/api/activity/signup", userToken, Map.of(
+                "activityId", activityId, "contactName", "取消测试", "phone", "13800000009"));
+        assertEquals(200, httpStatus(again), messageOf(again));
+        assertEquals("SIGNED_UP", dataOf(again).path("status").asText());
+    }
+
+    @Test
+    void appointmentAuditWritesNotification() throws Exception {
+        String userToken = login("rider_xiaowang");
+        String adminToken = login("platform_admin");
+
+        JsonNode created = call("post", "/api/appointment", userToken, Map.of(
+                "stationId", firstStationId(), "serviceName", "通知回归测试",
+                "date", java.time.LocalDate.now().plusDays(8).toString(), "slot", "09:00-11:00"));
+        long appointmentId = dataOf(created).path("id").asLong();
+        JsonNode audited = call("put", "/api/appointment/audit", adminToken,
+                Map.of("id", appointmentId, "status", "CONFIRMED", "reason", "请按时到场"));
+        assertEquals(200, httpStatus(audited), messageOf(audited));
+
+        JsonNode page = dataOf(call("get", "/api/notification/page?current=1&size=50", userToken, null));
+        JsonNode target = null;
+        for (JsonNode row : page.path("records")) {
+            if (row.path("bizId").asLong() == appointmentId && "APPOINTMENT".equals(row.path("bizType").asText())) {
+                target = row;
+            }
+        }
+        assertNotNull(target, "预约审核后应给预约人写入通知");
+        assertEquals("预约已确认", target.path("title").asText());
+        assertTrue(target.path("content").asText().contains("请按时到场"));
+
+        long unread = dataOf(call("get", "/api/notification/unread-count", userToken, null)).path("count").asLong();
+        assertTrue(unread >= 1);
+        assertEquals(200, httpStatus(call("put", "/api/notification/" + target.path("id").asLong() + "/read",
+                userToken, null)));
+        long afterRead = dataOf(call("get", "/api/notification/unread-count", userToken, null)).path("count").asLong();
+        assertEquals(unread - 1, afterRead);
+    }
+
+    @Test
+    void newWorkItemsNotifyStationManager() throws Exception {
+        String userToken = login("rider_xiaowang");
+        String stationToken = login("station_admin_01");
+        String adminToken = login("platform_admin");
+        int stationId = firstStationId();
+
+        assertEquals(200, httpStatus(call("post", "/api/appointment", userToken, Map.of(
+                "stationId", stationId, "serviceName", "负责人通知测试",
+                "date", java.time.LocalDate.now().plusDays(9).toString(), "slot", "09:00-11:00"))));
+
+        assertEquals(200, httpStatus(call("post", "/api/appeal", userToken, Map.of(
+                "title", "负责人诉求通知测试", "content", "内容", "category", "REQUEST",
+                "receiverTarget", "STATION", "stationId", stationId, "area", "西湖区"))));
+
+        JsonNode activity = call("post", "/api/activity/admin", adminToken, Map.of(
+                "title", "负责人报名通知测试", "stationId", stationId,
+                "activityTime", "2025-01-01 09:00:00", "maxCount", 5));
+        long activityId = dataOf(activity).path("id").asLong();
+        assertEquals(200, httpStatus(call("post", "/api/activity/signup", userToken, Map.of(
+                "activityId", activityId, "contactName", "通知测试", "phone", "13800000009"))));
+
+        JsonNode page = dataOf(call("get", "/api/notification/page?current=1&size=100", stationToken, null));
+        boolean appointmentNotified = false;
+        boolean appealNotified = false;
+        boolean signupNotified = false;
+        for (JsonNode row : page.path("records")) {
+            String title = row.path("title").asText();
+            appointmentNotified |= "新的预约待确认".equals(title);
+            appealNotified |= "新的诉求待受理".equals(title);
+            signupNotified |= "新的活动报名".equals(title);
+        }
+        assertTrue(appointmentNotified, "新预约应通知驿站负责人");
+        assertTrue(appealNotified, "定向驿站的新诉求应通知负责人");
+        assertTrue(signupNotified, "新报名应通知活动所属驿站负责人");
+    }
+
+    @Test
+    void serviceAdminPageIsScopedToManagedStations() throws Exception {
+        String stationToken = login("station_admin_01");
+        String adminToken = login("platform_admin");
+
+        JsonNode stationPage = dataOf(call("get", "/api/station/service/admin/page?current=1&size=50", stationToken, null));
+        assertTrue(stationPage.path("records").size() > 0, "驿站端应能看到自己驿站的服务项目");
+        for (JsonNode row : stationPage.path("records")) {
+            long stationId = row.path("stationId").asLong();
+            assertTrue(stationId >= 1 && stationId <= 4, "驿站端不应看到其他驿站的服务项目：" + stationId);
+        }
+        JsonNode other = dataOf(call("get", "/api/station/service/admin/page?current=1&size=10&stationId=5", stationToken, null));
+        assertEquals(0, other.path("total").asInt(), "驿站端不应能查 5 号驿站的服务项目");
+
+        JsonNode platform = dataOf(call("get", "/api/station/service/admin/page?current=1&size=10&stationId=5", adminToken, null));
+        assertTrue(platform.path("total").asInt() > 0, "平台端应能查 5 号驿站的服务项目");
+    }
+
+    @Test
+    void stationAdminManagesOnlyOwnServiceItems() throws Exception {
+        String stationToken = login("station_admin_01");
+        int stationId = firstStationId();
+
+        JsonNode own = call("post", "/api/station/service", stationToken, Map.of(
+                "stationId", stationId, "serviceName", "权限联调服务", "serviceType", "GENERAL", "needAppoint", false));
+        assertEquals(200, httpStatus(own), messageOf(own));
+        long serviceId = dataOf(own).path("id").asLong();
+
+        JsonNode other = call("post", "/api/station/service", stationToken, Map.of(
+                "stationId", 5, "serviceName", "越权服务", "serviceType", "GENERAL", "needAppoint", false));
+        assertEquals(403, httpStatus(other));
+
+        assertEquals(200, httpStatus(call("delete", "/api/station/service/" + serviceId, stationToken, null)));
+    }
+
+    @Test
+    void appealEvaluationIsMarkedAndNotRepeatable() throws Exception {
+        String userToken = login("rider_xiaowang");
+        String adminToken = login("platform_admin");
+        String title = "评价标记测试-" + System.nanoTime();
+
+        JsonNode appeal = call("post", "/api/appeal", userToken, Map.of(
+                "title", title, "content", "内容", "category", "REQUEST", "area", "西湖区",
+                "receiverTarget", "PLATFORM"));
+        long appealId = dataOf(appeal).path("id").asLong();
+        assertEquals(200, httpStatus(call("put", "/api/appeal/handle", adminToken,
+                Map.of("id", appealId, "status", "RESOLVED", "content", "已处理，感谢反馈"))));
+        assertEquals(200, httpStatus(call("post", "/api/appeal/evaluate", userToken,
+                Map.of("appealId", appealId, "score", 5, "content", "满意"))));
+
+        JsonNode mine = dataOf(call("get", "/api/appeal/my", userToken, null));
+        boolean evaluated = false;
+        for (JsonNode row : mine) {
+            if (row.path("id").asLong() == appealId) {
+                evaluated = row.path("evaluated").asBoolean();
+            }
+        }
+        assertTrue(evaluated, "评价后列表应标记 evaluated=true");
+        assertEquals(400, httpStatus(call("post", "/api/appeal/evaluate", userToken,
+                Map.of("appealId", appealId, "score", 4, "content", "重复评价"))));
+    }
+
+    @Test
+    void suspensionBlocksAppointmentsInWindow() throws Exception {
+        String adminToken = login("platform_admin");
+        String userToken = login("rider_xiaowang");
+        int stationId = firstStationId();
+        String day = java.time.LocalDate.now().plusDays(6).toString();
+
+        // 暂停前先有一条落在窗口内的预约，用来验证“暂停通知已预约用户”
+        JsonNode before = call("post", "/api/appointment", userToken, Map.of(
+                "stationId", stationId, "serviceName", "暂停前预约", "date", day, "slot", "09:00-11:00"));
+        assertEquals(200, httpStatus(before), messageOf(before));
+
+        JsonNode suspended = call("put", "/api/station/" + stationId + "/suspend", adminToken, Map.of(
+                "from", day + " 00:00:00", "to", day + " 23:59:59", "reason", "设备检修"));
+        assertEquals(200, httpStatus(suspended), messageOf(suspended));
+        assertEquals(day + " 00:00:00", dataOf(suspended).path("suspendedFrom").asText());
+
+        JsonNode notifications = dataOf(call("get", "/api/notification/page?current=1&size=50", userToken, null));
+        boolean notified = false;
+        for (JsonNode row : notifications.path("records")) {
+            if ("驿站暂停服务提醒".equals(row.path("title").asText())) {
+                notified = true;
+            }
+        }
+        assertTrue(notified, "暂停服务应通知窗口内已预约的用户");
+
+        JsonNode blocked = call("post", "/api/appointment", userToken, Map.of(
+                "stationId", stationId, "serviceName", "暂停期间预约", "date", day, "slot", "09:00-11:00"));
+        assertEquals(400, httpStatus(blocked));
+        assertTrue(messageOf(blocked).contains("暂停服务"), messageOf(blocked));
+
+        assertEquals(200, httpStatus(call("delete", "/api/station/" + stationId + "/suspend", adminToken, null)));
+        JsonNode allowed = call("post", "/api/appointment", userToken, Map.of(
+                "stationId", stationId, "serviceName", "恢复后预约", "date", day, "slot", "09:00-11:00"));
+        assertEquals(200, httpStatus(allowed), messageOf(allowed));
+    }
+
+    @Test
+    void stationChangeListIsScopedToManagedStations() throws Exception {
+        String stationToken = login("station_admin_01");
+        String adminToken = login("platform_admin");
+
+        // 变更审批只给平台管理员：驿站端只能提交/查看自己的申请
+        assertEquals(403, httpStatus(call("get", "/api/station/change/pending", stationToken, null)));
+
+        JsonNode own = call("post", "/api/station/change", stationToken, Map.of(
+                "stationId", 1, "type", "PHONE", "newValue", "0571-66665555", "reason", "范围测试"));
+        assertEquals(200, httpStatus(own), messageOf(own));
+        long ownId = dataOf(own).path("id").asLong();
+
+        JsonNode adminNotes = dataOf(call("get", "/api/notification/page?current=1&size=50", adminToken, null));
+        boolean reviewerNotified = false;
+        for (JsonNode row : adminNotes.path("records")) {
+            if ("新的驿站变更申请".equals(row.path("title").asText())) {
+                reviewerNotified = true;
+            }
+        }
+        assertTrue(reviewerNotified, "新变更申请应通知平台管理员");
+
+        JsonNode mine = dataOf(call("get", "/api/station/change/mine", stationToken, null));
+        assertTrue(mine.isArray());
+        boolean sawOwn = false;
+        for (JsonNode row : mine) {
+            long stationId = row.path("stationId").asLong();
+            assertTrue(stationId >= 1 && stationId <= 4, "驿站管理员只应看到自己负责驿站的申请：" + stationId);
+            if (row.path("id").asLong() == ownId) {
+                sawOwn = true;
+            }
+        }
+        assertTrue(sawOwn, "我的申请应包含刚提交的记录");
+
+        // 不能查看/代提别家驿站的申请
+        assertEquals(403, httpStatus(call("get", "/api/station/change/list?stationId=5", stationToken, null)));
+        assertEquals(400, httpStatus(call("post", "/api/station/change", stationToken, Map.of(
+                "stationId", 5, "type", "PHONE", "newValue", "0571-00000000", "reason", "越权"))));
+
+        // 平台管理员能看到全部待审批
+        JsonNode pending = dataOf(call("get", "/api/station/change/pending", adminToken, null));
+        assertTrue(pending.isArray());
+        assertEquals(200, httpStatus(call("put", "/api/station/change/" + ownId + "/cancel", stationToken, null)));
+        // 撤销后不能再被审批
+        assertEquals(400, httpStatus(call("put", "/api/station/change/" + ownId + "/approve", adminToken, Map.of())));
+    }
+
+    @Test
+    void securityGuardsRejectCrossTenantAndInvalidState() throws Exception {
+        String rider = login("rider_xiaowang");
+        String station = login("station_admin_01");
+        String admin = login("platform_admin");
+
+        // 1) 驿站管理员不能审核不属于自己负责驿站的预约
+        JsonNode appointment = call("post", "/api/appointment", rider, Map.of(
+                "stationId", 5, "serviceName", "越权审核测试",
+                "date", java.time.LocalDate.now().plusDays(5).toString(), "slot", "09:00-11:00"));
+        assertEquals(200, httpStatus(appointment), messageOf(appointment));
+        long appointmentId = dataOf(appointment).path("id").asLong();
+        JsonNode crossAudit = call("put", "/api/appointment/audit", station,
+                Map.of("id", appointmentId, "status", "CONFIRMED"));
+        assertEquals(403, httpStatus(crossAudit));
+
+        // 2) 匿名诉求在详情里也必须隐藏提交人（管理端列表与详情同口径）
+        String area = dataOf(call("get", "/api/station/1", null, null)).path("area").asText();
+        JsonNode anonymous = call("post", "/api/appeal", rider, Map.of(
+                "title", "匿名详情测试", "content", "内容", "anonymous", true,
+                "area", area, "category", "REQUEST", "stationId", 1, "receiverTarget", "STATION"));
+        long appealId = dataOf(anonymous).path("id").asLong();
+        JsonNode detail = dataOf(call("get", "/api/appeal/" + appealId, station, null));
+        assertEquals("匿名用户", detail.path("userName").asText());
+        assertEquals(0, detail.path("userId").asLong());
+        // 定向驿站按 station_id 路由，不再依赖用户手填区域
+        assertEquals(1, detail.path("stationId").asLong());
+
+        // 3) 活动取消后不再接收报名
+        JsonNode activity = call("post", "/api/activity/admin", admin, Map.of(
+                "title", "取消后报名测试", "stationId", firstStationId(),
+                "activityTime", "2026-12-09 09:00:00", "maxCount", 5));
+        long activityId = dataOf(activity).path("id").asLong();
+        assertEquals(200, httpStatus(call("put", "/api/activity/admin/" + activityId, admin,
+                Map.of("status", "CANCELLED"))));
+        assertEquals(400, httpStatus(call("post", "/api/activity/signup", rider, Map.of(
+                "activityId", activityId, "contactName", "测试", "phone", "13800000009"))));
+
+        // 4) 变更审批通过后不能再驳回
+        JsonNode change = call("post", "/api/station/change", station, Map.of(
+                "stationId", 1, "type", "PHONE", "newValue", "0571-88887777", "reason", "回归测试"));
+        long changeId = dataOf(change).path("id").asLong();
+        // 驿站管理员不能审批自己提交的申请
+        assertEquals(403, httpStatus(call("put", "/api/station/change/" + changeId + "/approve", station, Map.of())));
+        assertEquals(200, httpStatus(call("put", "/api/station/change/" + changeId + "/approve", admin, Map.of())));
+        JsonNode changeNotes = dataOf(call("get", "/api/notification/page?current=1&size=50", station, null));
+        boolean changeNotified = false;
+        for (JsonNode row : changeNotes.path("records")) {
+            if ("变更申请已通过".equals(row.path("title").asText())) {
+                changeNotified = true;
+            }
+        }
+        assertTrue(changeNotified, "变更审批结果应通知申请人");
+        assertEquals(400, httpStatus(call("put", "/api/station/change/" + changeId + "/reject", admin,
+                Map.of("reviewNote", "尝试回退"))));
+
+        // 申请人可以撤回仍待审批的申请；撤回后审批端不能再通过
+        JsonNode withdraw = call("post", "/api/station/change", station, Map.of(
+                "stationId", 2, "type", "PHONE", "newValue", "0571-77776666", "reason", "撤回测试"));
+        long withdrawId = dataOf(withdraw).path("id").asLong();
+        assertEquals(200, httpStatus(call("put", "/api/station/change/" + withdrawId + "/cancel", station, null)));
+        assertEquals(400, httpStatus(call("put", "/api/station/change/" + withdrawId + "/approve", admin, Map.of())));
+
+        // 5) 角色降级后旧令牌立即失效（随后恢复，避免影响其它用例）
+        JsonNode users = dataOf(call("get", "/api/admin/users?keyword=station_admin_01", admin, null));
+        long stationAdminId = users.path("records").get(0).path("id").asLong();
+        assertEquals(200, httpStatus(call("put", "/api/admin/users/" + stationAdminId + "/roles", admin,
+                Map.of("roleCodes", new String[]{"USER"}))));
+        assertEquals(401, httpStatus(call("get", "/api/appointment/admin/page?current=1&size=5", station, null)));
+        assertEquals(200, httpStatus(call("put", "/api/admin/users/" + stationAdminId + "/roles", admin,
+                Map.of("roleCodes", new String[]{"STATION_ADMIN"}))));
+    }
+
     // ------------------------------------------------------------ 辅助
 
     private int firstStationId() throws Exception {
@@ -581,5 +916,21 @@ class ApiIntegrationTest {
         JsonNode first = page.path("records").get(0);
         assertTrue(first.path("remaining").asInt() > 0, "演示活动应有剩余名额");
         return first.path("id").asInt();
+    }
+
+    /** 找一个当前用户还没评价过的驿站；都被评价过时退化为第一个驿站（测试会因 400 明确失败）。 */
+    private long firstUnratedStationId(String userToken) throws Exception {
+        Set<Long> rated = new HashSet<>();
+        for (JsonNode item : dataOf(call("get", "/api/evaluation/my", userToken, null))) {
+            rated.add(item.path("stationId").asLong());
+        }
+        JsonNode page = dataOf(call("get", "/api/station/page?current=1&size=50", null, null));
+        for (JsonNode item : page.path("records")) {
+            long id = item.path("id").asLong();
+            if (id > 0 && !rated.contains(id)) {
+                return id;
+            }
+        }
+        return firstStationId();
     }
 }

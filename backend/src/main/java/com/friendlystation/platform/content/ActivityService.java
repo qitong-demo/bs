@@ -36,4 +36,17 @@ public interface ActivityService {
 
     /** 剩余名额，活动不存在抛出业务异常。 */
     int remainingSlots(Long activityId);
+
+    /**
+     * 报名成功后的计数回调。
+     *
+     * <p>MySQL 实现的报名人数实时从 activity_signup 统计，无需维护；内存实现没有这张表，
+     * 必须在这里累加，否则列表会一直显示「剩余满额」。</p>
+     */
+    default void onSignup(long activityId) {
+    }
+
+    /** 报名取消后的计数回调；与 {@link #onSignup(long)} 成对，避免内存计数只增不减。 */
+    default void onSignupCancel(long activityId) {
+    }
 }

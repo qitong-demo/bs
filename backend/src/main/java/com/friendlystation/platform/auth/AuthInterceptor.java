@@ -18,14 +18,17 @@ public class AuthInterceptor implements HandlerInterceptor {
     private final ObjectMapper objectMapper;
     private final CredentialVersionService credentialVersionService;
     private final com.friendlystation.platform.admin.AdminPermissionService adminPermissionService;
+    private final AccountService accountService;
 
     public AuthInterceptor(JwtService jwtService, ObjectMapper objectMapper,
                            CredentialVersionService credentialVersionService,
-                           com.friendlystation.platform.admin.AdminPermissionService adminPermissionService) {
+                           com.friendlystation.platform.admin.AdminPermissionService adminPermissionService,
+                           AccountService accountService) {
         this.jwtService = jwtService;
         this.objectMapper = objectMapper;
         this.credentialVersionService = credentialVersionService;
         this.adminPermissionService = adminPermissionService;
+        this.accountService = accountService;
     }
 
     @Override
@@ -57,7 +60,11 @@ public class AuthInterceptor implements HandlerInterceptor {
                 writeError(response, 401, "登录凭证已失效，请重新登录");
                 return false;
             }
-            CurrentUserContext.set(currentUser);
+            // 停用账号的旧令牌同样必须失效：只拦住登录不够，JWT 在过期前本来仍然可用。
+            if (!accountService.enabled(currentUser.id())) {
+                writeError(response, 401, "账号已停用，请联系管理员");
+                return false;
+            }
             if (required != null && Arrays.stream(required.value()).noneMatch(currentUser.role()::equals)) {
                 writeError(response, 403, "当前角色无权执行此操作");
                 return false;
@@ -77,6 +84,9 @@ public class AuthInterceptor implements HandlerInterceptor {
                     return false;
                 }
             }
+            // 只有确认这次请求可以继续时才写入上下文：提前 set 后再 return false，
+            // Spring 不会对返回 false 的拦截器调用 afterCompletion，线程池线程会残留上一个用户。
+            CurrentUserContext.set(currentUser);
             return true;
         } catch (JwtException | IllegalArgumentException exception) {
             writeError(response, 401, "登录凭证已失效，请重新登录");

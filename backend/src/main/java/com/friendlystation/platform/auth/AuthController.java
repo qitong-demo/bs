@@ -46,7 +46,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ApiResponse<Map<String, Object>> register(@Valid @RequestBody RegisterRequest request) {
-        AccountUser user = accountService.register(request.username(), request.phone(), request.password());
+        // 注册与改密必须用同一套规则：此前注册只校验非空，1 位密码也能注册，
+        // 之后想改成同样长度却被拒绝，规则自相矛盾。
+        String username = CredentialRules.requireUsername(request.username());
+        String phone = CredentialRules.requirePhone(request.phone());
+        String password = CredentialRules.requirePassword(request.password(), username);
+        AccountUser user = accountService.register(username, phone, password);
         return ApiResponse.ok(Map.of(
                 "id", user.id(),
                 "username", user.username(),

@@ -17,6 +17,9 @@ public final class CredentialRules {
     /** 账号 ID：4~20 位，字母开头，仅字母数字下划线。 */
     private static final Pattern USERNAME = Pattern.compile("^[A-Za-z][A-Za-z0-9_]{3,19}$");
 
+    /** 手机号：允许数字、加号、连字符、括号与空格，长度 5~30（与预约联系电话同一口径）。 */
+    private static final Pattern PHONE = Pattern.compile("[0-9+\\-()\\s]{5,30}");
+
     /** 邮箱格式与 {@link VerificationCodeSupport#requireEmail} 保持一致。 */
     public static String requireUsername(String raw) {
         String text = raw == null ? "" : raw.trim();
@@ -58,5 +61,17 @@ public final class CredentialRules {
         if (first == null || !first.equals(second)) {
             throw new BusinessException("两次输入的密码不一致");
         }
+    }
+
+    /** 注册手机号：与改资料、创建子账号共用同一套格式，避免注册入口比其它入口宽松。 */
+    public static String requirePhone(String raw) {
+        String text = raw == null ? "" : raw.trim();
+        if (text.isEmpty()) {
+            throw new BusinessException("请填写手机号");
+        }
+        if (!PHONE.matcher(text).matches()) {
+            throw new BusinessException("手机号格式不正确");
+        }
+        return text;
     }
 }

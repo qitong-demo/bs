@@ -93,6 +93,37 @@ public final class BusinessHours {
         return openTime == null ? "" : openTime.trim();
     }
 
+    /**
+     * 预约时段是否合法（`HH:mm-HH:mm`，且起止有序）。
+     *
+     * <p>写入前必须先过这一关：{@link #contains} 对无法解析的时段返回 true（无法判断就不拦），
+     * 若直接把用户输入交给它，"待确认"、任意文本都会被当成通过。</p>
+     */
+    public static boolean isValidSlot(String slot) {
+        if (slot == null || slot.isBlank()) {
+            return false;
+        }
+        Matcher matcher = RANGE_PATTERN.matcher(slot.trim());
+        if (!matcher.matches()) {
+            return false;
+        }
+        LocalTime from = parseTime(matcher.group(1));
+        LocalTime to = parseTime(matcher.group(2));
+        return from != null && to != null && from.isBefore(to);
+    }
+
+    /** 取时段的起止时间；格式非法时返回 null。 */
+    public static LocalTime[] slotBounds(String slot) {
+        if (!isValidSlot(slot)) {
+            return null;
+        }
+        Matcher matcher = RANGE_PATTERN.matcher(slot.trim());
+        if (!matcher.matches()) {
+            return null;
+        }
+        return new LocalTime[]{parseTime(matcher.group(1)), parseTime(matcher.group(2))};
+    }
+
     private static LocalTime parseTime(String value) {
         if (value == null) {
             return null;

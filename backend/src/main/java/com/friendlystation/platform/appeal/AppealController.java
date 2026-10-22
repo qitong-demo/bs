@@ -2,6 +2,7 @@ package com.friendlystation.platform.appeal;
 
 import com.friendlystation.platform.auth.CurrentUserContext;
 import com.friendlystation.platform.auth.DataScopeService;
+import com.friendlystation.platform.auth.RequirePermission;
 import com.friendlystation.platform.auth.RequireRole;
 import com.friendlystation.platform.common.ApiResponse;
 import com.friendlystation.platform.common.PageResult;
@@ -49,30 +50,45 @@ public class AppealController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword
     ) {
+        var user = CurrentUserContext.require();
         return ApiResponse.ok(workflowService.appealPage(current, size, status, keyword,
-                dataScopeService.areas(CurrentUserContext.require())));
+                dataScopeService.stationIds(user), dataScopeService.areas(user)));
     }
 
     @GetMapping("/{id}")
     @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<Map<String, Object>> detail(@PathVariable Long id) {
-        return ApiResponse.ok(workflowService.appealDetail(id));
+        var user = CurrentUserContext.require();
+        boolean platformLevel = dataScopeService.isPlatformLevel(user);
+        if (!workflowService.canAccessAppeal(id, user.id(), platformLevel,
+                dataScopeService.stationIds(user), dataScopeService.areas(user))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权查看该诉求");
+        }
+        return ApiResponse.ok(workflowService.appealDetail(id, user.id()));
     }
 
     @GetMapping("/{id}/records")
     @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
     public ApiResponse<List<Map<String, Object>>> records(@PathVariable Long id) {
-        return ApiResponse.ok(workflowService.appealRecords(id));
+        var user = CurrentUserContext.require();
+        boolean platformLevel = dataScopeService.isPlatformLevel(user);
+        if (!workflowService.canAccessAppeal(id, user.id(), platformLevel,
+                dataScopeService.stationIds(user), dataScopeService.areas(user))) {
+            throw new com.friendlystation.platform.common.ForbiddenException("无权查看该诉求");
+        }
+        return ApiResponse.ok(workflowService.appealRecords(id, user.id()));
     }
 
     @PutMapping("/assign")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @RequirePermission({"APPEAL_HANDLE"})
     public ApiResponse<Map<String, Object>> assign(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.assignAppeal(payload, CurrentUserContext.require().id()));
     }
 
     @PutMapping("/handle")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @RequirePermission({"APPEAL_HANDLE"})
     public ApiResponse<Map<String, Object>> handle(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(workflowService.handleAppeal(payload, CurrentUserContext.require().id()));
     }

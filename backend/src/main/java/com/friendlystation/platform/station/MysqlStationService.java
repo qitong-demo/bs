@@ -1,6 +1,7 @@
 package com.friendlystation.platform.station;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.friendlystation.platform.common.BusinessException;
 import com.friendlystation.platform.common.FormatUtils;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 /**
  * 数据库版驿站服务（mysql profile），与 MockStationService 对外行为保持一致。
@@ -120,7 +122,8 @@ public class MysqlStationService implements StationService {
         station.setAddress(request.address());
         station.setContactPhone(request.contactPhone());
         station.setOpenTime(request.openTime());
-        station.setStatus(request.status() == null || request.status().isBlank() ? STATUS_OPEN : request.status().trim());
+        station.setStatus(request.status() == null || request.status().isBlank()
+                ? STATUS_OPEN : requireOpenOrClosed(request.status()));
         station.setStationType(request.stationType() == null || request.stationType().isBlank()
                 ? DEFAULT_TYPE : request.stationType().trim());
         // 后台录入的数据没有公开来源，标记为 MANUAL，前端据此与公开来源数据区分展示。
@@ -150,7 +153,7 @@ public class MysqlStationService implements StationService {
             station.setOpenTime(request.openTime());
         }
         if (request.status() != null && !request.status().isBlank()) {
-            station.setStatus(request.status().trim());
+            station.setStatus(requireOpenOrClosed(request.status()));
         }
         if (request.stationType() != null && !request.stationType().isBlank()) {
             station.setStationType(request.stationType().trim());
@@ -173,6 +176,39 @@ public class MysqlStationService implements StationService {
         station.setId(id);
         station.setStatus(normalizedStatus);
         stationMapper.updateById(station);
+        return toDto(stationMapper.selectById(id));
+    }
+
+    @Override
+    @Transactional
+    public StationDto suspend(Long id, LocalDateTime from, LocalDateTime to, String reason) {
+        if (from == null || to == null || !from.isBefore(to)) {
+            throw new BusinessException("暂停开始时间必须早于结束时间");
+        }
+        if (!existsActive(id)) {
+            throw new BusinessException("驿站不存在");
+        }
+        stationMapper.update(null, new LambdaUpdateWrapper<Station>()
+                .eq(Station::getId, id)
+                .set(Station::getSuspendedFrom, from)
+                .set(Station::getSuspendedTo, to)
+                .set(Station::getSuspendReason, reason == null ? "" : reason.trim())
+                .set(Station::getUpdateTime, LocalDateTime.now()));
+        return toDto(stationMapper.selectById(id));
+    }
+
+    @Override
+    @Transactional
+    public StationDto resume(Long id) {
+        if (!existsActive(id)) {
+            throw new BusinessException("驿站不存在");
+        }
+        stationMapper.update(null, new LambdaUpdateWrapper<Station>()
+                .eq(Station::getId, id)
+                .set(Station::getSuspendedFrom, null)
+                .set(Station::getSuspendedTo, null)
+                .set(Station::getSuspendReason, "")
+                .set(Station::getUpdateTime, LocalDateTime.now()));
         return toDto(stationMapper.selectById(id));
     }
 
@@ -310,6 +346,9 @@ public class MysqlStationService implements StationService {
                         FormatUtils.date(station.getGeocodeAt()),
                         text(station.getBusinessSource()),
                         FormatUtils.date(station.getBusinessSyncedAt())),
+                FormatUtils.dateTime(station.getSuspendedFrom()),
+                FormatUtils.dateTime(station.getSuspendedTo()),
+                text(station.getSuspendReason()),
                 FormatUtils.dateTime(station.getCreateTime())
         );
     }

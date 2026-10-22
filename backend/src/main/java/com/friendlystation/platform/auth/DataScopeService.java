@@ -22,7 +22,10 @@ public class DataScopeService {
 
     /** 是否属于平台级角色（不受驿站范围限制）。 */
     public boolean isPlatformLevel(CurrentUser user) {
-        return user == null || !"STATION_ADMIN".equals(user.role());
+        // 普通用户不是「平台级」：他在管理端接口上会被 @RequireRole 拦住，
+        // 但在诉求详情这类三种角色都开放的接口上，必须按“只能看本人”处理，
+        // 否则任何登录用户都能读到别人的诉求。
+        return user == null || "PLATFORM_ADMIN".equals(user.role());
     }
 
     /** 当前账号负责的驿站。 */

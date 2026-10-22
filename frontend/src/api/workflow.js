@@ -21,6 +21,11 @@ export function auditAppointment(data) {
   return request({ url: "/appointment/audit", method: "put", data });
 }
 
+/** 服务完成后把已确认的预约标记为已完成。 */
+export function finishAppointment(id) {
+  return request({ url: `/appointment/${id}/finish`, method: "put" });
+}
+
 // ------------------------------------------------------------------ 诉求
 export function createAppeal(data) {
   return request({ url: "/appeal", method: "post", data });
@@ -73,4 +78,9 @@ export function reviewSignup(data) {
 
 export function getAdminSignups() {
   return request({ url: "/activity/admin/signups" });
+}
+
+/** 报名人取消自己的报名：审核通过/未通过后不可取消。 */
+export function cancelSignup(id) {
+  return request({ url: `/activity/signup/${id}/cancel`, method: "put" });
 }

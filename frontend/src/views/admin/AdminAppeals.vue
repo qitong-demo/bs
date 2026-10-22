@@ -55,7 +55,7 @@
       </el-table-column>
       <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" :disabled="!canHandle(row)" @click="openAssign(row)">分派</el-button>
+          <el-button size="small" :disabled="!canAssign(row)" @click="openAssign(row)">分派</el-button>
           <el-button size="small" type="primary" :disabled="!canHandle(row)" @click="openHandle(row, 'PROCESSING')">处理中</el-button>
           <el-button size="small" type="success" :disabled="!canHandle(row)" @click="openHandle(row, 'RESOLVED')">办结</el-button>
           <el-button size="small" type="info" :disabled="!canHandle(row)" @click="openHandle(row, 'CLOSED')">关闭</el-button>
@@ -142,7 +142,7 @@
             <p class="admin-timeline-handler">操作人：{{ textOf(item.handlerName) }}</p>
           </el-timeline-item>
         </el-timeline>
-        <el-empty v-else-if="!timelineLoading" description="暂无处理记录" />
+        <el-empty v-else-if="!timelineLoading" :image-size="64" description="暂无处理记录" />
       </div>
       <template #footer>
         <el-button @click="timelineVisible = false">关闭</el-button>
@@ -189,6 +189,11 @@ const timeline = ref([]);
 
 const handleTitle = computed(() => HANDLE_TITLES[handleStatus.value] || "处理诉求");
 const handleContentLabel = computed(() => HANDLE_LABELS[handleStatus.value] || "给用户的回复");
+
+function canAssign(row) {
+  // 处理中再分派会被后端拒绝（状态不能回退），按钮提前禁用
+  return ["PENDING_ACCEPTANCE", "ASSIGNED"].includes(row?.status);
+}
 
 function canHandle(row) {
   return ["PENDING_ACCEPTANCE", "ASSIGNED", "PROCESSING"].includes(row?.status);

@@ -62,6 +62,12 @@ public class MockActivityService implements ActivityService {
         external.put("cityCode", "330100");
         external.put("sourceLevel", "GOV");
         store.add(external);
+        // 种子数据已占用 1~4：计数器必须从现有最大 id 开始，否则新建活动会覆盖种子记录。
+        long maxId = store.stream()
+                .mapToLong(item -> ((Number) item.get("id")).longValue())
+                .max()
+                .orElse(3L);
+        idGenerator.set(maxId);
     }
 
     @Override
@@ -99,6 +105,7 @@ public class MockActivityService implements ActivityService {
                 ContentSupport.trimText(data.get("content")),
                 ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"),
                 LocalDateTime.now());
+        applyOrganizer(record, data);
         applySourceFields(record, data);
         store.add(record);
         signedCounts.put(id, 0);
@@ -128,7 +135,12 @@ public class MockActivityService implements ActivityService {
             record.put("address", ContentSupport.trimText(data.get("address")));
         }
         if (data.containsKey("maxCount")) {
-            record.put("maxCount", requireMaxCount(data.get("maxCount")));
+            int newMax = requireMaxCount(data.get("maxCount"));
+            int signed = signedCounts.getOrDefault(((Number) record.get("id")).longValue(), 0);
+            if (newMax < signed) {
+                throw new BusinessException("活动名额不能小于已报名人数（当前 " + signed + " 人）");
+            }
+            record.put("maxCount", newMax);
         }
         if (data.containsKey("content")) {
             record.put("content", ContentSupport.trimText(data.get("content")));
@@ -136,14 +148,35 @@ public class MockActivityService implements ActivityService {
         if (data.containsKey("status")) {
             record.put("status", ContentSupport.textOrDefault(data.get("status"), "PUBLISHED"));
         }
+        if (data.containsKey("organizerType") || data.containsKey("externalUrl")) {
+            Map<String, Object> merged = new LinkedHashMap<>(data);
+            merged.putIfAbsent("organizerType", record.get("organizerType"));
+            applyOrganizer(record, merged);
+            applySourceFields(record, merged);
+        }
         return view(record);
     }
 
     @Override
     public void delete(Long id) {
         Map<String, Object> record = require(id);
+        int signed = signedCounts.getOrDefault(id, 0);
+        if (signed > 0) {
+            throw new BusinessException("该活动已有 " + signed + " 人报名，不能直接删除。"
+                    + "请改为取消活动，已报名的用户仍能看到记录与取消说明。");
+        }
         store.remove(record);
         signedCounts.remove(id);
+    }
+
+    @Override
+    public void onSignup(long activityId) {
+        signedCounts.merge(activityId, 1, Integer::sum);
+    }
+
+    @Override
+    public void onSignupCancel(long activityId) {
+        signedCounts.computeIfPresent(activityId, (key, count) -> Math.max(count - 1, 0));
     }
 
     @Override
@@ -188,6 +221,27 @@ public class MockActivityService implements ActivityService {
         int to = (int) Math.min(from + safeSize, filtered.size());
         List<Map<String, Object>> records = filtered.subList(from, to).stream().map(this::view).toList();
         return new PageResult<>(safeCurrent, safeSize, filtered.size(), records);
+    }
+
+    /**
+     * 设置承办方，与 mysql 实现同口径：第三方活动必须给出 http(s) 链接，
+     * 站内活动不接受外部链接，避免出现两套报名入口。
+     */
+    private static void applyOrganizer(Map<String, Object> record, Map<String, Object> data) {
+        String type = ActivityOrganizer.normalize(data.get("organizerType"));
+        String externalUrl = ContentSupport.trimText(data.get("externalUrl"));
+        if (ActivityOrganizer.TYPE_EXTERNAL.equals(type)) {
+            if (externalUrl.isEmpty()) {
+                throw new BusinessException("第三方活动必须填写报名或详情链接");
+            }
+            if (!externalUrl.startsWith("http://") && !externalUrl.startsWith("https://")) {
+                throw new BusinessException("活动链接需以 http:// 或 https:// 开头");
+            }
+        } else {
+            externalUrl = "";
+        }
+        record.put("organizerType", type);
+        record.put("externalUrl", externalUrl);
     }
 
     /**

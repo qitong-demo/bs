@@ -12,8 +12,10 @@ class DemoWorkflowStoreTest {
         DemoWorkflowStore store = new DemoWorkflowStore();
         // 预约事项改为用户自填（serviceName 必填），不再是固定的服务项目 id
         Map<String, Object> created = store.addAppointment(
-                Map.of("station", "湖滨驿站", "serviceName", "想确认能否借用场地开培训", "date", "2026-10-07"), 1L);
-        Map<String, Object> audited = store.auditAppointment(Map.of("id", created.get("id"), "status", "CONFIRMED"), 2L);
+                Map.of("stationId", 1L, "station", "湖滨驿站", "serviceName", "想确认能否借用场地开培训",
+                        "date", java.time.LocalDate.now().plusDays(7).toString(), "slot", "09:00-11:00"), 1L);
+        Map<String, Object> audited = store.auditAppointment(
+                Map.of("id", created.get("id"), "status", "CONFIRMED"), 2L, null);
         assertEquals("CONFIRMED", audited.get("status"));
         assertEquals(2L, audited.get("operatorId"));
     }
@@ -23,7 +25,8 @@ class DemoWorkflowStoreTest {
         DemoWorkflowStore store = new DemoWorkflowStore();
         // 未填写沟通事项应被拒绝，避免出现「预约了但不知道要沟通什么」的记录
         var error = assertThrows(com.friendlystation.platform.common.BusinessException.class,
-                () -> store.addAppointment(Map.of("station", "湖滨驿站", "date", "2026-10-07"), 1L));
+                () -> store.addAppointment(Map.of("stationId", 1L, "station", "湖滨驿站",
+                        "date", java.time.LocalDate.now().plusDays(7).toString()), 1L));
         assertTrue(error.getMessage().contains("想提前沟通的事项"));
     }
 
@@ -32,10 +35,12 @@ class DemoWorkflowStoreTest {
         DemoWorkflowStore store = new DemoWorkflowStore();
         var error = assertThrows(com.friendlystation.platform.common.BusinessException.class,
                 () -> store.addAppointment(Map.of(
+                        "stationId", 1L,
                         "station", "湖滨驿站",
                         "serviceName", "想确认能否借用场地开培训",
                         "contactPhone", "不是电话号码",
-                        "date", "2026-10-07"), 1L));
+                        "date", java.time.LocalDate.now().plusDays(7).toString(),
+                        "slot", "09:00-11:00"), 1L));
         assertTrue(error.getMessage().contains("联系电话"));
     }
 
@@ -95,13 +100,13 @@ class DemoWorkflowStoreTest {
         // 未通过必须说明原因，报名人有权知道为什么
         Map<String, Object> rejectNoNote = Map.of("id", signup.get("id"), "status", "REJECTED");
         RuntimeException rejectError =
-                assertThrows(RuntimeException.class, () -> store.reviewSignup(rejectNoNote, 2L));
+                assertThrows(RuntimeException.class, () -> store.reviewSignup(rejectNoNote, 2L, null));
         assertTrue(rejectError.getMessage().contains("原因"), rejectError.getMessage());
 
         Map<String, Object> reviewed = store.reviewSignup(Map.of(
                 "id", signup.get("id"),
                 "status", "APPROVED",
-                "reviewNote", "已电话确认，周六上午 9 点在驿站集合"), 2L);
+                "reviewNote", "已电话确认，周六上午 9 点在驿站集合"), 2L, null);
         assertEquals("APPROVED", reviewed.get("status"));
         assertEquals("审核通过", reviewed.get("statusLabel"));
         assertEquals("已电话确认，周六上午 9 点在驿站集合", reviewed.get("reviewNote"));

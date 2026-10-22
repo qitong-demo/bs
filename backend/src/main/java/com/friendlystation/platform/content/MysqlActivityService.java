@@ -121,7 +121,12 @@ public class MysqlActivityService implements ActivityService {
             activity.setAddress(ContentSupport.trimText(data.get("address")));
         }
         if (data.containsKey("maxCount")) {
-            activity.setMaxCount(requireMaxCount(data.get("maxCount")));
+            int newMax = requireMaxCount(data.get("maxCount"));
+            int signed = signedCount(id);
+            if (newMax < signed) {
+                throw new BusinessException("活动名额不能小于已报名人数（当前 " + signed + " 人）");
+            }
+            activity.setMaxCount(newMax);
         }
         if (data.containsKey("content")) {
             activity.setContent(ContentSupport.trimText(data.get("content")));
@@ -141,7 +146,13 @@ public class MysqlActivityService implements ActivityService {
     @Override
     @Transactional
     public void delete(Long id) {
-        require(id);
+        // 锁活动行：与 addSignup 的 FOR UPDATE 串行化，避免「查完没有报名 → 并发插入报名 → 删除撞外键」。
+        Activity activity = activityMapper.selectOne(new LambdaQueryWrapper<Activity>()
+                .eq(Activity::getId, id)
+                .last("FOR UPDATE"));
+        if (activity == null) {
+            throw new BusinessException("活动不存在");
+        }
         long signed = signupMapper.selectCount(new LambdaQueryWrapper<ActivitySignup>()
                 .eq(ActivitySignup::getActivityId, id));
         // 已有人报名的活动不能删：activity_signup 有外键指向 activity，
@@ -153,7 +164,12 @@ public class MysqlActivityService implements ActivityService {
             throw new BusinessException("该活动已有 " + signed + " 人报名，不能直接删除。"
                     + "请改为取消活动，已报名的骑手仍能看到记录与取消说明。");
         }
-        activityMapper.deleteById(id);
+        try {
+            activityMapper.deleteById(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException exception) {
+            // 检查与删除之间仍可能有并发报名，外键会拦住删除；转成可读的业务错误而不是 500。
+            throw new BusinessException("该活动刚收到新的报名，不能直接删除，请刷新后重试或改为取消活动");
+        }
     }
 
     @Override
@@ -310,13 +326,14 @@ public class MysqlActivityService implements ActivityService {
         }
     }
 
-    /** 统计该活动的报名人数。 */
+    /** 统计该活动的有效报名人数（已取消不占名额）。 */
     private int signedCount(Long activityId) {
         if (activityId == null) {
             return 0;
         }
         long count = signupMapper.selectCount(new LambdaQueryWrapper<ActivitySignup>()
-                .eq(ActivitySignup::getActivityId, activityId));
+                .eq(ActivitySignup::getActivityId, activityId)
+                .ne(ActivitySignup::getStatus, ActivityOrganizer.SIGNUP_CANCELLED));
         return (int) Math.min(count, Integer.MAX_VALUE);
     }
 

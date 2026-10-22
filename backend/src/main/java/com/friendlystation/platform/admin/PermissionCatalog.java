@@ -103,7 +103,7 @@ public class PermissionCatalog {
      */
     public static final List<String> STATION_ADMIN_PERMISSIONS = List.of(
             "APPOINTMENT_AUDIT", "APPEAL_HANDLE", "ACTIVITY_MANAGE",
-            "SIGNUP_MANAGE", "CHANGE_APPROVE", "REPORT_EXPORT"
+            "SIGNUP_MANAGE", "REPORT_EXPORT", "SERVICE_MANAGE"
     );
 
     /** 主管理员的内置账号 ID 约定：账号名 platform_admin。 */

@@ -34,9 +34,24 @@ export function deleteStation(id) {
   return request({ url: `/station/${id}`, method: "delete" });
 }
 
+/** 当前账号负责的驿站（驿站管理员端）。 */
+export function getMyStations() {
+  return request({ url: "/station/mine" });
+}
+
+/** 设置暂停服务窗口：期间不接受新预约。 */
+export function suspendStation(id, data) {
+  return request({ url: `/station/${id}/suspend`, method: "put", data });
+}
+
+/** 取消暂停服务。 */
+export function resumeStation(id) {
+  return request({ url: `/station/${id}/suspend`, method: "delete" });
+}
+
 // -------------------------------------------------------------- 服务项目
 export function getStationServicePage(params = {}) {
-  return request({ url: "/station/service/page", params: { current: 1, size: 10, ...params } });
+  return request({ url: "/station/service/admin/page", params: { current: 1, size: 10, ...params } });
 }
 
 export function listStationServices(stationId) {

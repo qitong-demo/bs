@@ -101,7 +101,7 @@ describe("驿站接口契约", () => {
   it("服务项目接口路径正确", async () => {
     await stationApi.getStationServicePage({ stationId: 3 });
     expect(request).toHaveBeenLastCalledWith({
-      url: "/station/service/page",
+      url: "/station/service/admin/page",
       params: { current: 1, size: 10, stationId: 3 }
     });
 

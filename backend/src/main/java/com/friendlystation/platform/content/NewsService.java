@@ -28,6 +28,9 @@ public interface NewsService {
     /** 资讯详情，不存在抛出业务异常。 */
     Map<String, Object> detail(Long id);
 
+    /** 用户打开详情：返回详情并让阅读数 +1。 */
+    Map<String, Object> view(Long id);
+
     /** 新增资讯。 */
     Map<String, Object> create(Map<String, Object> payload);
 

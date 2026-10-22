@@ -1753,6 +1753,19 @@ button {
   padding: 0 4px;
 }
 
+.message-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 4px;
+}
+
+/* 手机端登录页：第三个演示角色占满一行，避免 2+1 的悬空布局 */
+@media (max-width: 520px) {
+  .demo-actions button:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .record-row,
 .evaluation-row {
   display: flex;

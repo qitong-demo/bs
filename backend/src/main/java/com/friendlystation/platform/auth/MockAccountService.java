@@ -153,6 +153,11 @@ public class MockAccountService implements AccountService {
     }
 
     @Override
+    public boolean enabled(long userId) {
+        return exists(userId) && isEnabled(userId);
+    }
+
+    @Override
     public String usernameOf(long userId) {
         return users.values().stream()
                 .filter(user -> user.id() == userId)

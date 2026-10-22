@@ -13,6 +13,8 @@ public class Appeal {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    /** 定向反馈的驿站；为空表示未指定（平台诉求或历史数据）。 */
+    private Long stationId;
     private String title;
     /** 分类：REQUEST 反映问题 / PRAISE 表扬感谢 / SUGGESTION 提出建议。 */
     private String category;

@@ -1,10 +1,11 @@
 package com.friendlystation.platform.statistics;
 
-import com.friendlystation.platform.station.StationDto;
-import com.friendlystation.platform.station.StationSource;
 import com.friendlystation.platform.common.BusinessException;
+import com.friendlystation.platform.common.PageResult;
 import com.friendlystation.platform.evaluation.StationEvaluationService;
+import com.friendlystation.platform.station.StationDto;
 import com.friendlystation.platform.station.StationService;
+import com.friendlystation.platform.station.StationSource;
 import com.friendlystation.platform.workflow.WorkflowService;
 import org.springframework.stereotype.Component;
 
@@ -13,12 +14,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 统计报表导出。数据来源统一走各业务服务，因此内存 profile 与 mysql profile 使用同一套报表口径，
- * 只有在 mysql profile 下才会导出数据库中的真实记录。
+ * 统计报表导出。数据来源统一走各业务服务，因此内存 profile 与 mysql profile 使用同一套报表口径。
+ *
+ * <p>导出必须遵守两件事：</p>
+ * <ol>
+ *   <li><b>数据范围</b>：驿站管理员只能导出自己负责的驿站/区域，不能借导出绕过列表的权限；</li>
+ *   <li><b>不静默截断</b>：业务分页接口有单页上限（200/50），导出要循环取页，
+ *       直到取完或达到导出上限，而不是只拿第一页。</li>
+ * </ol>
  */
 @Component
 public class CsvExportBuilder {
     private static final int EXPORT_LIMIT = 5000;
+    private static final int PAGE_SIZE = 200;
 
     private final WorkflowService workflowService;
     private final StationService stationService;
@@ -32,22 +40,27 @@ public class CsvExportBuilder {
         this.evaluationService = evaluationService;
     }
 
+    /** 平台级导出（不限制范围）。 */
     public CsvExport build(String type) {
+        return build(type, null, null);
+    }
+
+    public CsvExport build(String type, List<Long> stationIds, List<String> areas) {
         String normalized = type == null ? "" : type.trim().toLowerCase();
         return switch (normalized) {
-            case "appeal", "appeals" -> new CsvExport("appeals.csv", appealsCsv());
-            case "appointment", "appointments" -> new CsvExport("appointments.csv", appointmentsCsv());
-            case "station", "stations" -> new CsvExport("stations.csv", stationsCsv());
-            case "signup", "signups" -> new CsvExport("activity-signups.csv", signupsCsv());
-            case "evaluation", "evaluations" -> new CsvExport("station-evaluations.csv", evaluationsCsv());
+            case "appeal", "appeals" -> new CsvExport("appeals.csv", appealsCsv(stationIds, areas));
+            case "appointment", "appointments" -> new CsvExport("appointments.csv", appointmentsCsv(stationIds));
+            case "station", "stations" -> new CsvExport("stations.csv", stationsCsv(stationIds));
+            case "signup", "signups" -> new CsvExport("activity-signups.csv", signupsCsv(stationIds));
+            case "evaluation", "evaluations" -> new CsvExport("station-evaluations.csv", evaluationsCsv(stationIds));
             default -> throw new BusinessException("不支持的导出类型：" + (type == null ? "" : type)
                     + "，可选值为 appeals、appointments、stations、signups、evaluations");
         };
     }
 
-    private String appealsCsv() {
+    private String appealsCsv(List<Long> stationIds, List<String> areas) {
         List<List<String>> rows = new ArrayList<>();
-        for (Map<String, Object> item : workflowService.appealPage(1, EXPORT_LIMIT, null, null, null).records()) {
+        for (Map<String, Object> item : collectAppeals(stationIds, areas)) {
             rows.add(List.of(
                     text(item.get("id")),
                     text(item.get("title")),
@@ -66,9 +79,9 @@ public class CsvExportBuilder {
                 "当前状态", "受理方", "处理人", "提交时间", "办结时间"), rows);
     }
 
-    private String appointmentsCsv() {
+    private String appointmentsCsv(List<Long> stationIds) {
         List<List<String>> rows = new ArrayList<>();
-        for (Map<String, Object> item : workflowService.appointmentPage(1, EXPORT_LIMIT, null, null, null).records()) {
+        for (Map<String, Object> item : collectAppointments(stationIds)) {
             rows.add(List.of(
                     text(item.get("id")),
                     text(item.get("stationName")),
@@ -86,9 +99,9 @@ public class CsvExportBuilder {
                 "当前状态", "预约人", "审核说明", "提交时间"), rows);
     }
 
-    private String stationsCsv() {
+    private String stationsCsv(List<Long> stationIds) {
         List<List<String>> rows = new ArrayList<>();
-        for (StationDto item : stationService.adminPage(1, EXPORT_LIMIT, null, null, null, null).records()) {
+        for (StationDto item : collectStations(stationIds)) {
             if ("DELETED".equals(item.status())) {
                 continue;
             }
@@ -116,9 +129,12 @@ public class CsvExportBuilder {
                 "创建时间"), rows);
     }
 
-    private String signupsCsv() {
+    private String signupsCsv(List<Long> stationIds) {
         List<List<String>> rows = new ArrayList<>();
-        for (Map<String, Object> item : workflowService.allSignups()) {
+        for (Map<String, Object> item : workflowService.allSignups(stationIds)) {
+            if (rows.size() >= EXPORT_LIMIT) {
+                break;
+            }
             rows.add(List.of(
                     text(item.get("id")),
                     text(item.get("activityTitle")),
@@ -131,9 +147,9 @@ public class CsvExportBuilder {
         return CsvSupport.toCsv(List.of("编号", "活动名称", "报名人", "联系电话", "报名状态", "报名时间"), rows);
     }
 
-    private String evaluationsCsv() {
+    private String evaluationsCsv(List<Long> stationIds) {
         List<List<String>> rows = new ArrayList<>();
-        for (Map<String, Object> item : evaluationService.page(1, EXPORT_LIMIT, null, null).records()) {
+        for (Map<String, Object> item : collectEvaluations(stationIds)) {
             rows.add(List.of(
                     text(item.get("id")),
                     text(item.get("stationName")),
@@ -148,6 +164,86 @@ public class CsvExportBuilder {
         }
         return CsvSupport.toCsv(List.of("编号", "评价驿站", "评价人", "综合评分", "服务评分",
                 "环境评分", "设施评分", "评价内容", "评价时间"), rows);
+    }
+
+    /** 循环取页，避免业务接口的单页上限（200）把导出静默截断。 */
+    private List<Map<String, Object>> collectAppointments(List<Long> stationIds) {
+        List<Map<String, Object>> collected = new ArrayList<>();
+        long current = 1;
+        while (collected.size() < EXPORT_LIMIT) {
+            PageResult<Map<String, Object>> page = workflowService.appointmentPage(
+                    current, PAGE_SIZE, null, null, stationIds);
+            collected.addAll(page.records());
+            if (page.records().isEmpty() || current * PAGE_SIZE >= page.total()) {
+                break;
+            }
+            current++;
+        }
+        return collected.size() > EXPORT_LIMIT ? collected.subList(0, EXPORT_LIMIT) : collected;
+    }
+
+    private List<Map<String, Object>> collectAppeals(List<Long> stationIds, List<String> areas) {
+        List<Map<String, Object>> collected = new ArrayList<>();
+        long current = 1;
+        while (collected.size() < EXPORT_LIMIT) {
+            PageResult<Map<String, Object>> page = workflowService.appealPage(
+                    current, PAGE_SIZE, null, null, stationIds, areas);
+            collected.addAll(page.records());
+            if (page.records().isEmpty() || current * PAGE_SIZE >= page.total()) {
+                break;
+            }
+            current++;
+        }
+        return collected.size() > EXPORT_LIMIT ? collected.subList(0, EXPORT_LIMIT) : collected;
+    }
+
+    private List<StationDto> collectStations(List<Long> stationIds) {
+        List<StationDto> collected = new ArrayList<>();
+        long current = 1;
+        while (collected.size() < EXPORT_LIMIT) {
+            PageResult<StationDto> page = stationService.adminPage(current, 50, null, null, null, null);
+            for (StationDto item : page.records()) {
+                if (stationIds != null && !stationIds.contains(item.id())) {
+                    continue;
+                }
+                collected.add(item);
+            }
+            if (page.records().isEmpty() || current * 50L >= page.total()) {
+                break;
+            }
+            current++;
+        }
+        return collected.size() > EXPORT_LIMIT ? collected.subList(0, EXPORT_LIMIT) : collected;
+    }
+
+    private List<Map<String, Object>> collectEvaluations(List<Long> stationIds) {
+        List<Map<String, Object>> collected = new ArrayList<>();
+        long current = 1;
+        while (collected.size() < EXPORT_LIMIT) {
+            PageResult<Map<String, Object>> page = evaluationService.page(current, 50, null, null);
+            for (Map<String, Object> item : page.records()) {
+                if (stationIds != null && !stationIds.contains(number(item.get("stationId")))) {
+                    continue;
+                }
+                collected.add(item);
+            }
+            if (page.records().isEmpty() || current * 50L >= page.total()) {
+                break;
+            }
+            current++;
+        }
+        return collected.size() > EXPORT_LIMIT ? collected.subList(0, EXPORT_LIMIT) : collected;
+    }
+
+    private static long number(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception ignored) {
+            return 0L;
+        }
     }
 
     private static String text(Object value) {

@@ -15,6 +15,12 @@ public class GlobalExceptionHandler {
         return new ApiResponse<>(400, exception.getMessage(), null);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<Void> handleForbiddenException(ForbiddenException exception) {
+        return ApiResponse.forbidden(exception.getMessage());
+    }
+
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiResponse<Void> handleNoResourceFound(NoResourceFoundException exception) {

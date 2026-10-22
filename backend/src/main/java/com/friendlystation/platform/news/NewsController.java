@@ -42,6 +42,11 @@ public class NewsController {
             @RequestParam(required = false) String sourceType,
             @RequestParam(required = false) String platform
     ) {
+        // 城市编码会参与排序 SQL（ORDER BY 不能参数化），入口统一做白名单校验；
+        // 放在 controller 是为了两套 profile 行为一致，而不是只有 MySQL 实现拒绝。
+        if (cityCode != null && !cityCode.isBlank() && !cityCode.trim().matches("\\d{6}")) {
+            throw new com.friendlystation.platform.common.BusinessException("城市编码不合法");
+        }
         return ApiResponse.ok(newsService.publicPage(current, size, category, keyword, cityCode, sourceType, platform));
     }
 
@@ -58,15 +63,16 @@ public class NewsController {
         return ApiResponse.ok(newsService.adminPage(current, size, category, keyword, status));
     }
 
-    /** 资讯详情。 */
+    /** 资讯详情（同时累加阅读数）。 */
     @GetMapping("/{id}")
     public ApiResponse<Map<String, Object>> detail(@PathVariable Long id) {
-        return ApiResponse.ok(newsService.detail(id));
+        return ApiResponse.ok(newsService.view(id));
     }
 
     /** 新增资讯。 */
     @PostMapping
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(newsService.create(payload));
     }
@@ -74,6 +80,7 @@ public class NewsController {
     /** 修改资讯。 */
     @PutMapping("/{id}")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(newsService.update(id, payload));
     }
@@ -81,6 +88,7 @@ public class NewsController {
     /** 删除资讯。 */
     @DeleteMapping("/{id}")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         newsService.delete(id);
         return ApiResponse.ok(Map.of("id", id, "deleted", true));

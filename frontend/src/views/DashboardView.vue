@@ -852,9 +852,11 @@ onMounted(async () => {
   }
   await initCity();
   await Promise.all([loadAll(), loadNearbyStations()]);
+  messageStore.startPolling();
 });
 
 onBeforeUnmount(() => {
+  messageStore.stopPolling();
   mobileQuery?.removeEventListener?.("change", onViewportChange);
   if (nowTimer) {
     clearInterval(nowTimer);

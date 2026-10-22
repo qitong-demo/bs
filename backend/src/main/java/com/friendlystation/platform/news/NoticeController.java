@@ -59,6 +59,7 @@ public class NoticeController {
     /** 新增公告。 */
     @PostMapping
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(noticeService.create(payload));
     }
@@ -66,6 +67,7 @@ public class NoticeController {
     /** 修改公告。 */
     @PutMapping("/{id}")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         return ApiResponse.ok(noticeService.update(id, payload));
     }
@@ -73,6 +75,7 @@ public class NoticeController {
     /** 删除公告。 */
     @DeleteMapping("/{id}")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"NEWS_MANAGE"})
     public ApiResponse<Map<String, Object>> delete(@PathVariable Long id) {
         noticeService.delete(id);
         return ApiResponse.ok(Map.of("id", id, "deleted", true));
