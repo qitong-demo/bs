@@ -54,8 +54,18 @@
       <el-tab-pane v-if="canSee('activities')" label="活动管理" name="activities">
         <AdminActivities />
       </el-tab-pane>
-      <el-tab-pane v-if="canSee('signups')" label="报名记录" name="signups">
-        <AdminActivities :section="'signups'" />
+      <el-tab-pane v-if="canSee('signups')" name="signups">
+        <template #label>
+          <span class="signup-tab-label">
+            报名审核
+            <el-badge v-if="pendingSignups" :value="pendingSignups" :max="99" class="signup-tab-badge" />
+          </span>
+        </template>
+        <AdminActivities
+          :section="'signups'"
+          :focus-signup-id="focusSignupId"
+          @reviewed="loadPendingSignups"
+        />
       </el-tab-pane>
       <el-tab-pane v-if="canSee('users')" label="账号管理" name="users">
         <AdminUsers />
@@ -81,6 +91,7 @@ import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { PLATFORM_ROLES, numberText } from "./admin/admin-shared";
 import { getMyPermissions } from "../api/admin";
+import { getSignupPendingCount } from "../api/workflow";
 import AdminOverview from "./admin/AdminOverview.vue";
 import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
@@ -137,6 +148,8 @@ const messageStore = useMessageStore();
 const router = useRouter();
 const route = useRoute();
 const activeTab = ref("overview");
+const pendingSignups = ref(0);
+const focusSignupId = ref(Number(route.query.signupId) || 0);
 const loading = ref(false);
 const stat = ref({});
 const workflow = ref({});
@@ -213,15 +226,38 @@ async function loadSummary() {
   }
 }
 
+async function loadPendingSignups() {
+  try {
+    const data = await getSignupPendingCount();
+    pendingSignups.value = Number(data?.count) || 0;
+  } catch {
+    pendingSignups.value = 0;
+  }
+}
+
+watch(
+  () => [route.query.tab, route.query.signupId],
+  ([tab, signupId]) => {
+    if (tab === "signups" || signupId) {
+      activeTab.value = "signups";
+    }
+    focusSignupId.value = Number(signupId) || 0;
+  }
+);
+
 onMounted(() => {
   messageStore.startPolling();
   messageStore.refreshQuietly();
   loadMyPermissions();
   loadSummary();
+  loadPendingSignups();
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
   const tab = String(route.query.tab || "");
   if (tab && canSee(tab)) {
     activeTab.value = tab;
+  }
+  if (route.query.signupId) {
+    activeTab.value = "signups";
   }
 });
 
@@ -243,6 +279,15 @@ h1 { margin: 0; font-size: 28px; }
 .admin-metric span { color: #687483; font-size: 13px; }
 .admin-metric strong { font-size: 26px; color: #14836d; line-height: 1.1; }
 .admin-metric small { color: #87909f; font-size: 12px; }
+.signup-tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.signup-tab-label :deep(.el-badge__content) {
+  position: static;
+  transform: none;
+}
 .admin-tabs { padding: 0 20px 20px; background: #fff; border: 1px solid #e5eaf0; border-radius: 6px; }
 .admin-tabs :deep(.el-tabs__header) { margin-bottom: 10px; }
 /* 平台管理员有 12 个标签，窄屏时给左右滚动箭头留出空间，避免标签被裁切 */

@@ -51,6 +51,7 @@ public class DemoWorkflowStore implements WorkflowService {
      */
     private com.friendlystation.platform.content.ActivityService activityLookup;
     private com.friendlystation.platform.notification.NotificationService notificationService;
+    private com.friendlystation.platform.auth.MockAccountService accountService;
 
     public DemoWorkflowStore() {
     }
@@ -72,12 +73,22 @@ public class DemoWorkflowStore implements WorkflowService {
         this.notificationService = notificationService;
     }
 
+    @Autowired(required = false)
+    public void setAccountService(com.friendlystation.platform.auth.MockAccountService accountService) {
+        this.accountService = accountService;
+    }
+
     /** 统一写通知；单元测试未注入时静默跳过。 */
     private void push(Object userId, String type, String title, String content, String bizType, long bizId) {
+        pushWithLink(userId, type, title, content, "", bizType, bizId);
+    }
+
+    private void pushWithLink(Object userId, String type, String title, String content, String link,
+                              String bizType, long bizId) {
         if (notificationService == null) {
             return;
         }
-        notificationService.push(FormatUtils.number(userId), type, title, content, "", bizType, bizId);
+        notificationService.push(FormatUtils.number(userId), type, title, content, link, bizType, bizId);
     }
 
     // ------------------------------------------------------------------ 预约
@@ -647,23 +658,34 @@ public class DemoWorkflowStore implements WorkflowService {
         return view(item);
     }
 
-    /** 报名成功后提醒活动所属驿站的负责人联系报名人。 */
+    /** 报名成功后提醒活动所属驿站的负责人；平台管理员始终保留一份可处理的通知。 */
     private void notifySignupManager(Map<String, Object> activity, String contactName, long signupId) {
-        if (activity == null || stationLookup == null) {
+        if (activity == null) {
             return;
         }
+        String link = "/admin?tab=signups&signupId=" + signupId;
+        String content = activity.get("title") + " · " + contactName;
+        Long managerId = null;
         long stationId = FormatUtils.number(activity.get("stationId"));
-        if (stationId <= 0) {
+        if (stationId > 0 && stationLookup != null) {
+            try {
+                StationDto station = stationLookup.detail(stationId);
+                if (station != null && station.managerId() != null) {
+                    managerId = station.managerId();
+                    pushWithLink(managerId, "SIGNUP", "新的活动报名", content, link, "SIGNUP", signupId);
+                }
+            } catch (BusinessException ignored) {
+                // 活动所属驿站已删除：报名本身仍有效，不阻断。
+            }
+        }
+        if (accountService == null) {
             return;
         }
-        try {
-            StationDto station = stationLookup.detail(stationId);
-            if (station != null && station.managerId() != null) {
-                push(station.managerId(), "SIGNUP", "新的活动报名",
-                        activity.get("title") + " · " + contactName, "SIGNUP", signupId);
+        for (var user : accountService.list()) {
+            if (!"PLATFORM_ADMIN".equals(user.role()) || (managerId != null && managerId == user.id())) {
+                continue;
             }
-        } catch (BusinessException ignored) {
-            // 活动所属驿站已删除：报名本身仍有效，不阻断。
+            pushWithLink(user.id(), "SIGNUP", "新的活动报名", content, link, "SIGNUP", signupId);
         }
     }
 
@@ -752,6 +774,16 @@ public class DemoWorkflowStore implements WorkflowService {
             }
         }
         return view(item);
+    }
+
+    @Override
+    public long pendingSignupCount(java.util.List<Long> stationIds) {
+        return allSignups(stationIds).stream()
+                .filter(row -> ActivityOrganizer.SIGNUP_SIGNED_UP.equals(
+                                ActivityOrganizer.normalizeSignupStatus(row.get("status")))
+                        || ActivityOrganizer.SIGNUP_CONTACTED.equals(
+                                ActivityOrganizer.normalizeSignupStatus(row.get("status"))))
+                .count();
     }
 
     @Override

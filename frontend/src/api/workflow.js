@@ -80,6 +80,11 @@ export function getAdminSignups() {
   return request({ url: "/activity/admin/signups" });
 }
 
+/** 待处理报名数：平台端标签角标。 */
+export function getSignupPendingCount() {
+  return request({ url: "/activity/admin/signups/pending-count" });
+}
+
 /** 报名人取消自己的报名：审核通过/未通过后不可取消。 */
 export function cancelSignup(id) {
   return request({ url: `/activity/signup/${id}/cancel`, method: "put" });

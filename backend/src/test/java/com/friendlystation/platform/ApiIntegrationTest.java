@@ -671,15 +671,54 @@ class ApiIntegrationTest {
         boolean appointmentNotified = false;
         boolean appealNotified = false;
         boolean signupNotified = false;
+        boolean signupLinkPresent = false;
         for (JsonNode row : page.path("records")) {
             String title = row.path("title").asText();
             appointmentNotified |= "新的预约待确认".equals(title);
             appealNotified |= "新的诉求待受理".equals(title);
             signupNotified |= "新的活动报名".equals(title);
+            if ("新的活动报名".equals(title) && row.path("link").asText().contains("tab=signups")) {
+                signupLinkPresent = true;
+            }
         }
         assertTrue(appointmentNotified, "新预约应通知驿站负责人");
         assertTrue(appealNotified, "定向驿站的新诉求应通知负责人");
         assertTrue(signupNotified, "新报名应通知活动所属驿站负责人");
+        assertTrue(signupLinkPresent, "报名通知应带管理端处理链接");
+    }
+
+    @Test
+    void platformAdminCanReviewAnySignup() throws Exception {
+        String userToken = login("rider_xiaowang");
+        String stationToken = login("station_admin_01");
+        String adminToken = login("platform_admin");
+        int stationId = firstStationId();
+
+        JsonNode activity = call("post", "/api/activity/admin", adminToken, Map.of(
+                "title", "平台处理报名测试-" + System.nanoTime(), "stationId", stationId,
+                "activityTime", "2026-12-31 09:00:00", "maxCount", 5, "status", "PUBLISHED"));
+        long activityId = dataOf(activity).path("id").asLong();
+        JsonNode signup = call("post", "/api/activity/signup", userToken, Map.of(
+                "activityId", activityId, "contactName", "平台处理", "phone", "13800000010"));
+        long signupId = dataOf(signup).path("id").asLong();
+
+        long stationPending = dataOf(call("get", "/api/activity/admin/signups/pending-count", stationToken, null))
+                .path("count").asLong();
+        long adminPending = dataOf(call("get", "/api/activity/admin/signups/pending-count", adminToken, null))
+                .path("count").asLong();
+        assertTrue(stationPending >= 1, "驿站端应看到待处理报名");
+        assertTrue(adminPending >= 1, "平台端应看到待处理报名");
+
+        assertEquals(200, httpStatus(call("put", "/api/activity/signup/review", adminToken, Map.of(
+                "id", signupId, "status", "APPROVED", "reviewNote", "平台审核通过"))));
+        JsonNode adminSignups = dataOf(call("get", "/api/activity/admin/signups", adminToken, null));
+        boolean approved = false;
+        for (JsonNode row : adminSignups) {
+            if (row.path("id").asLong() == signupId) {
+                approved = "APPROVED".equals(row.path("status").asText());
+            }
+        }
+        assertTrue(approved, "平台管理员应能直接审核任意报名");
     }
 
     @Test

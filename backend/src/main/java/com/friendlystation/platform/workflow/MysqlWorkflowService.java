@@ -17,7 +17,9 @@ import com.friendlystation.platform.persistence.entity.AppealRecord;
 import com.friendlystation.platform.persistence.entity.ServiceAppointment;
 import com.friendlystation.platform.persistence.entity.Station;
 import com.friendlystation.platform.persistence.entity.StationServiceItem;
+import com.friendlystation.platform.persistence.entity.SysRole;
 import com.friendlystation.platform.persistence.entity.SysUser;
+import com.friendlystation.platform.persistence.entity.SysUserRole;
 import com.friendlystation.platform.persistence.mapper.ActivityMapper;
 import com.friendlystation.platform.persistence.mapper.ActivitySignupMapper;
 import com.friendlystation.platform.persistence.mapper.AppealEvaluationMapper;
@@ -26,7 +28,9 @@ import com.friendlystation.platform.persistence.mapper.AppealRecordMapper;
 import com.friendlystation.platform.persistence.mapper.ServiceAppointmentMapper;
 import com.friendlystation.platform.persistence.mapper.StationMapper;
 import com.friendlystation.platform.persistence.mapper.StationServiceItemMapper;
+import com.friendlystation.platform.persistence.mapper.SysRoleMapper;
 import com.friendlystation.platform.persistence.mapper.SysUserMapper;
+import com.friendlystation.platform.persistence.mapper.SysUserRoleMapper;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -57,6 +61,8 @@ public class MysqlWorkflowService implements WorkflowService {
     private final StationServiceItemMapper serviceItemMapper;
     private final ActivityMapper activityMapper;
     private final SysUserMapper userMapper;
+    private final SysRoleMapper roleMapper;
+    private final SysUserRoleMapper userRoleMapper;
     private final com.friendlystation.platform.notification.NotificationService notificationService;
 
     public MysqlWorkflowService(ServiceAppointmentMapper appointmentMapper,
@@ -68,6 +74,8 @@ public class MysqlWorkflowService implements WorkflowService {
                                 StationServiceItemMapper serviceItemMapper,
                                 ActivityMapper activityMapper,
                                 SysUserMapper userMapper,
+                                SysRoleMapper roleMapper,
+                                SysUserRoleMapper userRoleMapper,
                                 com.friendlystation.platform.notification.NotificationService notificationService) {
         this.appointmentMapper = appointmentMapper;
         this.appealMapper = appealMapper;
@@ -78,6 +86,8 @@ public class MysqlWorkflowService implements WorkflowService {
         this.serviceItemMapper = serviceItemMapper;
         this.activityMapper = activityMapper;
         this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
         this.notificationService = notificationService;
     }
 
@@ -588,6 +598,16 @@ public class MysqlWorkflowService implements WorkflowService {
         }
         notifyOrganizer(activity, contactName, item.getId());
         return signupView(item, activity);
+    }
+
+    @Override
+    public long pendingSignupCount(List<Long> stationIds) {
+        return allSignups(stationIds).stream()
+                .filter(row -> ActivityOrganizer.SIGNUP_SIGNED_UP.equals(
+                                ActivityOrganizer.normalizeSignupStatus(row.get("status")))
+                        || ActivityOrganizer.SIGNUP_CONTACTED.equals(
+                                ActivityOrganizer.normalizeSignupStatus(row.get("status"))))
+                .count();
     }
 
     @Override
@@ -1111,31 +1131,68 @@ public class MysqlWorkflowService implements WorkflowService {
         return signupView(updatedSignup, activity);
     }
 
-    /** 报名成功后提醒承办方（活动所属驿站的负责人）联系报名人。 */
+    /** 报名成功后提醒承办方；平台自办活动或驿站无负责人时，由平台管理员接手。 */
     private void notifyOrganizer(Activity activity, String contactName, Long signupId) {
-        if (activity == null || activity.getStationId() == null || signupId == null) {
+        if (activity == null || signupId == null) {
             return;
         }
-        Station station = stationMapper.selectById(activity.getStationId());
-        if (station == null || station.getManagerId() == null) {
-            return;
+        String link = "/admin?tab=signups&signupId=" + signupId;
+        String content = activity.getTitle() + " · " + (contactName == null ? "" : contactName);
+        Long stationManagerId = null;
+        if (activity.getStationId() != null) {
+            Station station = stationMapper.selectById(activity.getStationId());
+            if (station != null && station.getManagerId() != null) {
+                stationManagerId = station.getManagerId();
+                notificationService.push(stationManagerId, "SIGNUP", "新的活动报名", content,
+                        link, "SIGNUP", signupId);
+            }
         }
-        notificationService.push(station.getManagerId(), "SIGNUP", "新的活动报名",
-                activity.getTitle() + " · " + contactName, "", "SIGNUP", signupId);
+        // 平台管理员始终保留一份可处理的报名通知，避免出现“只看得到、处理不了”的情况。
+        for (Long adminId : platformAdminIds()) {
+            if (adminId == null || adminId.equals(stationManagerId)) {
+                continue;
+            }
+            notificationService.push(adminId, "SIGNUP", "新的活动报名", content,
+                    link, "SIGNUP", signupId);
+        }
     }
 
     /** 报名取消后提醒承办方，避免对方还在按原名单联系。 */
     private void notifyOrganizerCancel(Activity activity, String contactName, Long signupId) {
-        if (activity == null || activity.getStationId() == null || signupId == null) {
+        if (activity == null || signupId == null) {
             return;
         }
-        Station station = stationMapper.selectById(activity.getStationId());
-        if (station == null || station.getManagerId() == null) {
-            return;
+        String link = "/admin?tab=signups&signupId=" + signupId;
+        String content = activity.getTitle() + " · " + (contactName == null ? "" : contactName);
+        boolean stationHandled = false;
+        if (activity.getStationId() != null) {
+            Station station = stationMapper.selectById(activity.getStationId());
+            if (station != null && station.getManagerId() != null) {
+                notificationService.push(station.getManagerId(), "SIGNUP", "报名已取消", content,
+                        link, "SIGNUP", signupId);
+                stationHandled = true;
+            }
         }
-        notificationService.push(station.getManagerId(), "SIGNUP", "报名已取消",
-                activity.getTitle() + " · " + (contactName == null ? "" : contactName),
-                "", "SIGNUP", signupId);
+        if (!stationHandled) {
+            for (Long adminId : platformAdminIds()) {
+                if (adminId == null) {
+                    continue;
+                }
+                notificationService.push(adminId, "SIGNUP", "报名已取消", content,
+                        link, "SIGNUP", signupId);
+            }
+        }
+    }
+
+    private List<Long> platformAdminIds() {
+        SysRole role = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>()
+                .eq(SysRole::getRoleCode, "PLATFORM_ADMIN"));
+        if (role == null) {
+            return List.of();
+        }
+        return userRoleMapper.selectList(new LambdaQueryWrapper<SysUserRole>()
+                        .eq(SysUserRole::getRoleId, role.getId()))
+                .stream().map(SysUserRole::getUserId).filter(Objects::nonNull).distinct().toList();
     }
 
     private Map<Long, Activity> activitiesById(Collection<Long> ids) {

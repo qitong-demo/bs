@@ -95,6 +95,9 @@ public interface WorkflowService {
     /** 管理端报名列表；stationIds 为 null 表示平台级不限制，空集合表示没有可见数据。 */
     List<Map<String, Object>> allSignups(List<Long> stationIds);
 
+    /** 待处理报名数（已报名/已联系），用于管理端标签角标。 */
+    long pendingSignupCount(List<Long> stationIds);
+
     Map<String, Object> overview();
 
     /**

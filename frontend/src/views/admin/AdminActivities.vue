@@ -33,7 +33,7 @@
           <template #default="{ row }">{{ textOf(row.title) }}</template>
         </el-table-column>
         <el-table-column label="举办驿站" min-width="160" show-overflow-tooltip>
-          <template #default="{ row }">{{ textOf(row.stationName) }}</template>
+          <template #default="{ row }">{{ Number(row.stationId) > 0 ? textOf(row.stationName) : "平台自办" }}</template>
         </el-table-column>
         <el-table-column label="活动时间" width="170">
           <template #default="{ row }">{{ textOf(row.activityTime) }}</template>
@@ -80,12 +80,26 @@
     </template>
 
     <template v-else>
-      <div class="admin-toolbar">
-        <span class="admin-toolbar-label">报名记录来自活动报名工作流</span>
+      <div class="admin-toolbar signup-toolbar">
+        <el-radio-group v-model="signupStatus" size="small">
+          <el-radio-button value="">全部 {{ signupCounts.all }}</el-radio-button>
+          <el-radio-button value="PENDING">待处理 {{ signupCounts.pending }}</el-radio-button>
+          <el-radio-button value="APPROVED">已通过 {{ signupCounts.approved }}</el-radio-button>
+          <el-radio-button value="REJECTED">未通过 {{ signupCounts.rejected }}</el-radio-button>
+          <el-radio-button value="CANCELLED">已取消 {{ signupCounts.cancelled }}</el-radio-button>
+        </el-radio-group>
+        <el-input
+          v-model="signupKeyword"
+          class="admin-toolbar-search"
+          clearable
+          placeholder="搜索活动、报名人或电话"
+        >
+          <template #prefix><el-icon><Search /></el-icon></template>
+        </el-input>
         <el-button class="admin-toolbar-action" @click="loadSignups"><el-icon><Refresh /></el-icon>刷新</el-button>
-        <span class="admin-toolbar-total">共 {{ signups.length }} 条报名</span>
+        <span class="admin-toolbar-total">共 {{ filteredSignups.length }} 条报名</span>
       </div>
-      <el-table :data="signups" v-loading="signupLoading" stripe empty-text="暂无报名记录">
+      <el-table :data="pagedSignups" v-loading="signupLoading" stripe empty-text="暂无报名记录">
         <el-table-column prop="id" label="编号" width="70" />
         <el-table-column label="活动名称" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">{{ textOf(row.activityTitle) }}</template>
@@ -120,6 +134,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <div class="admin-pager">
+        <el-pagination
+          v-model:current-page="signupPage"
+          v-model:page-size="signupPageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="filteredSignups.length"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+        />
+      </div>
     </template>
 
     <!-- 承办方处理报名：联系、审核通过或未通过，并给出给报名人的反馈 -->
@@ -168,6 +192,7 @@
         </el-form-item>
         <el-form-item label="举办驿站" prop="stationId">
           <el-select v-model="form.stationId" filterable class="admin-full" placeholder="选择举办驿站">
+            <el-option v-if="isPlatformAdmin" :value="0" label="平台自办（不挂驿站）" />
             <el-option
               v-for="item in stations"
               :key="item.id"
@@ -228,7 +253,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   createActivity,
@@ -239,12 +264,18 @@ import {
 import { getAdminSignups, reviewSignup } from "../../api/workflow";
 import { getStationPage } from "../../api/station";
 import { errorMessage } from "../../api/http";
+import { useUserStore } from "../../stores/user";
 import { contentStatusLabel, contentStatusTag, numberText, signupStatusTag, textOf } from "./admin-shared";
 
 const props = defineProps({
   /** 初始展示的区块：activities（活动列表）或 signups（报名记录）。 */
-  section: { type: String, default: "activities" }
+  section: { type: String, default: "activities" },
+  /** 从消息通知跳转时带过来的报名 id，加载后自动打开处理弹窗。 */
+  focusSignupId: { type: Number, default: 0 }
 });
+const emit = defineEmits(["reviewed"]);
+const userStore = useUserStore();
+const isPlatformAdmin = computed(() => userStore.roleCode === "PLATFORM_ADMIN");
 
 const activeSection = ref(props.section === "signups" ? "signups" : "activities");
 const showSectionSwitch = computed(() => props.section !== "signups");
@@ -264,6 +295,9 @@ const reviewTarget = ref(null);
 const reviewForm = reactive({ status: "CONTACTED", reviewNote: "" });
 
 function openReview(row) {
+  if (!row || ["APPROVED", "REJECTED", "CANCELLED"].includes(row.status)) {
+    return;
+  }
   reviewTarget.value = row;
   // 已审核过的再次打开时沿用原状态，避免手滑把结论改掉
   reviewForm.status = ["CONTACTED", "APPROVED", "REJECTED"].includes(row.status) ? row.status : "CONTACTED";
@@ -288,6 +322,7 @@ async function submitReview() {
     reviewVisible.value = false;
     ElMessage.success("已提交处理结果，报名人可以看到反馈");
     await loadSignups();
+    emit("reviewed");
   } catch (error) {
     ElMessage.error(errorMessage(error, "处理失败"));
   } finally {
@@ -295,6 +330,41 @@ async function submitReview() {
   }
 }
 const signups = ref([]);
+const signupStatus = ref("");
+const signupKeyword = ref("");
+const signupPage = ref(1);
+const signupPageSize = ref(10);
+
+const signupCounts = computed(() => {
+  const result = { all: signups.value.length, pending: 0, approved: 0, rejected: 0, cancelled: 0 };
+  for (const row of signups.value) {
+    if (["SIGNED_UP", "CONTACTED"].includes(row.status)) result.pending += 1;
+    else if (row.status === "APPROVED") result.approved += 1;
+    else if (row.status === "REJECTED") result.rejected += 1;
+    else if (row.status === "CANCELLED") result.cancelled += 1;
+  }
+  return result;
+});
+
+const filteredSignups = computed(() => {
+  const keyword = signupKeyword.value.trim().toLowerCase();
+  return signups.value.filter((row) => {
+    if (signupStatus.value === "PENDING" && !["SIGNED_UP", "CONTACTED"].includes(row.status)) return false;
+    if (!["", "PENDING"].includes(signupStatus.value) && row.status !== signupStatus.value) return false;
+    if (!keyword) return true;
+    return [row.activityTitle, row.contactName, row.userName, row.phone]
+      .some((value) => String(value || "").toLowerCase().includes(keyword));
+  });
+});
+
+const pagedSignups = computed(() => {
+  const start = (signupPage.value - 1) * signupPageSize.value;
+  return filteredSignups.value.slice(start, start + signupPageSize.value);
+});
+
+watch([signupStatus, signupKeyword], () => {
+  signupPage.value = 1;
+});
 
 const stations = ref([]);
 const dialogVisible = ref(false);
@@ -370,6 +440,21 @@ async function loadSignups() {
   }
 }
 
+watch(
+  () => props.focusSignupId,
+  async (id) => {
+    if (!id) return;
+    if (!signups.value.length) {
+      await loadSignups();
+    }
+    const row = signups.value.find((item) => Number(item.id) === Number(id));
+    if (row) {
+      openReview(row);
+    }
+  },
+  { immediate: true }
+);
+
 function onSectionChange(section) {
   if (section === "signups" && !signups.value.length) {
     loadSignups();
@@ -380,7 +465,7 @@ function openCreate() {
   editingId.value = null;
   Object.assign(form, {
     title: "",
-    stationId: stations.value.length ? stations.value[0].id : null,
+    stationId: isPlatformAdmin.value ? 0 : (stations.value.length ? stations.value[0].id : null),
     activityTime: "",
     address: "",
     maxCount: 30,
@@ -395,7 +480,7 @@ function openEdit(row) {
   editingId.value = row.id;
   Object.assign(form, {
     title: row.title || "",
-    stationId: row.stationId || null,
+    stationId: Number(row.stationId) > 0 ? row.stationId : 0,
     activityTime: row.activityTime || "",
     address: row.address || "",
     maxCount: Number(row.maxCount) > 0 ? Number(row.maxCount) : 1,
@@ -421,7 +506,7 @@ async function submit() {
   try {
     const payload = {
       title: form.title,
-      stationId: form.stationId,
+      stationId: Number(form.stationId) > 0 ? form.stationId : null,
       activityTime: form.activityTime,
       address: form.address,
       maxCount: form.maxCount,
@@ -480,6 +565,14 @@ onMounted(async () => {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 6px;
+}
+
+.signup-toolbar {
+  flex-wrap: wrap;
+}
+
+.signup-toolbar .el-radio-group {
+  flex-wrap: wrap;
 }
 
 .admin-section-switch { margin-bottom: 14px; }

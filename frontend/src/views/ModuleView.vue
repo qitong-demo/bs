@@ -776,7 +776,7 @@
             :key="item.key"
             class="message-row"
             :class="{ unread: !messageStore.isRead(item.key) }"
-            @click="messageStore.markRead(item.key)"
+            @click="openMessage(item)"
           >
             <span class="message-icon" :class="`message-icon--${item.type}`"><el-icon><Bell /></el-icon></span>
             <div><strong>{{ item.title }}</strong><p>{{ item.detail }}</p></div>
@@ -943,6 +943,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
 import StationMap from "../components/StationMap.vue";
 import { errorMessage } from "../api/http";
 import { currentUser, updateProfile } from "../api/auth";
@@ -986,6 +987,7 @@ const props = defineProps({
   /** 首页点「提前联系」时带过来的驿站 id：切到服务预约并预选它。 */
   prefillStationId: { type: [Number, String], default: null }
 });
+const router = useRouter();
 
 const emit = defineEmits(["back-home", "change-view", "prefill-consumed"]);
 
@@ -1445,6 +1447,14 @@ function toggleFavorite(station) {
   }
   localStorage.setItem("friendly_station_favorites", JSON.stringify(favorites.value));
 }
+/** 点击消息：先标已读，再按后端 link 跳到对应处理页。 */
+async function openMessage(item) {
+  await messageStore.markRead(item.key);
+  if (item.link) {
+    router.push(item.link);
+  }
+}
+
 /** 全部标记已读：写回共享 store，顶栏角标随之清零。 */
 function markMessagesRead() {
   if (!messageStore.unreadCount) return;

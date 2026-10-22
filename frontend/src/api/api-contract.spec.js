@@ -197,6 +197,9 @@ describe("预约与诉求接口契约", () => {
 
     await workflowApi.getAdminSignups();
     expect(request).toHaveBeenLastCalledWith({ url: "/activity/admin/signups" });
+
+    await workflowApi.getSignupPendingCount();
+    expect(request).toHaveBeenLastCalledWith({ url: "/activity/admin/signups/pending-count" });
   });
 
   it("承办方处理报名命中 /activity/signup/review", async () => {

@@ -106,6 +106,16 @@ public class ActivityController {
                 dataScopeService.stationIds(CurrentUserContext.require())));
     }
 
+    /** 待处理报名数：平台端标签角标 / 工作台待办。 */
+    @GetMapping("/admin/signups/pending-count")
+    @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"SIGNUP_MANAGE"})
+    public ApiResponse<Map<String, Object>> pendingSignupCount() {
+        long count = workflowService.pendingSignupCount(
+                dataScopeService.stationIds(CurrentUserContext.require()));
+        return ApiResponse.ok(Map.of("count", count));
+    }
+
     /** 报名人取消自己的报名：审核通过/未通过之后不可再取消。 */
     @PutMapping("/signup/{id}/cancel")
     @RequireRole({"USER", "STATION_ADMIN", "PLATFORM_ADMIN"})
