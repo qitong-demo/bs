@@ -144,6 +144,13 @@ public class MysqlActivityService implements ActivityService {
     }
 
     @Override
+    public long pendingReviewCount() {
+        Long count = activityMapper.selectCount(new LambdaQueryWrapper<Activity>()
+                .eq(Activity::getStatus, "PENDING_REVIEW"));
+        return count == null ? 0 : count;
+    }
+
+    @Override
     @Transactional
     public Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId) {
         Activity activity = require(id);

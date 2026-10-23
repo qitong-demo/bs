@@ -90,12 +90,17 @@ public class MysqlStationRectificationService implements StationRectificationSer
         if (!"REVIEW".equals(item.getStatus()) && !"PENDING".equals(item.getStatus())) {
             throw new BusinessException("当前整改状态不能复核");
         }
-        item.setStatus("approve".equalsIgnoreCase(action) ? "CLOSED" : "PENDING");
+        boolean suspend = "suspend".equalsIgnoreCase(action);
+        item.setStatus("approve".equalsIgnoreCase(action) || suspend ? "CLOSED" : "PENDING");
         item.setReviewNote(note == null ? "" : note.trim());
         item.setReviewerId(operatorId);
         item.setUpdateTime(LocalDateTime.now());
         mapper.updateById(item);
-        notifyStation(item, "整改复核结果", "approve".equalsIgnoreCase(action) ? "整改已通过" : "请继续整改");
+        if (suspend) {
+            stationService.suspend(item.getStationId(), LocalDateTime.now(), LocalDateTime.now().plusDays(7),
+                    note == null || note.isBlank() ? "整改未通过，暂停服务" : note.trim());
+        }
+        notifyStation(item, "整改复核结果", "approve".equalsIgnoreCase(action) || suspend ? "整改已通过" : "请继续整改");
         return view(item);
     }
 

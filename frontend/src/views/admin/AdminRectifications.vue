@@ -111,6 +111,7 @@
           <el-radio-group v-model="reviewForm.action">
             <el-radio-button value="approve">通过并关闭</el-radio-button>
             <el-radio-button value="reject">退回继续整改</el-radio-button>
+            <el-radio-button value="suspend">暂停服务 7 天</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="复核说明">

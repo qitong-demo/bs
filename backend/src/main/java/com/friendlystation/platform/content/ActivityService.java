@@ -34,6 +34,9 @@ public interface ActivityService {
     /** 平台审核驿站提交的活动：approve 发布，reject 驳回。 */
     Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId);
 
+    /** 待平台审核的活动数。 */
+    long pendingReviewCount();
+
     /** 物理删除活动。 */
     void delete(Long id);
 

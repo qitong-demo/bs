@@ -315,7 +315,9 @@ const props = defineProps({
   /** 初始展示的区块：activities（活动列表）或 signups（报名记录）。 */
   section: { type: String, default: "activities" },
   /** 从消息通知跳转时带过来的报名 id，加载后自动打开处理弹窗。 */
-  focusSignupId: { type: Number, default: 0 }
+  focusSignupId: { type: Number, default: 0 },
+  /** 从活动待审核通知跳转时带过来的活动 id。 */
+  focusActivityId: { type: Number, default: 0 }
 });
 const emit = defineEmits(["reviewed"]);
 const userStore = useUserStore();
@@ -499,6 +501,7 @@ async function submitActivityReview() {
     ElMessage.success(activityReviewForm.action === "approve" ? "已通过并发布" : "已驳回");
     activityReviewVisible.value = false;
     await load();
+    emit("reviewed");
   } catch (error) {
     ElMessage.error(errorMessage(error, "审核失败"));
   } finally {
@@ -517,6 +520,17 @@ async function loadSignups() {
     signupLoading.value = false;
   }
 }
+
+watch(
+  () => props.focusActivityId,
+  async (id) => {
+    if (!id) return;
+    await load();
+    const row = rows.value.find((item) => Number(item.id) === Number(id));
+    if (row) openActivityReview(row);
+  },
+  { immediate: true }
+);
 
 watch(
   () => props.focusSignupId,

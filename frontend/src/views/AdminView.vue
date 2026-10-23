@@ -91,8 +91,14 @@
       <el-tab-pane v-if="canSee('contents')" label="资讯公告管理" name="contents">
         <AdminContents />
       </el-tab-pane>
-      <el-tab-pane v-if="canSee('activities')" label="活动管理" name="activities">
-        <AdminActivities />
+      <el-tab-pane v-if="canSee('activities')" name="activities">
+        <template #label>
+          <span class="signup-tab-label">
+            公益活动
+            <el-badge v-if="pendingActivities" :value="pendingActivities" :max="99" />
+          </span>
+        </template>
+        <AdminActivities :focus-activity-id="focusActivityId" @reviewed="loadPendingActivities" />
       </el-tab-pane>
       <el-tab-pane v-if="canSee('signups')" name="signups">
         <template #label>
@@ -137,6 +143,7 @@ import { PLATFORM_ROLES, numberText } from "./admin/admin-shared";
 import { getMyPermissions } from "../api/admin";
 import { getSignupPendingCount } from "../api/workflow";
 import { getStationApplicationPendingCount } from "../api/station-apply";
+import { getActivityPendingCount } from "../api/content";
 import AdminOverview from "./admin/AdminOverview.vue";
 import AdminAppointments from "./admin/AdminAppointments.vue";
 import AdminAppeals from "./admin/AdminAppeals.vue";
@@ -203,8 +210,10 @@ const route = useRoute();
 const activeTab = ref("overview");
 const pendingSignups = ref(0);
 const pendingStationApplications = ref(0);
+const pendingActivities = ref(0);
 const focusSignupId = ref(Number(route.query.signupId) || 0);
 const focusApplicationId = ref(Number(route.query.applicationId) || 0);
+const focusActivityId = ref(Number(route.query.activityId) || 0);
 const loading = ref(false);
 const stat = ref({});
 let pendingSignupTimer = null;
@@ -331,6 +340,7 @@ const sidebarGroups = computed(() => {
 function navBadge(name) {
   if (name === "signups") return pendingSignups.value;
   if (name === "stationApplications") return pendingStationApplications.value;
+  if (name === "activities") return pendingActivities.value;
   return 0;
 }
 
@@ -375,17 +385,30 @@ async function loadPendingStationApplications() {
   }
 }
 
+async function loadPendingActivities() {
+  try {
+    const data = await getActivityPendingCount();
+    pendingActivities.value = Number(data?.count) || 0;
+  } catch {
+    pendingActivities.value = 0;
+  }
+}
+
 watch(
-  () => [route.query.tab, route.query.signupId, route.query.applicationId],
-  ([tab, signupId, applicationId]) => {
+  () => [route.query.tab, route.query.signupId, route.query.applicationId, route.query.activityId],
+  ([tab, signupId, applicationId, activityId]) => {
     if (tab === "signups" || signupId) {
       activeTab.value = "signups";
     }
     if (tab === "stationApplications" || applicationId) {
       activeTab.value = "stationApplications";
     }
+    if (tab === "activities" || activityId) {
+      activeTab.value = "activities";
+    }
     focusSignupId.value = Number(signupId) || 0;
     focusApplicationId.value = Number(applicationId) || 0;
+    focusActivityId.value = Number(activityId) || 0;
   }
 );
 
@@ -396,9 +419,11 @@ onMounted(() => {
   loadSummary();
   loadPendingSignups();
   loadPendingStationApplications();
+  loadPendingActivities();
   pendingSignupTimer = setInterval(() => {
     loadPendingSignups();
     loadPendingStationApplications();
+    loadPendingActivities();
   }, 60000);
   // 允许从首页的待办卡片直接落到对应标签页（/admin?tab=appointments）
   const tab = String(route.query.tab || "");
@@ -410,6 +435,9 @@ onMounted(() => {
   }
   if (route.query.applicationId) {
     activeTab.value = "stationApplications";
+  }
+  if (route.query.activityId) {
+    activeTab.value = "activities";
   }
 });
 

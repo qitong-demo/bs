@@ -31,17 +31,20 @@ public class ActivityAdminController {
     private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
     private final com.friendlystation.platform.station.StationService stationService;
     private final com.friendlystation.platform.notification.NotificationService notificationService;
+    private final com.friendlystation.platform.admin.AdminUserService adminUserService;
 
     public ActivityAdminController(ActivityService activityService,
                                    com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher,
                                    com.friendlystation.platform.auth.DataScopeService dataScopeService,
                                    com.friendlystation.platform.station.StationService stationService,
-                                   com.friendlystation.platform.notification.NotificationService notificationService) {
+                                   com.friendlystation.platform.notification.NotificationService notificationService,
+                                   com.friendlystation.platform.admin.AdminUserService adminUserService) {
         this.activityService = activityService;
         this.sourceFetcher = sourceFetcher;
         this.dataScopeService = dataScopeService;
         this.stationService = stationService;
         this.notificationService = notificationService;
+        this.adminUserService = adminUserService;
     }
 
     /** 后台活动分页，返回全部状态。 */
@@ -55,12 +58,20 @@ public class ActivityAdminController {
         return ApiResponse.ok(activityService.adminPage(current, size, status, keyword));
     }
 
+    @GetMapping("/pending-review-count")
+    @RequireRole({"PLATFORM_ADMIN"})
+    public ApiResponse<Map<String, Object>> pendingReviewCount() {
+        return ApiResponse.ok(Map.of("count", activityService.pendingReviewCount()));
+    }
+
     /** 新增活动：驿站提交先进入待审核，平台管理员可直接发布。 */
     @PostMapping
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
         Map<String, Object> data = forceStationReview(payload);
         requireStationInScope(data.get("stationId"));
-        return ApiResponse.ok(activityService.create(data));
+        Map<String, Object> result = activityService.create(data);
+        notifyPendingReview(result);
+        return ApiResponse.ok(result);
     }
 
     /** 修改活动：驿站修改后重新进入待审核，平台管理员可直接改状态。 */
@@ -71,7 +82,9 @@ public class ActivityAdminController {
         if (data.containsKey("stationId")) {
             requireStationInScope(data.get("stationId"));
         }
-        return ApiResponse.ok(activityService.update(id, data));
+        Map<String, Object> result = activityService.update(id, data);
+        notifyPendingReview(result);
+        return ApiResponse.ok(result);
     }
 
     /** 平台审核驿站活动：通过后发布，驳回必须写原因。 */
@@ -100,6 +113,22 @@ public class ActivityAdminController {
             }
         }
         return ApiResponse.ok(result);
+    }
+
+    /** 驿站提交的活动：给每个平台管理员写一条待审核通知。 */
+    private void notifyPendingReview(Map<String, Object> activity) {
+        if (!"PENDING_REVIEW".equals(String.valueOf(activity.get("status")))) {
+            return;
+        }
+        long id = com.friendlystation.platform.common.FormatUtils.number(activity.get("id"));
+        var page = adminUserService.userPage(1, 100, "PLATFORM_ADMIN", "");
+        for (Map<String, Object> user : page.records()) {
+            long userId = com.friendlystation.platform.common.FormatUtils.number(user.get("id"));
+            if (userId <= 0) continue;
+            notificationService.push(userId, "ACTIVITY", "新的公益活动待审核",
+                    String.valueOf(activity.get("title")) + " · " + String.valueOf(activity.get("stationName")),
+                    "/admin?tab=activities&activityId=" + id, "ACTIVITY", id);
+        }
     }
 
     /** 驿站/工作人员提交的活动统一进待审核；平台管理员不受限制。 */

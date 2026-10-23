@@ -158,6 +158,11 @@ public class MockActivityService implements ActivityService {
     }
 
     @Override
+    public long pendingReviewCount() {
+        return store.stream().filter(item -> "PENDING_REVIEW".equals(item.get("status"))).count();
+    }
+
+    @Override
     public Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId) {
         Map<String, Object> record = require(id);
         if (!"PENDING_REVIEW".equals(record.get("status"))) {

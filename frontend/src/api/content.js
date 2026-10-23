@@ -74,3 +74,7 @@ export function deleteActivity(id) {
 export function reviewActivity(id, data) {
   return request({ url: `/activity/admin/${id}/review`, method: "put", data });
 }
+
+export function getActivityPendingCount() {
+  return request({ url: "/activity/admin/pending-review-count" });
+}
