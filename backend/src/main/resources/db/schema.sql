@@ -247,6 +247,10 @@ CREATE TABLE IF NOT EXISTS activity (
     max_count INT NOT NULL DEFAULT 50,
     content LONGTEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED',
+    -- 驿站提交的活动先进入待审核；平台审核通过后才可发布
+    review_note VARCHAR(500),
+    reviewer_id BIGINT,
+    review_time DATETIME,
     -- 承办方：STATION 驿站 / PLATFORM 平台管理员 / EXTERNAL 第三方（外部机构）。
     -- 第三方活动只在站内展示并提供跳转链接，**不接受站内报名**——
     -- 报名与审核由对方平台负责，我们既不掌握名单也无法联系报名人。

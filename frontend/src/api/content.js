@@ -70,3 +70,7 @@ export function updateActivity(id, data) {
 export function deleteActivity(id) {
   return request({ url: `/activity/admin/${id}`, method: "delete" });
 }
+
+export function reviewActivity(id, data) {
+  return request({ url: `/activity/admin/${id}/review`, method: "put", data });
+}

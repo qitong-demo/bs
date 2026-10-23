@@ -1006,6 +1006,34 @@ class ApiIntegrationTest {
         assertTrue(ownsStation, "新驿站应归申请人负责");
     }
 
+    @Test
+    void stationActivityNeedsPlatformReview() throws Exception {
+        String stationToken = login("station_admin_01");
+        String adminToken = login("platform_admin");
+        String title = "活动预审测试-" + System.nanoTime();
+
+        JsonNode created = call("post", "/api/activity/admin", stationToken, Map.of(
+                "title", title, "stationId", firstStationId(), "activityTime", "2026-12-30 09:00:00",
+                "maxCount", 10, "status", "PUBLISHED"));
+        assertEquals(200, httpStatus(created));
+        assertEquals("PENDING_REVIEW", dataOf(created).path("status").asText(),
+                "驿站创建活动应先进入待审核");
+        long activityId = dataOf(created).path("id").asLong();
+
+        JsonNode before = dataOf(call("get", "/api/activity/page?current=1&size=10&keyword=" + title, null, null));
+        assertEquals(0, before.path("total").asInt(), "待审核活动不应出现在用户端");
+
+        assertEquals(400, httpStatus(call("put", "/api/activity/admin/" + activityId + "/review",
+                adminToken, Map.of("action", "reject", "reviewNote", ""))));
+        JsonNode reviewed = call("put", "/api/activity/admin/" + activityId + "/review",
+                adminToken, Map.of("action", "approve", "reviewNote", "公益内容合规"));
+        assertEquals(200, httpStatus(reviewed));
+        assertEquals("PUBLISHED", dataOf(reviewed).path("status").asText());
+
+        JsonNode after = dataOf(call("get", "/api/activity/page?current=1&size=10&keyword=" + title, null, null));
+        assertEquals(1, after.path("total").asInt(), "审核通过后活动应发布");
+    }
+
     private int firstActivityId() throws Exception {
         JsonNode page = dataOf(call("get", "/api/activity/page?current=1&size=1", null, null));
         assertTrue(page.path("total").asInt() > 0, "演示数据应至少包含一个活动");

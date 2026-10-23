@@ -56,9 +56,15 @@
         <el-table-column label="创建时间" width="170">
           <template #default="{ row }">{{ textOf(row.createTime) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="270" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="openPreview(row)">查看</el-button>
+            <el-button
+              v-if="isPlatformAdmin && row.status === 'PENDING_REVIEW'"
+              size="small"
+              type="primary"
+              @click="openActivityReview(row)"
+            >审核</el-button>
             <el-button size="small" @click="openEdit(row)">编辑</el-button>
             <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
           </template>
@@ -219,16 +225,53 @@
         <el-form-item label="活动内容" prop="content">
           <el-input v-model="form.content" type="textarea" :rows="5" maxlength="1000" show-word-limit placeholder="填写活动内容、参与方式等" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item v-if="isPlatformAdmin" label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio value="PUBLISHED">已发布</el-radio>
             <el-radio value="DRAFT">草稿</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-alert
+          v-else
+          type="info"
+          :closable="false"
+          show-icon
+          title="驿站活动保存后进入平台审核，审核通过才会在用户端发布。"
+        />
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="submitting" @click="submit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="activityReviewVisible" title="审核公益活动" width="520px">
+      <el-descriptions v-if="activityReviewTarget" :column="1" border size="small" class="admin-dialog-meta">
+        <el-descriptions-item label="活动">{{ activityReviewTarget.title }}</el-descriptions-item>
+        <el-descriptions-item label="驿站">{{ textOf(activityReviewTarget.stationName) || "平台自办" }}</el-descriptions-item>
+        <el-descriptions-item label="时间">{{ activityReviewTarget.activityTime }}</el-descriptions-item>
+      </el-descriptions>
+      <el-form label-position="top">
+        <el-form-item label="审核结果" required>
+          <el-radio-group v-model="activityReviewForm.action">
+            <el-radio-button value="approve">通过并发布</el-radio-button>
+            <el-radio-button value="reject">驳回</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="审核说明" :required="activityReviewForm.action === 'reject'">
+          <el-input
+            v-model="activityReviewForm.reviewNote"
+            type="textarea"
+            :rows="3"
+            maxlength="300"
+            show-word-limit
+            placeholder="驳回时必须说明原因，驿站会在消息中心看到"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="activityReviewVisible = false">取消</el-button>
+        <el-button type="primary" :loading="activityReviewSubmitting" @click="submitActivityReview">提交审核</el-button>
       </template>
     </el-dialog>
 
@@ -259,6 +302,7 @@ import {
   createActivity,
   deleteActivity,
   getAdminActivityPage,
+  reviewActivity,
   updateActivity
 } from "../../api/content";
 import { getAdminSignups, reviewSignup } from "../../api/workflow";
@@ -330,6 +374,10 @@ async function submitReview() {
   }
 }
 const signups = ref([]);
+const activityReviewVisible = ref(false);
+const activityReviewSubmitting = ref(false);
+const activityReviewTarget = ref(null);
+const activityReviewForm = reactive({ action: "approve", reviewNote: "" });
 const signupStatus = ref("");
 const signupKeyword = ref("");
 const signupPage = ref(1);
@@ -428,6 +476,36 @@ function reset() {
   search();
 }
 
+function openActivityReview(row) {
+  if (!row || row.status !== "PENDING_REVIEW") return;
+  activityReviewTarget.value = row;
+  activityReviewForm.action = "approve";
+  activityReviewForm.reviewNote = "";
+  activityReviewVisible.value = true;
+}
+
+async function submitActivityReview() {
+  if (!activityReviewTarget.value) return;
+  if (activityReviewForm.action === "reject" && !activityReviewForm.reviewNote.trim()) {
+    ElMessage.warning("驳回时请填写原因，驿站会在消息中心看到");
+    return;
+  }
+  activityReviewSubmitting.value = true;
+  try {
+    await reviewActivity(activityReviewTarget.value.id, {
+      action: activityReviewForm.action,
+      reviewNote: activityReviewForm.reviewNote.trim()
+    });
+    ElMessage.success(activityReviewForm.action === "approve" ? "已通过并发布" : "已驳回");
+    activityReviewVisible.value = false;
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "审核失败"));
+  } finally {
+    activityReviewSubmitting.value = false;
+  }
+}
+
 async function loadSignups() {
   signupLoading.value = true;
   try {
@@ -470,7 +548,7 @@ function openCreate() {
     address: "",
     maxCount: 30,
     content: "",
-    status: "PUBLISHED"
+    status: isPlatformAdmin.value ? "PUBLISHED" : "PENDING_REVIEW"
   });
   formRef.value?.clearValidate();
   dialogVisible.value = true;
@@ -485,7 +563,7 @@ function openEdit(row) {
     address: row.address || "",
     maxCount: Number(row.maxCount) > 0 ? Number(row.maxCount) : 1,
     content: row.content || "",
-    status: row.status || "PUBLISHED"
+    status: isPlatformAdmin.value ? (row.status || "PUBLISHED") : "PENDING_REVIEW"
   });
   formRef.value?.clearValidate();
   dialogVisible.value = true;
@@ -515,10 +593,10 @@ async function submit() {
     };
     if (editingId.value) {
       await updateActivity(editingId.value, payload);
-      ElMessage.success("活动已更新");
+      ElMessage.success(isPlatformAdmin.value ? "活动已更新" : "已更新并提交平台审核");
     } else {
       await createActivity(payload);
-      ElMessage.success("活动已新增");
+      ElMessage.success(isPlatformAdmin.value ? "活动已新增" : "已提交平台审核");
     }
     dialogVisible.value = false;
     await search();

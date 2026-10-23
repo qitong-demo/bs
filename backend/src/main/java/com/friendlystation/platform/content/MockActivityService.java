@@ -158,6 +158,23 @@ public class MockActivityService implements ActivityService {
     }
 
     @Override
+    public Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId) {
+        Map<String, Object> record = require(id);
+        if (!"PENDING_REVIEW".equals(record.get("status"))) {
+            throw new BusinessException("该活动不在待审核状态");
+        }
+        String normalized = "approve".equalsIgnoreCase(action) ? "approve" : "reject";
+        if ("reject".equals(normalized) && (reviewNote == null || reviewNote.isBlank())) {
+            throw new BusinessException("驳回时请填写原因");
+        }
+        record.put("status", "approve".equals(normalized) ? "PUBLISHED" : "REJECTED");
+        record.put("reviewNote", reviewNote == null ? "" : reviewNote.trim());
+        record.put("reviewerId", reviewerId);
+        record.put("reviewTime", LocalDateTime.now());
+        return view(record);
+    }
+
+    @Override
     public void delete(Long id) {
         Map<String, Object> record = require(id);
         int signed = signedCounts.getOrDefault(id, 0);
@@ -371,6 +388,9 @@ public class MockActivityService implements ActivityService {
         out.put("content", record.get("content") == null ? "" : record.get("content"));
         out.put("status", record.get("status"));
         out.put("statusLabel", ContentSupport.statusLabel((String) record.get("status")));
+        out.put("reviewNote", record.get("reviewNote") == null ? "" : record.get("reviewNote"));
+        out.put("reviewerId", record.get("reviewerId") == null ? 0L : record.get("reviewerId"));
+        out.put("reviewTime", ContentSupport.formatDateTime((LocalDateTime) record.get("reviewTime")));
         out.put("createTime", ContentSupport.formatDateTime((LocalDateTime) record.get("createTime")));
 
         // 以下字段 mysql 实现一直会返回，而这里原先缺失——两套 profile 的 JSON 不一致，

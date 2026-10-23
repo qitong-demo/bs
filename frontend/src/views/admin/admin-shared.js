@@ -48,7 +48,11 @@ const STATION_STATUS_LABELS = {
 
 const CONTENT_STATUS_LABELS = {
   PUBLISHED: "已发布",
-  DRAFT: "草稿"
+  DRAFT: "草稿",
+  PENDING_REVIEW: "待平台审核",
+  REJECTED: "审核未通过",
+  CANCELLED: "已取消",
+  EXPIRED: "已失效"
 };
 
 /** 空值统一显示为 "—"，避免出现 null / undefined。 */
@@ -130,7 +134,10 @@ export function stationStatusTag(status) {
 
 /** 资讯 / 公告状态标签色。 */
 export function contentStatusTag(status) {
-  return status === "PUBLISHED" ? "success" : "info";
+  if (status === "PUBLISHED") return "success";
+  if (status === "PENDING_REVIEW") return "warning";
+  if (status === "REJECTED") return "danger";
+  return "info";
 }
 
 /** 账号启用状态标签色（后端 status 为 1/0）。 */

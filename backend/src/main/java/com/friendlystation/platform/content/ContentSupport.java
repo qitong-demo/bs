@@ -43,6 +43,15 @@ final class ContentSupport {
         if ("EXPIRED".equals(status)) {
             return "已失效";
         }
+        if ("PENDING_REVIEW".equals(status)) {
+            return "待平台审核";
+        }
+        if ("REJECTED".equals(status)) {
+            return "审核未通过";
+        }
+        if ("CANCELLED".equals(status)) {
+            return "已取消";
+        }
         return status == null ? "" : status;
     }
 

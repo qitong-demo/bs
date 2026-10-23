@@ -145,6 +145,25 @@ public class MysqlActivityService implements ActivityService {
 
     @Override
     @Transactional
+    public Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId) {
+        Activity activity = require(id);
+        if (!"PENDING_REVIEW".equals(activity.getStatus())) {
+            throw new BusinessException("该活动不在待审核状态");
+        }
+        String normalized = "approve".equalsIgnoreCase(action) ? "approve" : "reject";
+        if ("reject".equals(normalized) && (reviewNote == null || reviewNote.isBlank())) {
+            throw new BusinessException("驳回时请填写原因");
+        }
+        activity.setStatus("approve".equals(normalized) ? "PUBLISHED" : "REJECTED");
+        activity.setReviewNote(reviewNote == null ? "" : reviewNote.trim());
+        activity.setReviewerId(reviewerId);
+        activity.setReviewTime(LocalDateTime.now());
+        activityMapper.updateById(activity);
+        return toMap(require(id));
+    }
+
+    @Override
+    @Transactional
     public void delete(Long id) {
         // 锁活动行：与 addSignup 的 FOR UPDATE 串行化，避免「查完没有报名 → 并发插入报名 → 删除撞外键」。
         Activity activity = activityMapper.selectOne(new LambdaQueryWrapper<Activity>()
@@ -358,6 +377,9 @@ public class MysqlActivityService implements ActivityService {
         out.put("content", activity.getContent() == null ? "" : activity.getContent());
         out.put("status", activity.getStatus());
         out.put("statusLabel", ContentSupport.statusLabel(activity.getStatus()));
+        out.put("reviewNote", activity.getReviewNote() == null ? "" : activity.getReviewNote());
+        out.put("reviewerId", activity.getReviewerId() == null ? 0L : activity.getReviewerId());
+        out.put("reviewTime", ContentSupport.formatDateTime(activity.getReviewTime()));
         // 承办方与报名入口：第三方活动给出跳转链接，用户无从报名会以为功能坏了
         String organizer = ActivityOrganizer.normalize(activity.getOrganizerType());
         out.put("organizerType", organizer);

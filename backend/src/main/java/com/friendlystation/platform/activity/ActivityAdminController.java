@@ -29,13 +29,19 @@ public class ActivityAdminController {
     private final ActivityService activityService;
     private final com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher;
     private final com.friendlystation.platform.auth.DataScopeService dataScopeService;
+    private final com.friendlystation.platform.station.StationService stationService;
+    private final com.friendlystation.platform.notification.NotificationService notificationService;
 
     public ActivityAdminController(ActivityService activityService,
                                    com.friendlystation.platform.content.ActivitySourceFetcher sourceFetcher,
-                                   com.friendlystation.platform.auth.DataScopeService dataScopeService) {
+                                   com.friendlystation.platform.auth.DataScopeService dataScopeService,
+                                   com.friendlystation.platform.station.StationService stationService,
+                                   com.friendlystation.platform.notification.NotificationService notificationService) {
         this.activityService = activityService;
         this.sourceFetcher = sourceFetcher;
         this.dataScopeService = dataScopeService;
+        this.stationService = stationService;
+        this.notificationService = notificationService;
     }
 
     /** 后台活动分页，返回全部状态。 */
@@ -49,21 +55,63 @@ public class ActivityAdminController {
         return ApiResponse.ok(activityService.adminPage(current, size, status, keyword));
     }
 
-    /** 新增活动。 */
+    /** 新增活动：驿站提交先进入待审核，平台管理员可直接发布。 */
     @PostMapping
     public ApiResponse<Map<String, Object>> create(@RequestBody Map<String, Object> payload) {
-        requireStationInScope(payload == null ? null : payload.get("stationId"));
-        return ApiResponse.ok(activityService.create(payload));
+        Map<String, Object> data = forceStationReview(payload);
+        requireStationInScope(data.get("stationId"));
+        return ApiResponse.ok(activityService.create(data));
     }
 
-    /** 修改活动。 */
+    /** 修改活动：驿站修改后重新进入待审核，平台管理员可直接改状态。 */
     @PutMapping("/{id}")
     public ApiResponse<Map<String, Object>> update(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         requireActivityScope(id);
-        if (payload != null && payload.containsKey("stationId")) {
-            requireStationInScope(payload.get("stationId"));
+        Map<String, Object> data = forceStationReview(payload);
+        if (data.containsKey("stationId")) {
+            requireStationInScope(data.get("stationId"));
         }
-        return ApiResponse.ok(activityService.update(id, payload));
+        return ApiResponse.ok(activityService.update(id, data));
+    }
+
+    /** 平台审核驿站活动：通过后发布，驳回必须写原因。 */
+    @PutMapping("/{id}/review")
+    @RequireRole({"PLATFORM_ADMIN"})
+    @com.friendlystation.platform.auth.RequirePermission({"ACTIVITY_MANAGE"})
+    public ApiResponse<Map<String, Object>> review(@PathVariable Long id,
+                                                   @RequestBody(required = false) Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        String action = String.valueOf(data.getOrDefault("action", "approve"));
+        String note = String.valueOf(data.getOrDefault("reviewNote", ""));
+        Map<String, Object> result = activityService.review(id, action, note,
+                com.friendlystation.platform.auth.CurrentUserContext.require().id());
+        Object stationId = result.get("stationId");
+        if (com.friendlystation.platform.common.FormatUtils.number(stationId) > 0) {
+            try {
+                var station = stationService.detail(com.friendlystation.platform.common.FormatUtils.number(stationId));
+                if (station != null && station.managerId() != null) {
+                    String title = "approve".equalsIgnoreCase(action) ? "活动审核通过" : "活动审核未通过";
+                    notificationService.push(station.managerId(), "ACTIVITY", title,
+                            String.valueOf(result.get("title")) + (note.isBlank() ? "" : "；" + note),
+                            "/admin?tab=activities&activityId=" + id, "ACTIVITY", id);
+                }
+            } catch (RuntimeException ignored) {
+                // 驿站已删除：审核结果仍写入活动记录
+            }
+        }
+        return ApiResponse.ok(result);
+    }
+
+    /** 驿站/工作人员提交的活动统一进待审核；平台管理员不受限制。 */
+    private Map<String, Object> forceStationReview(Map<String, Object> payload) {
+        Map<String, Object> data = payload == null
+                ? new java.util.LinkedHashMap<>() : new java.util.LinkedHashMap<>(payload);
+        var user = com.friendlystation.platform.auth.CurrentUserContext.require();
+        if (!dataScopeService.isPlatformLevel(user)) {
+            data.put("status", "PENDING_REVIEW");
+            data.put("reviewNote", "");
+        }
+        return data;
     }
 
     /**

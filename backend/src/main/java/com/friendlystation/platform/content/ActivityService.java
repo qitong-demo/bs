@@ -31,6 +31,9 @@ public interface ActivityService {
     /** 修改活动。 */
     Map<String, Object> update(Long id, Map<String, Object> payload);
 
+    /** 平台审核驿站提交的活动：approve 发布，reject 驳回。 */
+    Map<String, Object> review(Long id, String action, String reviewNote, long reviewerId);
+
     /** 物理删除活动。 */
     void delete(Long id);
 

@@ -26,9 +26,31 @@
       </article>
     </section>
 
-    <el-tabs v-model="activeTab" class="admin-tabs">
-      <el-tab-pane v-if="canSee('overview')" label="运营概览" name="overview">
-        <AdminOverview />
+    <div class="admin-body">
+      <aside class="admin-sidebar" aria-label="管理工作台导航">
+        <div v-for="group in sidebarGroups" :key="group.label" class="admin-nav-group">
+          <p class="admin-nav-title">{{ group.label }}</p>
+          <button
+            v-for="item in group.items"
+            :key="item.name"
+            class="admin-nav-item"
+            :class="{ active: activeTab === item.name }"
+            @click="activeTab = item.name"
+          >
+            <span>{{ item.label }}</span>
+            <el-badge
+              v-if="navBadge(item.name)"
+              :value="navBadge(item.name)"
+              :max="99"
+              class="admin-nav-badge"
+            />
+          </button>
+        </div>
+      </aside>
+
+      <el-tabs v-model="activeTab" class="admin-tabs admin-tabs--sidebar">
+        <el-tab-pane v-if="canSee('overview')" label="运营概览" name="overview">
+          <AdminOverview />
       </el-tab-pane>
       <el-tab-pane v-if="canSee('appointments')" label="预约审核" name="appointments">
         <AdminAppointments />
@@ -88,7 +110,8 @@
       <el-tab-pane v-if="canSee('reports')" label="报表导出" name="reports">
         <AdminReports />
       </el-tab-pane>
-    </el-tabs>
+      </el-tabs>
+    </div>
   </main>
 </template>
 
@@ -221,6 +244,73 @@ function canSee(name) {
   return visibleTabs.value.some((tab) => tab.name === name);
 }
 
+/** 左侧分组导航：平台管“站点治理/服务运行/内容活动”，驿站管“本站点经营”。 */
+const sidebarGroups = computed(() => {
+  const platformGroups = [
+    { label: "工作台", items: [{ name: "overview", label: "运营概览" }] },
+    {
+      label: "站点治理",
+      items: [
+        { name: "stationApplications", label: "入驻审核" },
+        { name: "stations", label: "站点名录" }
+      ]
+    },
+    {
+      label: "服务运行",
+      items: [
+        { name: "appointments", label: "预约协调" },
+        { name: "appeals", label: "诉求督办" },
+        { name: "changeRequests", label: "变更审批" }
+      ]
+    },
+    {
+      label: "内容与活动",
+      items: [
+        { name: "contents", label: "政策资讯" },
+        { name: "activities", label: "公益活动" },
+        { name: "signups", label: "报名审核" }
+      ]
+    },
+    {
+      label: "账号权限",
+      items: [
+        { name: "users", label: "平台账号" },
+        { name: "roles", label: "角色权限" }
+      ]
+    },
+    { label: "数据", items: [{ name: "reports", label: "服务报表" }] }
+  ];
+  const stationGroups = [
+    { label: "工作台", items: [{ name: "overview", label: "运营概览" }] },
+    { label: "站点管理", items: [{ name: "stationOps", label: "我的站点" }] },
+    {
+      label: "服务运行",
+      items: [
+        { name: "appointments", label: "预约接待" },
+        { name: "appeals", label: "诉求处理" }
+      ]
+    },
+    { label: "服务项目", items: [{ name: "services", label: "服务项目" }] },
+    {
+      label: "公益活动",
+      items: [
+        { name: "activities", label: "活动管理" },
+        { name: "signups", label: "报名审核" }
+      ]
+    },
+    { label: "数据", items: [{ name: "reports", label: "服务报表" }] }
+  ];
+  return (isPlatformAdmin.value ? platformGroups : stationGroups)
+    .map((group) => ({ ...group, items: group.items.filter((item) => canSee(item.name)) }))
+    .filter((group) => group.items.length);
+});
+
+function navBadge(name) {
+  if (name === "signups") return pendingSignups.value;
+  if (name === "stationApplications") return pendingStationApplications.value;
+  return 0;
+}
+
 watch(
   [activeTab, visibleTabs],
   () => {
@@ -317,6 +407,56 @@ h1 { margin: 0; font-size: 28px; }
 .admin-subtitle { margin: 8px 0 0; color: #687483; }
 .admin-header-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .admin-notice, .admin-metrics, .admin-tabs { max-width: 1440px; margin: 0 auto 18px; }
+.admin-body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  align-items: start;
+}
+.admin-sidebar {
+  position: sticky;
+  top: 16px;
+  padding: 12px 10px;
+  background: #fff;
+  border: 1px solid #e5eaf0;
+  border-radius: 6px;
+}
+.admin-nav-group + .admin-nav-group { margin-top: 14px; }
+.admin-nav-title {
+  margin: 0 8px 6px;
+  color: #8a95a3;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #3f4b5a;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-nav-item:hover { background: #f2f7f6; color: #14836d; }
+.admin-nav-item.active { background: #e8f6f2; color: #087f71; font-weight: 700; }
+.admin-nav-badge :deep(.el-badge__content) { position: static; transform: none; }
+.admin-tabs--sidebar { max-width: none; margin: 0; }
+.admin-tabs--sidebar :deep(.el-tabs__header) { display: none; }
+@media (max-width: 900px) {
+  .admin-body { grid-template-columns: 1fr; }
+  .admin-sidebar { position: static; display: flex; gap: 12px; overflow-x: auto; }
+  .admin-nav-group { min-width: 160px; }
+  .admin-nav-group + .admin-nav-group { margin-top: 0; }
+}
 .admin-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .admin-metric { min-height: 92px; padding: 16px 20px; background: #fff; border: 1px solid #e5eaf0; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
 .admin-metric span { color: #687483; font-size: 13px; }
