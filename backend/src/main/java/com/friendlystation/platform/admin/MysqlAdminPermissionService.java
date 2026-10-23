@@ -76,6 +76,12 @@ public class MysqlAdminPermissionService implements AdminPermissionService {
         if ("STATION_ADMIN".equalsIgnoreCase(roleCode)) {
             return PermissionCatalog.STATION_ADMIN_PERMISSIONS;
         }
+        if ("STATION_STAFF".equalsIgnoreCase(roleCode)) {
+            return PermissionCatalog.STATION_STAFF_PERMISSIONS;
+        }
+        if ("STATION_VOLUNTEER".equalsIgnoreCase(roleCode)) {
+            return PermissionCatalog.STATION_VOLUNTEER_PERMISSIONS;
+        }
         // 主管理员不受授权表限制，避免误删自己权限后无人能恢复
         if (isPrimaryAdmin(userId)) {
             return PermissionCatalog.DEFINITIONS.stream()

@@ -317,6 +317,8 @@ CREATE TABLE IF NOT EXISTS station_evaluation (
 INSERT IGNORE INTO sys_role (role_code, role_name, remark) VALUES
     ('USER', '普通用户', '新就业群体用户'),
     ('STATION_ADMIN', '驿站管理员', '负责本驿站运营'),
+    ('STATION_STAFF', '驿站工作人员', '在本站点接待预约、处理诉求与报名'),
+    ('STATION_VOLUNTEER', '驿站志愿者', '在本站点协助接待与报名'),
     ('PLATFORM_ADMIN', '管理员', '统一统筹平台，可创建子账号并分发功能权限');
 
 -- 功能权限目录：管理端的一个标签页或一类关键操作对应一个权限。
@@ -405,6 +407,20 @@ CREATE TABLE IF NOT EXISTS station_application (
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_station_application_status (status, create_time),
     KEY idx_station_application_applicant (applicant_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 驿站工作人员/志愿者账号：只在本站点数据范围内工作。
+CREATE TABLE IF NOT EXISTS station_member (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    station_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    -- STAFF 工作人员 / VOLUNTEER 志愿者
+    member_role VARCHAR(20) NOT NULL DEFAULT 'STAFF',
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_station_member (station_id, user_id),
+    KEY idx_station_member_user (user_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 驿站信息变更申请与审批。

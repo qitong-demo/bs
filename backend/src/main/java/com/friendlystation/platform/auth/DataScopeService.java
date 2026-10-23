@@ -1,9 +1,11 @@
 package com.friendlystation.platform.auth;
 
 import com.friendlystation.platform.station.StationDto;
+import com.friendlystation.platform.station.StationMemberService;
 import com.friendlystation.platform.station.StationService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,9 +17,11 @@ import java.util.List;
 @Component
 public class DataScopeService {
     private final StationService stationService;
+    private final StationMemberService stationMemberService;
 
-    public DataScopeService(StationService stationService) {
+    public DataScopeService(StationService stationService, StationMemberService stationMemberService) {
         this.stationService = stationService;
+        this.stationMemberService = stationMemberService;
     }
 
     /** 是否属于平台级角色（不受驿站范围限制）。 */
@@ -32,6 +36,17 @@ public class DataScopeService {
     public List<StationDto> managedStations(CurrentUser user) {
         if (user == null || user.id() == null || isPlatformLevel(user)) {
             return List.of();
+        }
+        if ("STATION_STAFF".equals(user.role()) || "STATION_VOLUNTEER".equals(user.role())) {
+            List<StationDto> result = new ArrayList<>();
+            for (Long id : stationMemberService.stationIdsOf(user.id())) {
+                try {
+                    result.add(stationService.detail(id));
+                } catch (RuntimeException ignored) {
+                    // 站点已删除：跳过
+                }
+            }
+            return result;
         }
         return stationService.listByManager(user.id());
     }

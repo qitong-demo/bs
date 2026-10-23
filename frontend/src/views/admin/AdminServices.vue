@@ -175,7 +175,7 @@ const rules = {
 async function loadStations() {
   try {
     // 驿站管理员只看到自己负责的驿站，避免下拉里出现别家驿站后编辑时被后端拒绝
-    const list = userStore.roleCode === "STATION_ADMIN"
+    const list = ["STATION_ADMIN", "STATION_STAFF", "STATION_VOLUNTEER"].includes(userStore.roleCode)
       ? await getMyStations()
       : (await getStationPage({ current: 1, size: 50 }))?.records;
     stations.value = Array.isArray(list) ? list : [];

@@ -50,6 +50,12 @@ public class DemoAdminPermissionService implements AdminPermissionService {
         if ("STATION_ADMIN".equalsIgnoreCase(roleCode)) {
             return PermissionCatalog.STATION_ADMIN_PERMISSIONS;
         }
+        if ("STATION_STAFF".equalsIgnoreCase(roleCode)) {
+            return PermissionCatalog.STATION_STAFF_PERMISSIONS;
+        }
+        if ("STATION_VOLUNTEER".equalsIgnoreCase(roleCode)) {
+            return PermissionCatalog.STATION_VOLUNTEER_PERMISSIONS;
+        }
         // 主管理员账号 id=3（platform_admin）不受授权表限制
         if (userId == 3L) {
             return PermissionCatalog.DEFINITIONS.stream()

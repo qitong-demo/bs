@@ -32,7 +32,7 @@ const router = createRouter({
 router.beforeEach((to) => {
   const token = localStorage.getItem("friendly_station_token");
   if (to.meta.requiresAuth && !token) return { name: "login", query: { redirect: to.fullPath } };
-  if (to.meta.adminOnly && !["STATION_ADMIN", "PLATFORM_ADMIN"].includes(localStorage.getItem("friendly_station_role"))) return { name: "dashboard" };
+  if (to.meta.adminOnly && !["STATION_ADMIN", "STATION_STAFF", "STATION_VOLUNTEER", "PLATFORM_ADMIN"].includes(localStorage.getItem("friendly_station_role"))) return { name: "dashboard" };
   if (to.name === "login" && token) return { name: "dashboard" };
   return true;
 });

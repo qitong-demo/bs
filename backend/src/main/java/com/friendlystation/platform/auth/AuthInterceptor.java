@@ -65,9 +65,17 @@ public class AuthInterceptor implements HandlerInterceptor {
                 writeError(response, 401, "账号已停用，请联系管理员");
                 return false;
             }
-            if (required != null && Arrays.stream(required.value()).noneMatch(currentUser.role()::equals)) {
-                writeError(response, 403, "当前角色无权执行此操作");
-                return false;
+            if (required != null) {
+                boolean roleMatched = Arrays.stream(required.value()).anyMatch(currentUser.role()::equals);
+                // 工作人员/志愿者属于驿站侧账号，沿用驿站管理员的角色入口；
+                // 具体能做什么仍由固定功能权限限制，不能借此进入平台端。
+                boolean stationSide = "STATION_STAFF".equals(currentUser.role())
+                        || "STATION_VOLUNTEER".equals(currentUser.role());
+                boolean stationAdminEndpoint = Arrays.stream(required.value()).anyMatch("STATION_ADMIN"::equals);
+                if (!roleMatched && !(stationSide && stationAdminEndpoint)) {
+                    writeError(response, 403, "当前角色无权执行此操作");
+                    return false;
+                }
             }
             // 功能权限校验：角色对了不代表这件事能做。
             // 之前只校验角色，子账号绕过前端直接调接口即可越权——权限体系等于装饰。

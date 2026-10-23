@@ -106,6 +106,16 @@ public class PermissionCatalog {
             "SIGNUP_MANAGE", "REPORT_EXPORT", "SERVICE_MANAGE"
     );
 
+    /** 工作人员：接待预约、处理诉求、服务项目与报名，但不能管站点资料和成员。 */
+    public static final List<String> STATION_STAFF_PERMISSIONS = List.of(
+            "APPOINTMENT_AUDIT", "APPEAL_HANDLE", "SIGNUP_MANAGE", "SERVICE_MANAGE"
+    );
+
+    /** 志愿者：只做接待与报名协助。 */
+    public static final List<String> STATION_VOLUNTEER_PERMISSIONS = List.of(
+            "APPOINTMENT_AUDIT", "SIGNUP_MANAGE"
+    );
+
     /** 主管理员的内置账号 ID 约定：账号名 platform_admin。 */
     public static final String PRIMARY_ADMIN_USERNAME = "platform_admin";
 }

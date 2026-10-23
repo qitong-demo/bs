@@ -49,6 +49,8 @@ export const useUserStore = defineStore("user", {
       this.role = {
         USER: "普通用户",
         STATION_ADMIN: "驿站管理员",
+        STATION_STAFF: "驿站工作人员",
+        STATION_VOLUNTEER: "驿站志愿者",
         PLATFORM_ADMIN: "平台管理员",
         
       }[payload.role] || "普通用户";

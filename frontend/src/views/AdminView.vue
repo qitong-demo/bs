@@ -64,6 +64,9 @@
       <el-tab-pane v-if="canSee('stationOps')" label="我的驿站" name="stationOps">
         <AdminStationOps />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('members')" label="工作人员" name="members">
+        <AdminMembers />
+      </el-tab-pane>
       <el-tab-pane v-if="canSee('stationApplications')" name="stationApplications">
         <template #label>
           <span class="signup-tab-label">
@@ -135,6 +138,7 @@ import AdminChangeRequests from "./admin/AdminChangeRequests.vue";
 import AdminStations from "./admin/AdminStations.vue";
 import AdminStationApplications from "./admin/AdminStationApplications.vue";
 import AdminStationOps from "./admin/AdminStationOps.vue";
+import AdminMembers from "./admin/AdminMembers.vue";
 import AdminServices from "./admin/AdminServices.vue";
 import AdminContents from "./admin/AdminContents.vue";
 import AdminActivities from "./admin/AdminActivities.vue";
@@ -153,6 +157,7 @@ import AdminReports from "./admin/AdminReports.vue";
 const tabs = [
   { name: "overview", label: "运营概览" },
   { name: "stationOps", label: "我的驿站", roles: ["STATION_ADMIN"] },
+  { name: "members", label: "工作人员", roles: ["STATION_ADMIN"] },
   { name: "appointments", label: "预约审核", permission: "APPOINTMENT_AUDIT" },
   { name: "appeals", label: "诉求处理", permission: "APPEAL_HANDLE" },
   { name: "changeRequests", label: "变更审批", permission: "CHANGE_APPROVE" },
@@ -196,7 +201,13 @@ let pendingSignupTimer = null;
 const workflow = ref({});
 
 const isPlatformAdmin = computed(() => PLATFORM_ROLES.includes(userStore.roleCode));
-const roleLabel = computed(() => userStore.role || "未知角色");
+const roleLabel = computed(() => ({
+  USER: "普通用户",
+  STATION_ADMIN: "驿站管理员",
+  STATION_STAFF: "驿站工作人员",
+  STATION_VOLUNTEER: "驿站志愿者",
+  PLATFORM_ADMIN: "平台管理员"
+}[userStore.roleCode] || userStore.role || "未知角色"));
 const visibleTabs = computed(() => tabs.filter((tab) => {
   // 角色限定标签（例如“我的驿站”只给驿站管理员）
   if (tab.roles && !tab.roles.includes(userStore.roleCode)) {
@@ -282,7 +293,7 @@ const sidebarGroups = computed(() => {
   ];
   const stationGroups = [
     { label: "工作台", items: [{ name: "overview", label: "运营概览" }] },
-    { label: "站点管理", items: [{ name: "stationOps", label: "我的站点" }] },
+    { label: "站点管理", items: [{ name: "stationOps", label: "我的站点" }, { name: "members", label: "工作人员" }] },
     {
       label: "服务运行",
       items: [

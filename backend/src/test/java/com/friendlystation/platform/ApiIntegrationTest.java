@@ -527,9 +527,8 @@ class ApiIntegrationTest {
         assertTrue(users.path("records").get(0).has("roleName"));
 
         JsonNode roles = dataOf(call("get", "/api/admin/roles", adminToken, null));
-        // 系统只有三个身份：普通用户 / 驿站管理员 / 管理员（原 SUPER_ADMIN 已删除，
-        // 它只定义过角色行、从未分配给任何账号，属"从未启用的幽灵角色"）
-        assertEquals(3, roles.size());
+        // 身份：普通用户 / 驿站管理员 / 工作人员 / 志愿者 / 平台管理员
+        assertEquals(5, roles.size());
 
         long userId = users.path("records").get(0).path("id").asLong();
         JsonNode updated = call("put", "/api/admin/users/" + userId + "/roles", adminToken,

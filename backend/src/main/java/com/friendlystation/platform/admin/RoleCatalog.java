@@ -15,7 +15,9 @@ public final class RoleCatalog {
 
     public static final List<RoleDefinition> DEFINITIONS = List.of(
             new RoleDefinition("USER", "普通用户", "新就业群体用户"),
-            new RoleDefinition("STATION_ADMIN", "驿站管理员", "负责本驿站运营"),
+            new RoleDefinition("STATION_ADMIN", "驿站管理员", "负责本站点运营"),
+            new RoleDefinition("STATION_STAFF", "驿站工作人员", "在本站点接待预约、处理诉求与报名"),
+            new RoleDefinition("STATION_VOLUNTEER", "驿站志愿者", "在本站点协助接待与报名"),
             new RoleDefinition("PLATFORM_ADMIN", "管理员", "统一统筹平台，可创建子账号并分发功能权限")
     );
 
