@@ -8,6 +8,11 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   # 邮件服务：用于发送邮箱验证码（改账号 ID / 改密码 / 改联系方式）。
   # 为什么不用短信：个人开发者申请不到短信资质（阿里云 2025-06-06 公告明确
   # 「短信服务不支持申请个人自用资质」），邮箱是能真实送达的唯一验证通道。

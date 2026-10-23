@@ -76,3 +76,5 @@ download_drawio_chunks.ps1
 inspect_drawio_range.ps1
 draw_usecase.py
 create_visio_usecase.py
+
+uploads/

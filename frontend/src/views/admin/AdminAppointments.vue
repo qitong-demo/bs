@@ -53,6 +53,7 @@
           <el-button size="small" type="danger" :disabled="row.status !== 'PENDING_STATION_CONFIRMATION'" @click="reject(row)">拒绝</el-button>
           <el-button size="small" type="primary" :disabled="row.status !== 'CONFIRMED'" @click="finish(row)">完成</el-button>
           <el-button size="small" @click="openDetail(row)">详情</el-button>
+          <el-button v-if="isPlatformAdmin" size="small" type="warning" @click="openIntervene(row)">平台干预</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -69,6 +70,30 @@
         @size-change="search"
       />
     </div>
+
+    <el-dialog v-model="interveneVisible" title="平台干预预约" width="520px">
+      <el-descriptions v-if="interveneTarget" :column="1" border size="small" class="admin-dialog-meta">
+        <el-descriptions-item label="预约">{{ interveneTarget.serviceName }}</el-descriptions-item>
+        <el-descriptions-item label="驿站">{{ interveneTarget.stationName }}</el-descriptions-item>
+        <el-descriptions-item label="当前状态">{{ appointmentStatusLabel(interveneTarget) }}</el-descriptions-item>
+      </el-descriptions>
+      <el-form label-position="top">
+        <el-form-item label="干预动作">
+          <el-radio-group v-model="interveneForm.action">
+            <el-radio-button value="CONFIRM">协调确认</el-radio-button>
+            <el-radio-button value="CANCEL">协调取消</el-radio-button>
+            <el-radio-button value="COMPLETE">标记完成</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="干预原因" required>
+          <el-input v-model="interveneForm.reason" type="textarea" :rows="3" maxlength="300" show-word-limit placeholder="必须填写，用户和审计日志都会看到" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="interveneVisible = false">取消</el-button>
+        <el-button type="warning" :loading="intervening" @click="submitIntervene">提交干预</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="detailVisible" title="预约详情" width="560px">
       <el-descriptions v-if="detail" :column="1" border size="small">
@@ -90,11 +115,19 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { auditAppointment, finishAppointment, getAdminAppointments } from "../../api/workflow";
+import { auditAppointment, finishAppointment, getAdminAppointments, interveneAppointment } from "../../api/workflow";
 import { errorMessage } from "../../api/http";
+import { useUserStore } from "../../stores/user";
 import { appointmentStatusLabel, appointmentStatusTag, textOf } from "./admin-shared";
+
+const userStore = useUserStore();
+const isPlatformAdmin = computed(() => userStore.roleCode === "PLATFORM_ADMIN");
+const interveneVisible = ref(false);
+const interveneTarget = ref(null);
+const intervening = ref(false);
+const interveneForm = reactive({ action: "CONFIRM", reason: "" });
 
 const statusOptions = [
   { value: "PENDING_STATION_CONFIRMATION", label: "待驿站确认" },
@@ -143,6 +176,34 @@ function reset() {
 function openDetail(row) {
   detail.value = row;
   detailVisible.value = true;
+}
+
+function openIntervene(row) {
+  interveneTarget.value = row;
+  interveneForm.action = "CONFIRM";
+  interveneForm.reason = "";
+  interveneVisible.value = true;
+}
+
+async function submitIntervene() {
+  if (!interveneForm.reason.trim()) {
+    ElMessage.warning("平台干预必须填写原因");
+    return;
+  }
+  intervening.value = true;
+  try {
+    await interveneAppointment(interveneTarget.value.id, {
+      action: interveneForm.action,
+      reason: interveneForm.reason.trim()
+    });
+    ElMessage.success("平台干预已提交，用户会收到通知");
+    interveneVisible.value = false;
+    await load();
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "干预失败"));
+  } finally {
+    intervening.value = false;
+  }
 }
 
 async function confirm(row) {

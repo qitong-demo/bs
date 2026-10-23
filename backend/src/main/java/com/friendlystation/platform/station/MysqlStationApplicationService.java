@@ -73,6 +73,8 @@ public class MysqlStationApplicationService implements StationApplicationService
         item.setStationType(FormatUtils.text(request.get("stationType"), ""));
         item.setCityCode(FormatUtils.text(request.get("cityCode"), "330100"));
         item.setDescription(FormatUtils.text(request.get("description"), ""));
+        item.setLicenseUrl(FormatUtils.text(request.get("licenseUrl"), ""));
+        item.setPhotoUrls(FormatUtils.text(request.get("photoUrls"), ""));
         item.setStatus("PENDING");
         item.setCreateTime(LocalDateTime.now());
         item.setUpdateTime(LocalDateTime.now());
@@ -230,6 +232,8 @@ public class MysqlStationApplicationService implements StationApplicationService
         out.put("stationType", item.getStationType() == null ? "" : item.getStationType());
         out.put("cityCode", item.getCityCode() == null ? "" : item.getCityCode());
         out.put("description", item.getDescription() == null ? "" : item.getDescription());
+        out.put("licenseUrl", item.getLicenseUrl() == null ? "" : item.getLicenseUrl());
+        out.put("photoUrls", item.getPhotoUrls() == null ? "" : item.getPhotoUrls());
         out.put("status", item.getStatus());
         out.put("statusLabel", statusLabel(item.getStatus()));
         out.put("reviewNote", item.getReviewNote() == null ? "" : item.getReviewNote());

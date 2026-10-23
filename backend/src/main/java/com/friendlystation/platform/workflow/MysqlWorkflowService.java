@@ -787,6 +787,54 @@ public class MysqlWorkflowService implements WorkflowService {
 
     @Override
     @Transactional
+    public Map<String, Object> interveneAppointment(long id, String action, String reason, long operatorId) {
+        String normalized = action == null ? "" : action.trim().toUpperCase();
+        if (!List.of("CONFIRM", "CANCEL", "COMPLETE").contains(normalized)) {
+            throw new BusinessException("平台干预动作不正确");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("平台干预必须填写原因");
+        }
+        ServiceAppointment item = appointmentMapper.selectById(id);
+        if (item == null) {
+            throw new BusinessException("预约不存在");
+        }
+        String target = switch (normalized) {
+            case "CONFIRM" -> WorkflowStatus.APPOINTMENT_CONFIRMED;
+            case "COMPLETE" -> WorkflowStatus.APPOINTMENT_FINISHED;
+            default -> WorkflowStatus.APPOINTMENT_CANCELLED;
+        };
+        LambdaUpdateWrapper<ServiceAppointment> update = new LambdaUpdateWrapper<ServiceAppointment>()
+                .eq(ServiceAppointment::getId, id)
+                .set(ServiceAppointment::getStatus, target)
+                .set(ServiceAppointment::getUpdateTime, LocalDateTime.now());
+        if ("CONFIRM".equals(normalized)) {
+            update.eq(ServiceAppointment::getStatus, WorkflowStatus.APPOINTMENT_PENDING);
+        } else if ("COMPLETE".equals(normalized)) {
+            update.eq(ServiceAppointment::getStatus, WorkflowStatus.APPOINTMENT_CONFIRMED);
+        } else {
+            update.in(ServiceAppointment::getStatus, List.of(WorkflowStatus.APPOINTMENT_PENDING,
+                    WorkflowStatus.APPOINTMENT_CONFIRMED));
+        }
+        if (appointmentMapper.update(null, update) == 0) {
+            throw new BusinessException("当前预约状态不允许该干预操作");
+        }
+        String title = switch (normalized) {
+            case "CONFIRM" -> "预约已由平台协调确认";
+            case "COMPLETE" -> "预约已由平台标记完成";
+            default -> "预约已由平台协调取消";
+        };
+        notificationService.push(item.getUserId(), "APPOINTMENT", title,
+                stationName(item.getStationId()) + " · " + FormatUtils.date(item.getAppointDate())
+                        + " " + item.getAppointTime() + "；原因：" + reason,
+                "", "APPOINTMENT", id);
+        ServiceAppointment updated = appointmentMapper.selectById(id);
+        return appointmentView(updated, stationName(updated.getStationId()), appointmentSubject(updated),
+                userName(updated.getUserId()));
+    }
+
+    @Override
+    @Transactional
     public int notifySuspension(long stationId, LocalDateTime from, LocalDateTime to, String reason) {
         if (from == null || to == null) {
             return 0;

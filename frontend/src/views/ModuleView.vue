@@ -905,6 +905,24 @@
                 placeholder="可填写场地条件、可提供的服务、运营单位等"
               />
             </el-form-item>
+            <el-form-item label="资质文件（营业执照/场地证明）" class="station-apply-wide">
+              <div class="station-upload-row">
+                <el-upload :show-file-list="false" :http-request="uploadLicense">
+                  <el-button>上传资质</el-button>
+                </el-upload>
+                <a v-if="stationApplyForm.licenseUrl" :href="stationApplyForm.licenseUrl" target="_blank" rel="noreferrer">查看已上传资质</a>
+                <span v-else class="field-hint">支持 jpg/png/pdf，最大 5MB</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="站点照片" class="station-apply-wide">
+              <div class="station-upload-row">
+                <el-upload :show-file-list="false" :http-request="uploadPhoto">
+                  <el-button>上传照片</el-button>
+                </el-upload>
+                <a v-if="stationApplyForm.photoUrls" :href="stationApplyForm.photoUrls" target="_blank" rel="noreferrer">查看已上传照片</a>
+                <span v-else class="field-hint">支持 jpg/png/webp，最大 5MB</span>
+              </div>
+            </el-form-item>
           </div>
           <el-button type="primary" :loading="stationApplySubmitting" @click="submitStationApply">提交入驻申请</el-button>
         </el-form>
@@ -1060,6 +1078,7 @@ import {
   getMyStationApplications,
   submitStationApplication
 } from "../api/station-apply";
+import { uploadFile } from "../api/file";
 import { useUserStore } from "../stores/user";
 import { useMessageStore } from "../stores/message";
 import { buildSlots, openStateMeta } from "../utils/business-hours";
@@ -1382,7 +1401,9 @@ const stationApplyForm = reactive({
   openTime: "",
   stationType: "小哥驿站",
   cityCode: "330100",
-  description: ""
+  description: "",
+  licenseUrl: "",
+  photoUrls: ""
 });
 const myStationApplications = ref([]);
 const stationApplyLoading = ref(false);
@@ -2206,6 +2227,26 @@ async function loadMyStationApplications() {
   }
 }
 
+async function uploadLicense(options) {
+  try {
+    const data = await uploadFile(options.file);
+    stationApplyForm.licenseUrl = data.url;
+    ElMessage.success("资质已上传");
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "上传失败"));
+  }
+}
+
+async function uploadPhoto(options) {
+  try {
+    const data = await uploadFile(options.file);
+    stationApplyForm.photoUrls = data.url;
+    ElMessage.success("照片已上传");
+  } catch (error) {
+    ElMessage.error(errorMessage(error, "上传失败"));
+  }
+}
+
 async function submitStationApply() {
   if (!stationApplyForm.stationName.trim() || !stationApplyForm.area.trim() || !stationApplyForm.address.trim()) {
     ElMessage.warning("请填写驿站名称、所属区域和详细地址");
@@ -2222,7 +2263,8 @@ async function submitStationApply() {
     ElMessage.success("入驻申请已提交，平台管理员审核后会通知你");
     Object.assign(stationApplyForm, {
       stationName: "", area: stationApplyForm.area, address: "", contactName: "",
-      contactPhone: "", openTime: "", stationType: "小哥驿站", cityCode: "330100", description: ""
+      contactPhone: "", openTime: "", stationType: "小哥驿站", cityCode: "330100",
+      description: "", licenseUrl: "", photoUrls: ""
     });
     await loadMyStationApplications();
   } catch (error) {

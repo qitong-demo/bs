@@ -31,6 +31,7 @@ public class PermissionCatalog {
             entry("NEWS_MANAGE", "资讯公告管理", "政策与公告的增删改、声明与建议创作、状态变更"),
             entry("DATA_REVIEW", "数据复核", "处理来源待核对、坐标为高德派生的驿站条目"),
             entry("REPORT_EXPORT", "报表导出", "导出各类台账"),
+            entry("AUDIT_VIEW", "操作日志", "查看平台干预、审核、整改等敏感操作记录"),
             // 放在最后，且 grantable=false
             entry(ACCOUNT_MANAGE, "账号管理", "新建子账号、分发权限、改账号 ID、重置密码")
     );

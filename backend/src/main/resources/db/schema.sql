@@ -398,6 +398,8 @@ CREATE TABLE IF NOT EXISTS station_application (
     station_type VARCHAR(50),
     city_code VARCHAR(20),
     description VARCHAR(1000),
+    license_url VARCHAR(500),
+    photo_urls VARCHAR(1000),
     -- PENDING / APPROVED / REJECTED / CANCELLED
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING',
     review_note VARCHAR(500),
@@ -421,6 +423,39 @@ CREATE TABLE IF NOT EXISTS station_member (
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_station_member (station_id, user_id),
     KEY idx_station_member_user (user_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 服务质量整改：平台下发，驿站反馈，平台复核关闭。
+CREATE TABLE IF NOT EXISTS station_rectification (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    station_id BIGINT NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    content VARCHAR(1000) NOT NULL,
+    level VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    deadline DATE,
+    station_reply VARCHAR(1000),
+    reviewer_id BIGINT,
+    review_note VARCHAR(500),
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_rectification_station (station_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 敏感操作审计：平台干预、审核、整改、成员变更都写这里。
+CREATE TABLE IF NOT EXISTS audit_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    actor_id BIGINT NOT NULL,
+    actor_name VARCHAR(80),
+    actor_role VARCHAR(30),
+    action VARCHAR(60) NOT NULL,
+    target_type VARCHAR(40) NOT NULL,
+    target_id BIGINT,
+    reason VARCHAR(500),
+    detail VARCHAR(1000),
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_audit_create (create_time),
+    KEY idx_audit_actor (actor_id, create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 驿站信息变更申请与审批。

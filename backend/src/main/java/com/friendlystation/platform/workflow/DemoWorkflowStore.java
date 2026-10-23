@@ -552,6 +552,59 @@ public class DemoWorkflowStore implements WorkflowService {
     }
 
     @Override
+    public synchronized Map<String, Object> interveneAppointment(long id, String action, String reason,
+                                                                 long operatorId) {
+        Map<String, Object> item = byId(appointments, id);
+        if (item == null) {
+            throw new BusinessException("预约不存在");
+        }
+        String normalized = action == null ? "" : action.trim().toUpperCase();
+        if (!java.util.List.of("CONFIRM", "CANCEL", "COMPLETE").contains(normalized)) {
+            throw new BusinessException("平台干预动作不正确");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("平台干预必须填写原因");
+        }
+        String current = String.valueOf(item.get("status"));
+        String target;
+        switch (normalized) {
+            case "CONFIRM" -> {
+                if (!WorkflowStatus.APPOINTMENT_PENDING.equals(current)) {
+                    throw new BusinessException("当前预约状态不允许该干预操作");
+                }
+                target = WorkflowStatus.APPOINTMENT_CONFIRMED;
+            }
+            case "COMPLETE" -> {
+                if (!WorkflowStatus.APPOINTMENT_CONFIRMED.equals(current)) {
+                    throw new BusinessException("当前预约状态不允许该干预操作");
+                }
+                target = WorkflowStatus.APPOINTMENT_FINISHED;
+            }
+            default -> {
+                if (!WorkflowStatus.APPOINTMENT_PENDING.equals(current)
+                        && !WorkflowStatus.APPOINTMENT_CONFIRMED.equals(current)) {
+                    throw new BusinessException("当前预约状态不允许该干预操作");
+                }
+                target = WorkflowStatus.APPOINTMENT_CANCELLED;
+            }
+        }
+        item.put("status", target);
+        item.put("operatorId", operatorId);
+        item.put("interveneReason", reason);
+        item.put("interveneTime", FormatUtils.dateTime(LocalDateTime.now()));
+        String title = switch (normalized) {
+            case "CONFIRM" -> "预约已由平台协调确认";
+            case "COMPLETE" -> "预约已由平台标记完成";
+            default -> "预约已由平台协调取消";
+        };
+        push(item.get("userId"), "APPOINTMENT", title,
+                item.get("stationName") + " · " + item.get("appointDate") + " " + item.get("appointTime")
+                        + "；原因：" + reason,
+                "APPOINTMENT", FormatUtils.number(item.get("id")));
+        return view(item);
+    }
+
+    @Override
     public int notifySuspension(long stationId, LocalDateTime from, LocalDateTime to, String reason) {
         if (from == null || to == null) {
             return 0;

@@ -42,6 +42,9 @@ public interface WorkflowService {
     /** 完成预约：只有已确认的预约可以标记为已完成。 */
     Map<String, Object> completeAppointment(long id, long operatorId, List<Long> stationIds);
 
+    /** 平台干预预约：CONFIRM / CANCEL / COMPLETE，必须填原因。 */
+    Map<String, Object> interveneAppointment(long id, String action, String reason, long operatorId);
+
     /**
      * 驿站设置暂停服务后，通知该时段内已提交预约的用户。
      *

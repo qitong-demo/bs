@@ -24,10 +24,13 @@ import java.util.Map;
 public class AppealController {
     private final WorkflowService workflowService;
     private final DataScopeService dataScopeService;
+    private final com.friendlystation.platform.audit.AuditLogService auditLogService;
 
-    public AppealController(WorkflowService workflowService, DataScopeService dataScopeService) {
+    public AppealController(WorkflowService workflowService, DataScopeService dataScopeService,
+                            com.friendlystation.platform.audit.AuditLogService auditLogService) {
         this.workflowService = workflowService;
         this.dataScopeService = dataScopeService;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping
@@ -83,14 +86,27 @@ public class AppealController {
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     @RequirePermission({"APPEAL_HANDLE"})
     public ApiResponse<Map<String, Object>> assign(@RequestBody Map<String, Object> payload) {
-        return ApiResponse.ok(workflowService.assignAppeal(payload, CurrentUserContext.require().id()));
+        Map<String, Object> result = workflowService.assignAppeal(payload, CurrentUserContext.require().id());
+        auditAppeal("APPEAL_ASSIGN", result, payload);
+        return ApiResponse.ok(result);
     }
 
     @PutMapping("/handle")
     @RequireRole({"STATION_ADMIN", "PLATFORM_ADMIN"})
     @RequirePermission({"APPEAL_HANDLE"})
     public ApiResponse<Map<String, Object>> handle(@RequestBody Map<String, Object> payload) {
-        return ApiResponse.ok(workflowService.handleAppeal(payload, CurrentUserContext.require().id()));
+        Map<String, Object> result = workflowService.handleAppeal(payload, CurrentUserContext.require().id());
+        auditAppeal("APPEAL_HANDLE", result, payload);
+        return ApiResponse.ok(result);
+    }
+
+    private void auditAppeal(String action, Map<String, Object> result, Map<String, Object> payload) {
+        var user = CurrentUserContext.require();
+        long id = result.get("id") == null ? 0L
+                : com.friendlystation.platform.common.FormatUtils.number(result.get("id"));
+        String reason = payload == null ? "" : String.valueOf(payload.getOrDefault("content", ""));
+        auditLogService.record(user, action, "APPEAL", id, reason,
+                "status=" + result.getOrDefault("status", ""));
     }
 
     @PostMapping("/evaluate")

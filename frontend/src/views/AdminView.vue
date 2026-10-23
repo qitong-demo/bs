@@ -67,6 +67,9 @@
       <el-tab-pane v-if="canSee('members')" label="工作人员" name="members">
         <AdminMembers />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('rectifications')" :label="isPlatformAdmin ? '整改督导' : '整改通知'" name="rectifications">
+        <AdminRectifications :mode="isPlatformAdmin ? 'platform' : 'station'" />
+      </el-tab-pane>
       <el-tab-pane v-if="canSee('stationApplications')" name="stationApplications">
         <template #label>
           <span class="signup-tab-label">
@@ -113,6 +116,9 @@
       <el-tab-pane v-if="canSee('reports')" label="报表导出" name="reports">
         <AdminReports />
       </el-tab-pane>
+      <el-tab-pane v-if="canSee('auditLogs')" label="操作日志" name="auditLogs">
+        <AdminAuditLogs />
+      </el-tab-pane>
       </el-tabs>
     </div>
   </main>
@@ -139,6 +145,8 @@ import AdminStations from "./admin/AdminStations.vue";
 import AdminStationApplications from "./admin/AdminStationApplications.vue";
 import AdminStationOps from "./admin/AdminStationOps.vue";
 import AdminMembers from "./admin/AdminMembers.vue";
+import AdminRectifications from "./admin/AdminRectifications.vue";
+import AdminAuditLogs from "./admin/AdminAuditLogs.vue";
 import AdminServices from "./admin/AdminServices.vue";
 import AdminContents from "./admin/AdminContents.vue";
 import AdminActivities from "./admin/AdminActivities.vue";
@@ -158,6 +166,7 @@ const tabs = [
   { name: "overview", label: "运营概览" },
   { name: "stationOps", label: "我的驿站", roles: ["STATION_ADMIN"] },
   { name: "members", label: "工作人员", roles: ["STATION_ADMIN"] },
+  { name: "rectifications", label: "整改督导", roles: ["STATION_ADMIN", "PLATFORM_ADMIN"] },
   { name: "appointments", label: "预约审核", permission: "APPOINTMENT_AUDIT" },
   { name: "appeals", label: "诉求处理", permission: "APPEAL_HANDLE" },
   { name: "changeRequests", label: "变更审批", permission: "CHANGE_APPROVE" },
@@ -169,7 +178,8 @@ const tabs = [
   { name: "signups", label: "报名记录", permission: "SIGNUP_MANAGE" },
   { name: "users", label: "账号管理", permission: "ACCOUNT_MANAGE" },
   { name: "roles", label: "角色权限", permission: "ACCOUNT_MANAGE" },
-  { name: "reports", label: "报表导出", permission: "REPORT_EXPORT" }
+  { name: "reports", label: "报表导出", permission: "REPORT_EXPORT" },
+  { name: "auditLogs", label: "操作日志", permission: "AUDIT_VIEW" }
 ];
 
 /** 当前账号的生效权限；null 表示获取失败、退回按角色判断。 */
@@ -263,7 +273,8 @@ const sidebarGroups = computed(() => {
       label: "站点治理",
       items: [
         { name: "stationApplications", label: "入驻审核" },
-        { name: "stations", label: "站点名录" }
+        { name: "stations", label: "站点名录" },
+        { name: "rectifications", label: "整改督导" }
       ]
     },
     {
@@ -289,11 +300,12 @@ const sidebarGroups = computed(() => {
         { name: "roles", label: "角色权限" }
       ]
     },
-    { label: "数据", items: [{ name: "reports", label: "服务报表" }] }
+    { label: "数据", items: [{ name: "reports", label: "服务报表" }] },
+    { label: "系统", items: [{ name: "auditLogs", label: "操作日志" }] }
   ];
   const stationGroups = [
     { label: "工作台", items: [{ name: "overview", label: "运营概览" }] },
-    { label: "站点管理", items: [{ name: "stationOps", label: "我的站点" }, { name: "members", label: "工作人员" }] },
+    { label: "站点管理", items: [{ name: "stationOps", label: "我的站点" }, { name: "members", label: "工作人员" }, { name: "rectifications", label: "整改通知" }] },
     {
       label: "服务运行",
       items: [

@@ -24,10 +24,13 @@ import java.util.Map;
 public class AppointmentController {
     private final WorkflowService workflowService;
     private final DataScopeService dataScopeService;
+    private final com.friendlystation.platform.audit.AuditLogService auditLogService;
 
-    public AppointmentController(WorkflowService workflowService, DataScopeService dataScopeService) {
+    public AppointmentController(WorkflowService workflowService, DataScopeService dataScopeService,
+                                 com.friendlystation.platform.audit.AuditLogService auditLogService) {
         this.workflowService = workflowService;
         this.dataScopeService = dataScopeService;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping
@@ -95,5 +98,21 @@ public class AppointmentController {
         var user = CurrentUserContext.require();
         return ApiResponse.ok(workflowService.completeAppointment(
                 id, user.id(), dataScopeService.stationIds(user)));
+    }
+
+    /** 平台干预预约：必须填原因，并写审计日志。 */
+    @PutMapping("/{id}/intervene")
+    @RequireRole({"PLATFORM_ADMIN"})
+    @RequirePermission({"APPOINTMENT_AUDIT"})
+    public ApiResponse<Map<String, Object>> intervene(@PathVariable Long id,
+                                                      @RequestBody(required = false) Map<String, Object> payload) {
+        Map<String, Object> data = payload == null ? Map.of() : payload;
+        String action = String.valueOf(data.getOrDefault("action", ""));
+        String reason = String.valueOf(data.getOrDefault("reason", ""));
+        var user = CurrentUserContext.require();
+        Map<String, Object> result = workflowService.interveneAppointment(id, action, reason, user.id());
+        auditLogService.record(user, "APPOINTMENT_INTERVENE", "APPOINTMENT", id, reason,
+                "action=" + action + "; status=" + result.get("status"));
+        return ApiResponse.ok(result);
     }
 }

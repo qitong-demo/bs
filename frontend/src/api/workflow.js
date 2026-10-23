@@ -26,6 +26,10 @@ export function finishAppointment(id) {
   return request({ url: `/appointment/${id}/finish`, method: "put" });
 }
 
+export function interveneAppointment(id, data) {
+  return request({ url: `/appointment/${id}/intervene`, method: "put", data });
+}
+
 // ------------------------------------------------------------------ 诉求
 export function createAppeal(data) {
   return request({ url: "/appeal", method: "post", data });

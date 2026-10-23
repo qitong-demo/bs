@@ -23,6 +23,8 @@ public class StationApplication {
     private String stationType;
     private String cityCode;
     private String description;
+    private String licenseUrl;
+    private String photoUrls;
     private String status;
     private String reviewNote;
     private Long reviewerId;

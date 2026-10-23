@@ -80,6 +80,14 @@
         <el-descriptions-item label="开放时间">{{ textOf(detail.openTime) || "—" }}</el-descriptions-item>
         <el-descriptions-item label="提交时间">{{ detail.createTime }}</el-descriptions-item>
         <el-descriptions-item label="补充说明" :span="2">{{ textOf(detail.description) || "—" }}</el-descriptions-item>
+        <el-descriptions-item label="资质文件" :span="2">
+          <a v-if="detail.licenseUrl" :href="detail.licenseUrl" target="_blank" rel="noreferrer">查看资质文件</a>
+          <span v-else>—</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="站点照片" :span="2">
+          <a v-if="detail.photoUrls" :href="detail.photoUrls" target="_blank" rel="noreferrer">查看站点照片</a>
+          <span v-else>—</span>
+        </el-descriptions-item>
         <el-descriptions-item v-if="detail.reviewNote" label="审核说明" :span="2">{{ detail.reviewNote }}</el-descriptions-item>
       </el-descriptions>
       <template #footer>
